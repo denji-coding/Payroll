@@ -5,12 +5,12 @@ echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></scri
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 ?>
 
-<div class="relative min-h-screen flex items-center justify-center bg-cover bg-center px-4" style="background-image: url('../public/assets/image/image_bg.jpg');">
-  <!-- Dark Overlay -->
-  <div class="absolute inset-0 bg-black/5 backdrop-blur-sm z-0"></div>
+<div class="relative min-h-screen flex items-center justify-center bg-center bg-no-repeat bg-cover px-4" style="background-image: url('../public/assets/image/image_bg.jpg');">
+  <!-- Soft light blur overlay -->
+  <div class="absolute inset-0 bg-white/10 backdrop-blur-sm z-0"></div>
 
   <!-- Login Card -->
-  <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-md relative z-10">
+  <div class="w-full max-w-md bg-white bg-opacity-95 p-8 rounded-2xl shadow-xl relative z-10 transition-all duration-300">
     <div class="flex flex-col items-center mb-6">
       <!-- User Icon -->
       <i class="bi bi-person-circle" style="color: green; font-size: 2.9rem;"></i>
@@ -27,13 +27,13 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 
       <!-- Email Input -->
       <div class="mb-4">
-        <label class="block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Email</label>
+        <label class="ml-2 block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Email</label>
         <div class="relative mb-3" data-aos="fade-up" data-aos-delay="50">
           <input
             type="email"
             class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43] focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2 w-full rounded"
             name="email"
-            placeholder="Enter admin email"
+            placeholder="Enter your email"
             value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
             required
           >
@@ -43,7 +43,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 
       <!-- Password Input -->
       <div class="mb-4">
-        <label class="block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Password</label>
+        <label class="ml-2 block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Password</label>
         <div class="relative" data-aos="fade-up" data-aos-delay="50">
           <input
             type="password"
