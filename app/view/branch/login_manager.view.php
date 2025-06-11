@@ -5,22 +5,27 @@ echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></scri
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 ?>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-  <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
+<div class="relative min-h-screen flex items-center justify-center bg-cover bg-center px-4" style="background-image: url('../public/assets/image/image_bg.jpg');">
+  <!-- Dark Overlay -->
+  <div class="absolute inset-0 bg-black/5 backdrop-blur-sm z-0"></div>
+
+  <!-- Login Card -->
+  <div class="w-full max-w-md bg-white p-8 rounded-lg shadow-md relative z-10">
     <div class="flex flex-col items-center mb-6">
-      <!-- User icon -->
+      <!-- User Icon -->
       <i class="bi bi-person-circle" style="color: green; font-size: 2.9rem;"></i>
-      <!-- System name and subtitle -->
+      <!-- Title -->
       <div class="text-center mt-3">
         <span class="text-xl font-semibold">Migrants Venture</span>
         <p>HRM & Payroll Management System</p>
       </div>
     </div>
 
+    <!-- Login Form -->
     <form id="managerLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'manager' ? 'block' : 'none' ?>;">
       <input type="hidden" name="login_type" value="manager">
 
-      <!-- Email input -->
+      <!-- Email Input -->
       <div class="mb-4">
         <label class="block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Email</label>
         <div class="relative mb-3" data-aos="fade-up" data-aos-delay="50">
@@ -32,16 +37,11 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
             value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
             required
           >
-          <i
-            class="bi bi-envelope position-absolute top-1/2 left-3 transform -translate-y-1/2"
-            style="color: #396A39; font-size: 1.4rem;"
-            data-aos="fade-up"
-            data-aos-delay="70"
-          ></i>
+          <i class="bi bi-envelope position-absolute top-1/2 left-3 transform -translate-y-1/2" style="color: #396A39; font-size: 1.4rem;" data-aos="fade-up" data-aos-delay="70"></i>
         </div>
       </div>
 
-      <!-- Password input -->
+      <!-- Password Input -->
       <div class="mb-4">
         <label class="block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Password</label>
         <div class="relative" data-aos="fade-up" data-aos-delay="50">
@@ -53,27 +53,18 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
             placeholder="Enter your password"
             required
           >
-          <!-- Lock icon on left - no toggle here -->
-          <span
-            class="absolute top-1/2 left-3 transform -translate-y-1/2"
-            data-aos="fade-up"
-            data-aos-delay="70"
-          >
+          <!-- Lock Icon -->
+          <span class="absolute top-1/2 left-3 transform -translate-y-1/2" data-aos="fade-up" data-aos-delay="70">
             <i class="bi bi-lock" style="font-size: 1.4rem; color: #396A39;"></i>
           </span>
-          <!-- Eye toggle icon on right -->
-          <span
-            class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer"
-            onclick="togglePassword(event, 'managerPassword')"
-            data-aos="fade-up"
-            data-aos-delay="90"
-          >
+          <!-- Eye Toggle Icon -->
+          <span class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer" onclick="togglePassword(event, 'managerPassword')" data-aos="fade-up" data-aos-delay="90">
             <i class="bi bi-eye-slash" style="font-size: 1.2rem; color: #396A39;"></i>
           </span>
         </div>
       </div>
 
-      <!-- Submit button -->
+      <!-- Submit Button -->
       <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-400">
         Login
       </button>
@@ -81,6 +72,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
   </div>
 </div>
 
+<!-- Password Toggle Script -->
 <script>
   function togglePassword(event, fieldId) {
     const passwordField = document.getElementById(fieldId);
