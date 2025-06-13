@@ -305,31 +305,41 @@ const clearBtn = document.getElementById('clearSearch');
 const table = document.getElementById('leaveTable');
 const noResultsRow = document.getElementById('noLeavesRow');
 
-searchInput.addEventListener('input', () => {
-  clearBtn.style.display = searchInput.value ? 'block' : 'none';
+if (searchInput && table) {
+  searchInput.addEventListener('input', () => {
+    // Only show clear button if it exists
+    if (clearBtn) {
+      clearBtn.style.display = searchInput.value ? 'block' : 'none';
+    }
 
-  const searchTerm = searchInput.value.toLowerCase();
-  const rows = Array.from(table.tBodies[0].rows).filter(row => row.id !== 'noLeavesRow');
+    const searchTerm = searchInput.value.toLowerCase();
+    const rows = Array.from(table.tBodies[0].rows).filter(row => row.id !== 'noLeavesRow');
 
-  let visibleCount = 0;
+    let visibleCount = 0;
 
-  rows.forEach(row => {
-    const rowText = row.textContent.toLowerCase();
-    const match = rowText.includes(searchTerm);
-    row.style.display = match ? '' : 'none';
-    if (match) visibleCount++;
+    rows.forEach(row => {
+      const rowText = row.textContent.toLowerCase();
+      const match = rowText.includes(searchTerm);
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+
+    // Show or hide the "no results" row if it exists
+    if (noResultsRow) {
+      noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+    }
   });
+}
 
-  // Show or hide the "no results" row
-  noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
-});
-
-clearBtn.addEventListener('click', () => {
-  searchInput.value = '';
-  clearBtn.style.display = 'none';
-  searchInput.dispatchEvent(new Event('input'));
-});
+if (clearBtn && searchInput) {
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.style.display = 'none';
+    searchInput.dispatchEvent(new Event('input'));
+  });
+}
 </script>
+
 
 
 <script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>

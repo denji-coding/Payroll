@@ -62,7 +62,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 
     <div class="flex flex-col">
         <a href="index.php?payroll=dashboard1"
-           class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'dashboard1') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'dashboard1') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-house-door"></i> Dashboard
         </a>
 
@@ -79,7 +79,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
             
 
             <div id="employeeDropdown" class="dropdown-container <?= $isEmployeeDropdownOpen ? 'open' : '' ?> ml-5 mt-2 -mb-3">
-                <a href="index.php?payroll=employees" 
+                <a href="index.php?payroll=employees" prefetch={false} 
                 class="block font-semibold py-2 px-3 text-xs text-white rounded <?= $currentPage == 'employees' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                     <i class="bi bi-person-gear"></i> Manage Employees
                 </a>
