@@ -11,22 +11,28 @@ $pdo->exec("SET time_zone = '+08:00'");
 if (isset($_GET['payroll']) && $_GET['payroll'] === 'attendance') {
     try {
         $filterDate = $_GET['date'] ?? date('Y-m-d');
+        // $formattedDate = date('F j, Y', strtotime($filterDate));
         $query = "
-            SELECT 
-                e.photo_path,
-                e.employee_no,
-                CONCAT(e.first_name, ' ', LEFT(e.middle_name, 1), '. ', e.last_name) AS full_name,
-                e.position,
-                a.time_in,
-                a.time_out,
-                a.date
-            FROM attendance a
-            INNER JOIN employees e ON a.employee_id = e.id
-            WHERE DATE(a.date) = :filterDate
-            ORDER BY 
-                CASE WHEN a.time_out IS NOT NULL THEN 0 ELSE 1 END,
-                a.time_out DESC,
-                a.time_in DESC
+    SELECT 
+        e.photo_path,
+        e.employee_no,
+        CONCAT(e.first_name, ' ', LEFT(e.middle_name, 1), '. ', e.last_name) AS full_name,
+        e.position,
+        a.morning_in,
+        a.morning_out,
+        a.afternoon_in,
+        a.afternoon_out,
+        a.date
+    FROM attendance a
+    INNER JOIN employees e ON a.employee_id = e.id
+    WHERE DATE(a.date) = :filterDate
+    ORDER BY 
+        GREATEST(
+            IFNULL(TIME_TO_SEC(a.afternoon_out), 0),
+            IFNULL(TIME_TO_SEC(a.afternoon_in), 0),
+            IFNULL(TIME_TO_SEC(a.morning_out), 0),
+            IFNULL(TIME_TO_SEC(a.morning_in), 0)
+        ) DESC
 ";
 
         $stmt = $pdo->prepare($query);
@@ -69,54 +75,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = $employee['first_name'] . ' ' . $middle_initial . $employee['last_name'];
         $image_path = $employee['photo_path'] ?? 'assets/image/default_user_image.svg';
         $today = date('Y-m-d');
-        $now = date('Y-m-d H:i:s');
-        $nowDT = new DateTime($now);
+        $now = date('H:i:s');
 
         $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employee_id = ? AND date = ?");
         $stmt->execute([$employee_id, $today]);
         $attendance = $stmt->fetch();
 
-        $schedStmt = $pdo->prepare("
-            SELECT s.* FROM schedules s
-            JOIN employee_schedules es ON es.schedule_id = s.id
-            WHERE es.employee_id = ?
-        ");
-        $schedStmt->execute([$employee_id]);
-        $schedule = $schedStmt->fetch();
+        if (!$attendance) {
+            $pdo->prepare("INSERT INTO attendance (employee_id, date) VALUES (?, ?)")->execute([$employee_id, $today]);
+            $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employee_id = ? AND date = ?");
+            $stmt->execute([$employee_id, $today]);
+            $attendance = $stmt->fetch();
+        }
 
-        if (!$schedule) {
+        $attendance_id = $attendance['id'];
+        $type = $manual_type ?? 'auto';
+        $field = '';
+        $log_status = 'on time';
+        $logged = false;
+
+        if ($manual_type || $employee_id_manual) {
+        // Smart logic just like RFID: determine next available field
+        if (!$attendance['morning_in']) {
+            $field = 'morning_in';
+            $type = 'morning-in';
+        } elseif (!$attendance['morning_out']) {
+            $field = 'morning_out';
+            $type = 'morning-out';
+        } elseif (!$attendance['afternoon_in']) {
+            $field = 'afternoon_in';
+            $type = 'afternoon-in';
+        } elseif (!$attendance['afternoon_out']) {
+            $field = 'afternoon_out';
+            $type = 'afternoon-out';
+        } else {
             echo json_encode([
-                'status' => 'error',
-                'message' => 'No schedule found. Please contact your manager or admin.'
+                "status" => "info",
+                "message" => "Attendance for today is already complete.",
+                "employee_id" => $employee_id,
+                "name" => $name,
+                "date" => $today
             ]);
             exit;
         }
 
-        $grace_period = $schedule['grace_period'] ?? 0;
-        $time_in_sched = new DateTime($today . ' ' . $schedule['time_in']);
-        $time_out_sched = new DateTime($today . ' ' . $schedule['time_out']);
+        if ($attendance[$field]) {
+            echo json_encode([
+                "status" => "info",
+                "message" => "You have already logged your " . str_replace('_', ' ', $field) . " today.",
+                "employee_id" => $employee_id,
+                "name" => $name,
+                "date" => $today
+            ]);
+            exit;
+        }
 
-        $type = "";
-        $log_status = "on time";
-
-        if ($manual_type === 'time-in') {
-            $type = "time-in";
-            if ($nowDT > (clone $time_in_sched)->modify("+$grace_period minutes")) {
-                $log_status = "late";
-            }
-
-            if (!$attendance) {
-                $stmt = $pdo->prepare("INSERT INTO attendance (employee_id, time_in, date) VALUES (?, ?, ?)");
-                $stmt->execute([$employee_id, $now, $today]);
-            } elseif ($attendance['time_in'] && !$attendance['time_out']) {
-                echo json_encode([
-                    "status" => "info",
-                    "message" => "You have already timed in today.",
-                    "employee_id" => $employee_id,
-                    "name" => $name,
-                    "date" => $today
-                ]);
-                exit;
+        $update = $pdo->prepare("UPDATE attendance SET `$field` = ?, updated_at = NOW() WHERE id = ?");
+        $update->execute([$now, $attendance_id]);
+        $logged = true;
+    }elseif ($rfid) {
+            if (!$attendance['morning_in']) {
+                $field = 'morning_in';
+                $type = 'morning-in';
+                $logged = true;
+            } elseif (!$attendance['morning_out']) {
+                $field = 'morning_out';
+                $type = 'morning-out';
+                $logged = true;
+            } elseif (!$attendance['afternoon_in']) {
+                $field = 'afternoon_in';
+                $type = 'afternoon-in';
+                $logged = true;
+            } elseif (!$attendance['afternoon_out']) {
+                $field = 'afternoon_out';
+                $type = 'afternoon-out';
+                $logged = true;
             } else {
                 echo json_encode([
                     "status" => "info",
@@ -128,102 +161,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
-        } elseif ($manual_type === 'time-out') {
-            $type = "time-out";
-
-            if ($attendance && $attendance['time_in'] && !$attendance['time_out']) {
-                $time_in_dt = new DateTime($attendance['time_in']);
-                $lockout_until = (clone $time_in_dt)->modify('+15 minutes');
-
-                if ($nowDT < $lockout_until) {
-                    echo json_encode([
-                        "status" => "info",
-                        "message" => "Please wait 15 minutes after timing in before you can time out.",
-                        "lockout_until" => $lockout_until->format('Y-m-d H:i:s'),
-                        "employee_id" => $employee_id,
-                        "name" => $name,
-                        "date" => $today
-                    ]);
-                    exit;
-                }
-
-                if ($nowDT < $time_out_sched) {
-                    $log_status = "early out";
-                }
-
-                $stmt = $pdo->prepare("UPDATE attendance SET time_out = ? WHERE id = ?");
-                $stmt->execute([$now, $attendance['id']]);
-
-            } else {
-                echo json_encode([
-                    "status" => "info",
-                    "message" => "You have not timed in yet or already timed out.",
-                    "employee_id" => $employee_id,
-                    "name" => $name,
-                    "date" => $today
-                ]);
-                exit;
-            }
-
-        } elseif ($rfid) {
-            if (!$attendance) {
-                $type = "time-in";
-                if ($nowDT > (clone $time_in_sched)->modify("+$grace_period minutes")) {
-                    $log_status = "late";
-                }
-                $stmt = $pdo->prepare("INSERT INTO attendance (employee_id, time_in, date) VALUES (?, ?, ?)");
-                $stmt->execute([$employee_id, $now, $today]);
-            } elseif ($attendance['time_in'] && !$attendance['time_out']) {
-                $time_in_dt = new DateTime($attendance['time_in']);
-                $lockout_until = (clone $time_in_dt)->modify('+15 minutes');
-
-                if ($nowDT < $lockout_until) {
-                    echo json_encode([
-                        "status" => "info",
-                        "message" => "Standby",
-                        "message" => "Please wait 15 minutes after timing in before you can time out.",
-                        "lockout_until" => $lockout_until->format('Y-m-d H:i:s'),
-                        "employee_id" => $employee_id,
-                        "name" => $name,
-                        "date" => $today
-                    ]);
-                    exit;
-                }
-
-                $type = "time-out";
-                if ($nowDT < $time_out_sched) {
-                    $log_status = "early out";
-                }
-                $stmt = $pdo->prepare("UPDATE attendance SET time_out = ? WHERE id = ?");
-                $stmt->execute([$now, $attendance['id']]);
-            } else {
-                echo json_encode([
-                    "status" => "info",
-                    "message" => "Attendance for today is already complete.",
-                    "employee_id" => $employee_id,
-                    "name" => $name,
-                    "date" => $today
-                ]);
-                exit;
-            }
+            $stmt = $pdo->prepare("UPDATE attendance SET `$field` = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$now, $attendance_id]);
         } else {
             echo json_encode(["status" => "error", "message" => "Invalid attendance request."]);
             exit;
         }
 
-        // SweetAlert2 Session Setup
-        $_SESSION['attendance_popup'] = [
-            'alert_message' => $type === "time-in"
-                ? "Time In successfully recorded for $name."
-                : "Time Out successfully recorded for $name.",
-            'attendance_message' => $type === "time-in"
-                ? "You have Time In at " . date("h:i A", strtotime($now)) . "."
-                : "You have Time Out at " . date("h:i A", strtotime($now)) . ".",
-            'alert_type' => 'success',
-            'image_url' => $image_path,
-            'attendance_action' => strtoupper($type),
-            'popup_border_color' => $type === 'time-in' ? "rgb(76, 180, 76)" : "rgb(255, 119, 119)"
-        ];
+        if ($logged) {
+            $_SESSION['attendance_popup'] = [
+                'alert_message' => ucfirst(str_replace('-', ' ', $type)) . " successfully recorded for $name.",
+                'attendance_message' => "You logged at " . date("h:i A", strtotime($now)) . ".",
+                'alert_type' => 'success',
+                'image_url' => $image_path,
+                'attendance_action' => strtoupper($type),
+                'popup_border_color' => "rgb(76, 180, 76)"
+            ];
+        }
 
         echo json_encode([
             "status" => "success",
@@ -233,12 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "name" => $name,
             "timestamp" => $now,
             "type" => $type,
-            "log_status" => $log_status,
-            "schedule" => [
-                "time_in" => $schedule['time_in'],
-                "time_out" => $schedule['time_out'],
-                "grace_period" => $schedule['grace_period']
-            ]
+            "log_status" => $log_status
         ]);
         exit;
 

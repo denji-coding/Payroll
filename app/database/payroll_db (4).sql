@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 08, 2025 at 05:50 PM
+-- Generation Time: Jun 14, 2025 at 03:09 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -52,8 +52,10 @@ CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
   `employee_id` int(11) NOT NULL,
   `date` date NOT NULL,
-  `time_in` time DEFAULT NULL,
-  `time_out` time DEFAULT NULL,
+  `morning_in` time DEFAULT NULL,
+  `morning_out` time DEFAULT NULL,
+  `afternoon_in` time DEFAULT NULL,
+  `afternoon_out` time DEFAULT NULL,
   `status` enum('Present','Absent','Late','On Leave') DEFAULT 'Present',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -63,20 +65,20 @@ CREATE TABLE `attendance` (
 -- Dumping data for table `attendance`
 --
 
-INSERT INTO `attendance` (`id`, `employee_id`, `date`, `time_in`, `time_out`, `status`, `created_at`, `updated_at`) VALUES
-(87, 118, '2025-05-25', '18:15:43', '18:40:03', 'Present', '2025-05-25 10:15:43', '2025-05-25 10:40:03'),
-(88, 116, '2025-05-25', '18:16:37', '18:51:13', 'Present', '2025-05-25 10:16:37', '2025-05-25 10:51:13'),
-(89, 117, '2025-05-25', '18:16:53', '18:45:52', 'Present', '2025-05-25 10:16:53', '2025-05-25 10:45:52'),
-(90, 115, '2025-05-25', '18:16:57', '18:45:38', 'Present', '2025-05-25 10:16:57', '2025-05-25 10:45:38'),
-(91, 116, '2025-05-26', '15:58:37', NULL, 'Present', '2025-05-26 07:58:37', '2025-05-26 07:58:37'),
-(93, 118, '2025-05-28', '00:02:05', '01:54:42', 'Present', '2025-05-27 16:02:05', '2025-05-27 17:54:42'),
-(94, 115, '2025-05-28', '00:02:08', '01:55:55', 'Present', '2025-05-27 16:02:08', '2025-05-27 17:55:55'),
-(95, 117, '2025-05-28', '00:02:11', '01:55:44', 'Present', '2025-05-27 16:02:11', '2025-05-27 17:55:44'),
-(96, 116, '2025-05-28', '00:02:15', '01:55:24', 'Present', '2025-05-27 16:02:15', '2025-05-27 17:55:24'),
-(97, 124, '2025-05-30', '09:19:47', NULL, 'Present', '2025-05-30 01:19:47', '2025-05-30 01:19:47'),
-(98, 118, '2025-05-30', '09:21:43', NULL, 'Present', '2025-05-30 01:21:43', '2025-05-30 01:21:43'),
-(99, 117, '2025-05-30', '09:41:31', NULL, 'Present', '2025-05-30 01:41:31', '2025-05-30 01:41:31'),
-(100, 128, '2025-06-04', '18:46:16', '21:50:12', 'Present', '2025-06-04 10:46:16', '2025-06-04 13:50:13');
+INSERT INTO `attendance` (`id`, `employee_id`, `date`, `morning_in`, `morning_out`, `afternoon_in`, `afternoon_out`, `status`, `created_at`, `updated_at`) VALUES
+(87, 118, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:15:43', '2025-05-25 10:40:03'),
+(88, 116, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:37', '2025-05-25 10:51:13'),
+(89, 117, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:53', '2025-05-25 10:45:52'),
+(90, 115, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:57', '2025-05-25 10:45:38'),
+(91, 116, '2025-05-26', NULL, NULL, NULL, NULL, 'Present', '2025-05-26 07:58:37', '2025-05-26 07:58:37'),
+(93, 118, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:05', '2025-05-27 17:54:42'),
+(94, 115, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:08', '2025-05-27 17:55:55'),
+(95, 117, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:11', '2025-05-27 17:55:44'),
+(96, 116, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:15', '2025-05-27 17:55:24'),
+(97, 124, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:19:47', '2025-05-30 01:19:47'),
+(98, 118, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:21:43', '2025-05-30 01:21:43'),
+(99, 117, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:41:31', '2025-05-30 01:41:31'),
+(100, 128, '2025-06-04', NULL, NULL, NULL, NULL, 'Present', '2025-06-04 10:46:16', '2025-06-04 13:50:13');
 
 -- --------------------------------------------------------
 

@@ -36,5 +36,7 @@
 
     <!-- Bootstrap CSS (Offline or CDN – avoid mixing both if unnecessary) -->
     <link rel="stylesheet" href="../public/assets/css/bootstrap/bootstrap.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
     
 

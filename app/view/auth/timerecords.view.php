@@ -97,79 +97,72 @@ require_once views_path("partials/nav");
                 <div class="relative w-full overflow-auto">
                     <div class="max-h-[calc(100vh-300px)] overflow-y-auto">
                         <table class="w-full caption-bottom text-sm">
-                            <thead class="[&_tr]:border-b bg-[#f2f8f2] sticky top-0 z-10">
+                            <thead class="bg-[#f2f8f2] sticky top-0 z-10">
+                                <!-- Header Row 1 -->
+                                <tr class="transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                    <th rowspan="2" class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">No.</th>
+                                    <th rowspan="2" class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Photo</th>
+                                    <th rowspan="2" class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Employee</th>
+                                    <th rowspan="2" class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Position</th>
+                                    <th rowspan="2" class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Date</th>
+
+                                    <!-- Grouped: Morning IN -->
+                                    <th colspan="2" class="h-12 px-4 text-center align-bottom font-bold text-[#478547] bg-white border-b-0">Morning</th>
+
+                                    <!-- Grouped: Afternoon OUT -->
+                                    <th colspan="2" class="h-12 px-4 text-center align-bottom font-bold text-[#478547] bg-white border-b-0">Afternoon</th>
+
+                                    <th rowspan="2" class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Status</th>
+                                </tr>
+
+                                <!-- Header Row 2 (subheaders: IN / OUT for both groups) -->
                                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">#</th>
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Employee</th>
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Position</th>
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Date</th>
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Time In</th>
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Time Out</th>
-                                    <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Status</th>
-                                    <!-- Actions column header -->
-                                    <!-- <th class="h-12 px-4 text-left align-middle font-bold text-[#478547] bg-white">Actions</th>                                   -->
+                                    <!-- Morning IN -->
+                                <th class="h-7 px-4 w-[80px] text-center border-r align-middle font-bold text-[#478547] bg-white">IN</th>
+                                <th class="h-7 px-4 w-[80px] text-center align-middle font-bold text-[#478547] bg-white">OUT</th>
+
+                                <!-- Afternoon OUT -->
+                                <th class="h-7 px-4 w-[80px] text-center border-r align-middle font-bold text-[#478547] bg-white">IN</th>
+                                <th class="h-7 px-4 w-[80px] text-center align-middle font-bold text-[#478547] bg-white">OUT</th>
+
                                 </tr>
                             </thead>
+
+
                             <tbody class="[&_tr:last-child]:border-0" id="attendanceTableBody">
                                 <!-- Sample data - This will be replaced with dynamic data -->
+                                
                                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                                     <td class="p-4 align-middle font-medium">1</td>
                                     <td class="p-4 align-middle font-medium">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
-                                                <img class="aspect-square h-full w-full" src="../public/assets/images/employee1.svg" alt="">
-                                            </span>
-                                            <div class="flex flex-col">
-                                                <span class="font-medium">John Doe</span>
-                                                <span class="text-xs text-gray-500">EMP-001</span>
-                                            </div>
-                                        </div>
+                                        <span class="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
+                                            <img class="aspect-square h-full w-full" src="../public/assets/images/employee1.svg" alt="">
+                                        </span>
                                     </td>
-                                    <td class="p-4 align-middle">
-                                        <span class="text-sm">Software Engineer</span>
-                                    </td>
-                                    <td class="p-4 align-middle">2024-03-15</td>
-                                    <td class="p-4 align-middle">08:00 AM</td>
-                                    <td class="p-4 align-middle">05:00 PM</td>
-                                    <td class="p-4 align-middle">
-                                        <div class="inline-flex items-center rounded-full border border-transparent bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-semibold">Present</div>
-                                    </td>
-                                    <!-- Actions column cell -->
-                                    <!-- <td class="p-4 align-middle">
-                                        <div class="flex gap-2">
-                                            <button class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium hover:bg-[#478547] hover:text-white transition duration-100 transform hover:scale-105" onclick="openModal('editTimeRecordModal')" type="button">
-                                                <i class="bi bi-pencil-square h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                                            </button>
-                                            <button class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium hover:bg-[#b91c1c] hover:text-white transition duration-100 transform hover:scale-105" onclick="openModal('deleteTimeRecordModal')" type="button">
-                                                <i class="bi bi-trash  h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                                            </button>
-                                        </div>
-                                    </td> -->
-
-                                    
-                                </tr>
-                                <tr >
-                                <td class="p-4 align-middle font-medium">1</td>
                                     <td class="p-4 align-middle font-medium">
                                         <div class="flex items-center space-x-2">
-                                            <span class="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
-                                                <img class="aspect-square h-full w-full" src="../public/assets/images/employee1.svg" alt="">
-                                            </span>
                                             <div class="flex flex-col">
                                                 <span class="font-medium">John Doe</span>
                                                 <span class="text-xs text-gray-500">EMP-001</span>
-                                            </div>
+                                        </div>
                                         </div>
                                     </td>
                                     <td class="p-4 align-middle">
                                         <span class="text-sm">Software Engineer</span>
                                     </td>
                                     <td class="p-4 align-middle">2024-03-15</td>
-                                    <td class="p-4 align-middle">08:00 AM</td>
-                                    <td class="p-4 align-middle">05:00 PM</td>
+                                    <!-- Morning IN/OUT -->
+                                    <td class="p-4 align-middle text-center">08:00 AM</td>
+                                    <td class="p-4 align-middle text-center">11:00 AM</td>
+                                    <!-- Afternoon IN/OUT -->
+                                    <td class="p-4 align-middle text-center">01:00 PM</td>
+                                    <td class="p-4 align-middle text-center">04:00 PM</td>
+                                    <!-- Status -->
                                     <td class="p-4 align-middle">
                                         <div class="inline-flex items-center rounded-full border border-transparent bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-semibold">Present</div>
                                     </td>
+                                </tr>
+
                                     <!-- Actions column cell -->
                                     <!-- <td class="p-4 align-middle">
                                         <div class="flex gap-2">
@@ -712,7 +705,7 @@ function updateAttendanceTable(records, selectedDate) {
 //                     avatar: "../public/assets/images/employee1.svg",
 //                     date: "2024-03-15",
 //                     time_in: "08:00 AM",
-//                     time_out: "05:00 PM",
+//                     time_out: "05:00 OUT",
 //                     status: "Present"
 //                 },
 //                 {
@@ -722,7 +715,7 @@ function updateAttendanceTable(records, selectedDate) {
 //                     avatar: "../public/assets/images/employee2.svg",
 //                     date: "2024-03-15",
 //                     time_in: "09:15 AM",
-//                     time_out: "05:30 PM",
+//                     time_out: "05:30 OUT",
 //                     status: "Late"
 //                 },
 //                 {
@@ -742,7 +735,7 @@ function updateAttendanceTable(records, selectedDate) {
 //                     avatar: "../public/assets/images/employee5.svg",
 //                     date: "2024-03-15",
 //                     time_in: "08:05 AM",
-//                     time_out: "05:05 PM",
+//                     time_out: "05:05 OUT",
 //                     status: "Present"
 //                 },
 //                 {
@@ -752,7 +745,7 @@ function updateAttendanceTable(records, selectedDate) {
 //                     avatar: "../public/assets/images/employee6.svg",
 //                     date: "2024-03-15",
 //                     time_in: "10:30 AM",
-//                     time_out: "06:30 PM",
+//                     time_out: "06:30 OUT",
 //                     status: "Late"
 //                 },
 //                 {
@@ -772,7 +765,7 @@ function updateAttendanceTable(records, selectedDate) {
 //                     avatar: "../public/assets/images/employee9.svg",
 //                     date: "2024-03-15",
 //                     time_in: "08:10 AM",
-//                     time_out: "05:10 PM",
+//                     time_out: "05:10 OUT",
 //                     status: "Present"
 //                 },
 //                 {
@@ -782,7 +775,7 @@ function updateAttendanceTable(records, selectedDate) {
 //                     avatar: "../public/assets/images/employee10.svg",
 //                     date: "2024-03-15",
 //                     time_in: "09:45 AM",
-//                     time_out: "06:45 PM",
+//                     time_out: "06:45 OUT",
 //                     status: "Late"
 //                 }
 //             ]
