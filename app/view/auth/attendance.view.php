@@ -88,7 +88,7 @@ require_once views_path("partials/header");
             <div class="flex justify-center -mt-2">
                 <div class="text-[#237339] w-full lg:w-1/2 h-32 flex flex-col items-center justify-center">
                     <div id="time" class="text-6xl font-extrabold"><?= $current_time ?></div>
-                    <div class="text-xl mt-2"><?= $current_date ?></div>
+                    <!-- <div class="text-xl mt-2"><?= $current_date ?></div> -->
                 </div>
             </div>
 
@@ -98,25 +98,27 @@ require_once views_path("partials/header");
             </div>
 
             <!-- Flatpickr CSS (Material Green Theme) -->
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+            <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css"> -->
+            <link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
 
             <!-- Flatpickr JS -->
-            <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+            <!-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> -->
+            <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
 
             <!-- Optional: Tailwind-Compatible Custom Style for Flatpickr Header -->
             <style>
             /* Calendar Header Background and Text */
-            .flatpickr-calendar .flatpickr-months {
-              background-color: #237339; /* Custom green */
+            /* .flatpickr-calendar .flatpickr-months {
+              background-color: #237339; 
               color: white;
               border-top-left-radius: 0.375rem;
               border-top-right-radius: 0.375rem;
-            }
+            } */
 
             .flatpickr-calendar .flatpickr-current-month input.cur-month {
-              background: transparent;
-              color: white;
-              font-weight: 600;
+                background: transparent;
+                color: white;
+                font-weight: 600;
             }
 
             .flatpickr-calendar .flatpickr-weekday {
@@ -126,11 +128,43 @@ require_once views_path("partials/header");
 
             .flatpickr-calendar .flatpickr-prev-month,
             .flatpickr-calendar .flatpickr-next-month {
-              color: white;
+                color: white;
+                border: 1px solid transparent;
+                border-radius: 4px;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: border-color 0.2s ease;
+                margin: 7px 10px;
+                box-sizing: border-box;
+                background: transparent;
+                padding: 0;
             }
 
-            
-          </style>
+            /* Style the arrow icons */
+            .flatpickr-calendar .flatpickr-prev-month svg,
+            .flatpickr-calendar .flatpickr-next-month svg {
+                width: 14px;
+                height: 14px;
+                fill: white; /* default arrow color (light gray or as needed) */
+                transition: fill 0.2s ease;
+            }
+
+            /* On hover, border and arrow turn white */
+            .flatpickr-calendar .flatpickr-prev-month:hover,
+            .flatpickr-calendar .flatpickr-next-month:hover {
+            border-color: white;
+            cursor: pointer;
+            }
+
+            .flatpickr-calendar .flatpickr-prev-month:hover svg,
+            .flatpickr-calendar .flatpickr-next-month:hover svg {
+            fill: white; /* hover arrow becomes white */
+            }
+
+        </style>
 
 
             <!-- Date Filter Form with Flatpickr -->
@@ -240,7 +274,7 @@ require_once views_path("partials/header");
                         <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">POSITION</th>
                         <th class="h-12 px-4 text-center text-xs align-bottom font-bold" colspan="2">MORNING</th>
                         <th class="h-12 px-4 text-center text-xs align-bottom font-bold" colspan="2">AFTERNOON</th>
-                        <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">DATE</th>
+                        <th class="py-3 px-4 text-center text-xs font-bold" rowspan="2">DATE</th>
                         </tr>
                         <tr>
                         <th class="py-2 px-4 text-center text-xs font-semibold">IN</th>
@@ -253,7 +287,7 @@ require_once views_path("partials/header");
                                 <?php if (count($attendanceRecords) > 0): ?>
                                     <?php foreach ($attendanceRecords as $index => $record): ?>
                                         <tr>
-                                            <td class="py-2 px-4 text-center"><?= $index + 1 ?></td>
+                                            <td class="py-2 px-4 text-center"><?= $index + 1 . '.)' ?></td>
                                             <td class="py-2 px-4">
                                                 <img src="<?= htmlspecialchars($record['photo_path'] ?: 'assets/image/default_user_image.svg') ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" />
                                             </td>
@@ -273,7 +307,7 @@ require_once views_path("partials/header");
                                             <td class="py-2 text-sm text-center px-4">
                                                 <?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '-' ?>
                                             </td>
-                                            <td class="py-2 px-4 text-sm"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
+                                            <td class="py-2 px-4 text-sm text-center"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>

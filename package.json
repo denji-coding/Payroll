@@ -12,6 +12,7 @@
     "detect-libc": "^1.0.3",
     "enhanced-resolve": "^5.18.1",
     "fill-range": "^7.1.1",
+    "flatpickr": "^4.6.13",
     "graceful-fs": "^4.2.11",
     "is-extglob": "^2.1.1",
     "is-glob": "^4.0.3",
