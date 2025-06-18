@@ -9,7 +9,7 @@ if (isset($_SESSION['error'])) {
 // Determine which form to show initially (default to admin)
 $loginType = $_GET['type'] ?? 'admin';
 ?>
-<script>
+<!-- <script>
   // Reset the sidebar collapse state on fresh login
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('reset_sidebar') === 'true') {
@@ -20,7 +20,7 @@ $loginType = $_GET['type'] ?? 'admin';
   if (localStorage.getItem('sidebar-collapsed') === 'true') {
     document.documentElement.classList.add('sidebar-collapsed');
   }
-</script>
+</script> -->
 
 <!-- Show logout toast if logged out -->
 <?php if ($loggedOut): ?>

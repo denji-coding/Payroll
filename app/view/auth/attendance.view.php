@@ -97,13 +97,7 @@ require_once views_path("partials/header");
                 Tap your RFID card or use Manual Attendance to record your attendance.
             </div>
 
-            <!-- Flatpickr CSS (Material Green Theme) -->
-            <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css"> -->
-            <link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
-
-            <!-- Flatpickr JS -->
-            <!-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> -->
-            <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
+            
 
             <!-- Optional: Tailwind-Compatible Custom Style for Flatpickr Header -->
             <style>
@@ -236,10 +230,6 @@ require_once views_path("partials/header");
                     }
                 }
             });
-
-        
-
-
             // Clear Filter Button Logic
             const clearBtn = document.getElementById("clearFilterBtn");
             if (clearBtn) {

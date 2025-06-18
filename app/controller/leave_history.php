@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // $admin_id = $_SESSION['admin_id'] ?? null;
 
@@ -16,7 +19,7 @@
 //     }
 // }
 
-require_once '../app/core/Database.php'; // Update with your DB connection file path
+require_once '../app/core/database.php'; // Update with your DB connection file path
 
 $db = new Database();
 $pdo = $db->getConnection();

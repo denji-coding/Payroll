@@ -15,13 +15,18 @@
 //         exit;
 //     }
 // }
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require_once '../app/core/database.php';
 
 if (!isset($_SESSION['SESSION_EMAIL'])) {
     header("Location: index.php?payroll=login1&type=admin");
     exit();
 }
 
-require_once '../app/core/Database.php';
+require_once '../app/core/database.php';
 
 try {
     // Create database connection

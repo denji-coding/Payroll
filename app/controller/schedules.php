@@ -1,5 +1,10 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
+require_once '../app/core/database.php';
+require_once '../app/Model/Employees.php';
 // $admin_id = $_SESSION['admin_id'] ?? null;
 
 // if (!$admin_id) {

@@ -1,4 +1,4 @@
-const notificationBtn = document.getElementById('notificationBtn');
+    const notificationBtn = document.getElementById('notificationBtn');
     const notificationDropdown = document.getElementById('notificationDropdown');
     const closeNotificationBtn = document.getElementById('closeNotificationDropdown');
 

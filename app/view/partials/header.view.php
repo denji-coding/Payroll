@@ -8,7 +8,6 @@
 
     <link rel="icon" type="image/png" href="../public/assets/image/logo.png">
 
-
     <!-- Fonts and Animations -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -21,22 +20,33 @@
 
     <!-- Load AOS styles -->
     <link rel="stylesheet" href="../public/assets/css/aos/aos.css">
-    <!-- <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet"> -->
 
-    <!-- Custom CSS Files -->
-    <link rel="stylesheet" href="../public/assets/css/register.css">
-    <link rel="stylesheet" href="../public/assets/css/dashboard.css">
-    <link rel="stylesheet" href="../public/assets/css/attendance.css">
-    <link rel="stylesheet" href="../public/assets/css/login1.css">
+    <!-- ✅ Conditional CSS -->
+    <?php if (isset($url) && $url === 'register'): ?>
+        <link rel="stylesheet" href="../public/assets/css/register.css">
+    <?php endif; ?>
+
+    <?php if (isset($url) && $url === 'dashboard1'): ?>
+        <link rel="stylesheet" href="../public/assets/css/dashboard.css">
+    <?php endif; ?>
+
+    <?php if (isset($url) && $url === 'attendance'): ?>
+        <link rel="stylesheet" href="../public/assets/css/attendance.css">
+    <?php endif; ?>
+
+    <?php if (isset($url) && $url === 'login1'): ?>
+        <link rel="stylesheet" href="../public/assets/css/login1.css">
+    <?php endif; ?>
+
+    <!-- ✅ Always loaded (shared across pages) -->
     <link rel="stylesheet" href="../public/assets/css/sidebar.css">
     <link rel="stylesheet" href="../public/assets/css/nav.css">
-
-    <!-- TAILWIND CSS -->
-    <link rel="stylesheet" href="../src/output.css">
-
-    <!-- Bootstrap CSS (Offline or CDN – avoid mixing both if unnecessary) -->
+    <link rel="stylesheet" href="../src/output.css"> <!-- Tailwind -->
     <link rel="stylesheet" href="../public/assets/css/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
 
+    <!-- ✅ JS -->
+    <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-
+</head>
+<body>

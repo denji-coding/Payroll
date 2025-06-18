@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require views_path("user/user_dtr");
 
 // $employee_id = $_SESSION['employee_id'] ?? null;

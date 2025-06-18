@@ -70,11 +70,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Generate only when button is clicked
-    generateIdBtn.addEventListener('click', () => {
-    const generatedId = generateUniqueEmployeeId();
-    employeeIdInput.value = generatedId;
-    employeeIdInput.focus();
-    });
+    // generateIdBtn.addEventListener('click', () => {
+    // const generatedId = generateUniqueEmployeeId();
+    // employeeIdInput.value = generatedId;
+    // employeeIdInput.focus();
+    // });
 
 
     const form = document.getElementById('addEmployeeForm');

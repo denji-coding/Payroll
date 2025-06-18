@@ -1,7 +1,11 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
  // Ensure session is started at the top
 
-require_once "../app/core/Database.php"; // Adjust path if needed
+require_once "../app/core/database.php"; // Adjust path if needed
 require_once views_path("branch/login_manager");
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $_POST['login_type'] === 'manager') {
