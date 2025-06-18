@@ -18,4 +18,4 @@ jobs:
         server: ftpupload.net
         username: if0_39147159
         password: GQDWxnaFz4xZl
-        server-dir: /htdocs/
+        server-dir: /htdocs/mvcPayroll/
