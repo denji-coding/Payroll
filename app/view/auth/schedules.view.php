@@ -128,11 +128,11 @@ require_once views_path("partials/nav");
                 <input type="hidden" name="action" value="delete">
 
                 <button type="button"
-        data-action="delete-schedule"
-        data-id="<?= $row['id'] ?>"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#b91c1c] hover:text-white ml-1">
-  <i class="bi bi-trash"></i>
-</button>
+                        data-action="delete-schedule"
+                        data-id="<?= $row['id'] ?>"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#b91c1c] hover:text-white ml-1">
+                  <i class="bi bi-trash"></i>
+                </button>
 
               </form>
 
@@ -467,7 +467,9 @@ document.addEventListener('click', async (e) => {
       text: 'This schedule will be permanently deleted.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Confirm'
     });
 
     if (confirm.isConfirmed) {

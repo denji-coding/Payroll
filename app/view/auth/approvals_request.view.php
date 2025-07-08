@@ -942,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete',
+        confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
