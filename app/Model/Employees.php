@@ -1,28 +1,32 @@
 <?php
 
+require_once __DIR__ . '/../core/Model.php';
+
 class Employees extends Model
 {
     protected $table = "employees";
+    protected $conn; // ✅ define connection property
 
     protected $allowed_columns = [
-        'employeeNo', 'rfidNumber', 'firstName', 'lastName', 'dob',
-        'placeOfBirth', 'sex', 'civilStatus', 'contactNumber', 'email',
-        'citizenship', 'bloodType', 'position', 'address', 'baseSalary',
-        'sssNumber', 'pagibigNumber', 'philhealthNumber', 'gsisNumber',
+        'employee_no', 'rfid_number', 'first_name', 'middle_name', 'last_name', 'dob',
+        'place_of_birth', 'sex', 'civil_status', 'contact_number', 'email',
+        'citizenship', 'blood_type', 'position', 'address', 'base_salary',
+        'sss_number', 'pagibig_number', 'philhealth_number', 'branch_manager',
         'photo_path'
     ];
 
-    private $conn;
-
-    public function __construct($db)
+    // ✅ Constructor to receive and store DB connection
+    public function __construct($dbConnection)
     {
-        $this->conn = $db;
+        $this->conn = $dbConnection;
     }
 
+    /**
+     * Get all employees not soft-deleted
+     */
     public function getAllEmployees()
     {
-        $query = "SELECT * FROM employees WHERE deleted_at IS NULL";
-        $stmt = $this->conn->prepare($query);
+        $stmt = $this->conn->prepare("SELECT * FROM {$this->table} WHERE deleted_at IS NULL ORDER BY id DESC");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

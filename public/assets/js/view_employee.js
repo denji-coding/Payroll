@@ -1,3 +1,4 @@
+// === Utility Functions ===
 function formatFullName(first, middle, last, suffix) {
   const firstName = (first ?? '').toUpperCase();
   const middleInitial = middle ? `${middle.charAt(0).toUpperCase()}.` : '';
@@ -7,101 +8,114 @@ function formatFullName(first, middle, last, suffix) {
 }
 
 function formatSSS(sss) {
-  if (!sss) return 'N/A';
-  return `${sss.slice(0, 4)}-${sss.slice(4, 11)}-${sss.slice(11)}`.replace(/-+$/, '');
+  return sss && sss.length >= 10
+    ? `${sss.slice(0, 2)}-${sss.slice(2, 9)}-${sss.slice(9)}`
+    : 'N/A';
 }
 
 function formatPagibig(pagibig) {
-  if (!pagibig) return 'N/A';
-  return `${pagibig.slice(0, 4)}-${pagibig.slice(4, 8)}-${pagibig.slice(8)}`.replace(/-+$/, '');
+  return pagibig && pagibig.length >= 8
+    ? `${pagibig.slice(0, 4)}-${pagibig.slice(4, 8)}-${pagibig.slice(8)}`
+    : 'N/A';
 }
 
 function formatPhilhealth(philhealth) {
-  if (!philhealth) return 'N/A';
-  return `${philhealth.slice(0, 2)}-${philhealth.slice(2, 11)}-${philhealth.slice(11)}`.replace(/-+$/, '');
+  return philhealth && philhealth.length >= 10
+    ? `${philhealth.slice(0, 2)}-${philhealth.slice(2, 10)}-${philhealth.slice(10)}`
+    : 'N/A';
 }
 
 function toTitleCase(str) {
-  if (!str) return 'N/A';
-  return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+  return str ? str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()) : 'N/A';
 }
 
-
+// === Main View Function ===
 function viewEmployee(employeeId) {
-  fetch(`index.php?payroll=employees&id=${employeeId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        const emp = data.data;
+  fetch(`index.php?payroll=api/employees&id=${employeeId}`)
+    .then(async (response) => {
+      const text = await response.text();
 
-        const deleteBtn = document.getElementById('modalDeleteBtn');
-        if (deleteBtn) {
-          deleteBtn.setAttribute('data-id', emp.id);
-        } else {
-          console.warn('modalDeleteBtn not found in the DOM');
-        }
+      try {
+        const data = JSON.parse(text);
+
+        if (data.status === 'success' && data.data) {
+          const emp = data.data;
+
+          const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text || 'N/A';
+          };
+
+          document.getElementById('view_employee_id').value = emp.employee_no || '';
+
+          setText('employeeIdView', emp.employee_no);
+          setText('employeeName', formatFullName(emp.first_name, emp.middle_name, emp.last_name, emp.suffix));
+          setText('employeeId', emp.employee_no);
+          setText('employeeBloodType', emp.blood_type || 'Not available');
+          setText('employeeCivilStatus', emp.civil_status);
+          setText('employeeSex', emp.sex);
+          setText('employeeCitizen', toTitleCase(emp.citizenship));
+          setText('employeePosition', emp.position);
+          setText('employeeEmail', emp.email);
+          setText('employeePhone', emp.contact_number);
+          setText('employeePlaceOfBirth', toTitleCase(emp.place_of_birth));
+          setText('employeeRFID', emp.rfid_number);
+          setText('employeeAddress', toTitleCase(emp.address));
+          setText('employeeSalary', emp.base_salary);
+          setText('employeeSSS', formatSSS(emp.sss_number));
+          setText('employeePagibig', formatPagibig(emp.pagibig_number));
+          setText('employeePhilhealth', formatPhilhealth(emp.philhealth_number));
+          setText('employeeBranch', (emp.manager_name && emp.branch_name) 
+    ? emp.manager_name + ' - ' + emp.branch_name 
+    : 'Not assigned');
 
 
-        document.getElementById('view_employee_id').value = emp.employee_no;
-        
-        document.getElementById('employeeIdView').textContent = emp.employee_no || 'N/A';
+          // Birthday formatting
+          const dobEl = document.getElementById('employeeBirthday');
+          if (dobEl) {
+            if (emp.dob) {
+              const date = new Date(emp.dob);
+              const formatted = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
+              dobEl.textContent = formatted;
+            } else {
+              dobEl.textContent = 'N/A';
+            }
+          }
 
-        document.getElementById('employeeName').textContent = formatFullName(emp.first_name, emp.middle_name, emp.last_name, emp.suffix);
-        document.getElementById('employeeId').textContent = emp.employee_no || 'N/A';
-        document.getElementById('employeeBloodType').textContent = emp.blood_type || 'Not available';
-        document.getElementById('employeeCivilStatus').textContent = emp.civil_status || 'Not available';
-        document.getElementById('employeeSex').textContent = emp.sex || 'Not available';
-        document.getElementById('employeeCitizen').textContent = (emp.citizenship || 'N/A').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-        document.getElementById('employeePosition').textContent = emp.position || 'N/A';
-        document.getElementById('employeeEmail').textContent = emp.email || 'N/A';
-        document.getElementById('employeePhone').textContent = emp.contact_number || 'N/A';
-        document.getElementById('employeePlaceOfBirth').textContent = toTitleCase(emp.place_of_birth || '');
-        document.getElementById('employeeRFID').textContent = emp.rfid_number || 'N/A';
-        document.getElementById('employeeAddress').textContent = toTitleCase(emp.address || '');
-        document.getElementById('employeeSalary').textContent = emp.base_salary || 'N/A';
-        document.getElementById('employeeSSS').textContent = formatSSS(emp.sss_number || '');
-        document.getElementById('employeePagibig').textContent = formatPagibig(emp.pagibig_number || '');
-        document.getElementById('employeePhilhealth').textContent = formatPhilhealth(emp.philhealth_number || '');
-        document.getElementById('employeeBranch').textContent = emp.branch_manager_display || 'Not assigned';
+          // Photo
+          const photoElement = document.getElementById('view_employeePhoto');
+          if (photoElement) {
+            const hasPhoto = emp.photo_path && emp.photo_path.trim() !== '';
+            const defaultImage = emp.sex?.toLowerCase() === 'female'
+              ? 'assets/image/default_women.png'
+              : 'assets/image/default_men.png';
 
-
-        // Format birthday
-        const dob = emp.dob || 'N/A';
-        if (dob !== 'N/A') {
-          const date = new Date(dob);
-          const formattedDob = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
-          document.getElementById('employeeBirthday').textContent = formattedDob;
-        } else {
-          document.getElementById('employeeBirthday').textContent = dob;
-        }
-
-        // Handle photo
-        const photoElement = document.getElementById('view_employeePhoto');
-
-        const isValidPhoto = emp.photo_path && emp.photo_path.trim() !== '';
-        const isFemale = emp.sex && emp.sex.toLowerCase() === 'female';
-
-        const defaultImage = isFemale
-            ? 'assets/image/default_women.png'
-            : 'assets/image/default_men.png';
-
-        if (isValidPhoto) {
-            const imageUrl = `../public/${emp.photo_path}`;
-            photoElement.src = imageUrl + `?v=${Date.now()}`; // force reload
-
-            photoElement.onerror = function () {
-                this.onerror = null;
-                this.src = defaultImage;
+            photoElement.src = hasPhoto ? `../public/${emp.photo_path}?v=${Date.now()}` : defaultImage;
+            photoElement.onerror = () => {
+              photoElement.onerror = null;
+              photoElement.src = defaultImage;
             };
+          }
+
+          // Delete Button
+          const deleteBtn = document.getElementById('modalDeleteBtn');
+          if (deleteBtn) {
+            deleteBtn.setAttribute('data-id', emp.id);
+          }
+
         } else {
-            photoElement.src = defaultImage;
+          console.warn("Employee not found or error:", data.message || data);
+          alert('Employee not found.');
         }
-      } else {
-        alert('Employee not found.');
+
+      } catch (err) {
+        console.error('❌ Invalid JSON from API:', err);
+        console.warn('🧾 Raw API Response:', text);
+        alert('⚠️ Invalid response from server. Check console.');
       }
     })
     .catch(error => {
-      console.error('Error loading employee:', error);
-      alert('Something went wrong while loading employee data.');
+      console.error('Fetch failed:', error);
+      alert('⚠️ Network error while loading employee.');
     });
 }

@@ -8,109 +8,124 @@ echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></scri
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
 
+$isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");</script>';
 ?>
 
+<div class="flex min-h-screen overflow-hidden <?= $isMobile ? 'bg-gray-100' : '' ?>">    
 
-<div class="flex min-h-screen overflow-hidden">
-    <!-- Main content -->
-    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">
+    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-all duration-300 ease-in-out ">
+
         <?php require_once views_path("partials/user_sidebar"); ?>
 
-        <div>
+        <div class="mt-6">
             <span class="text-2xl font-bold tracking-tight">My Payslips</span>
             <p class="text-gray-600">A detailed summary of your salary, deductions, and net pay for the selected period.</p>
         </div>
 
         <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">
-            <div class="flex items-center justify-between p-4 border-b border-gray-200 relative">
-            <span class="text-lg font-semibold text-gray-800">Payslip Records</span>
-            
-            <div class="relative max-w-sm w-full sm:w-auto">
-                <input
-                type="text"
-                id="payslipSearch"
-                placeholder="Search payslips..."
-                class="px-4 py-2 border rounded w-full pr-10"
-                >
-                <button
-                id="clearSearch"
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 hidden"
-                aria-label="Clear search"
-                type="button"
-                >
-                &#x2715; <!-- Unicode ✕ -->
-                </button>
-            </div>
-            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-gray-200">
+  <span class="text-lg font-semibold text-gray-800">Payslip Records</span>
+
+  <div class="relative w-full sm:w-auto">
+    <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.3-4.3"></path>
+    </svg>
+    <input
+      type="text"
+      id="payslipSearch"
+      placeholder="Search payslips..."
+      class="flex h-10 w-full placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8 text-base placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
+    >
+    <button
+      id="clearSearch"
+      class="absolute right-2 top-1/2 transform mt-[10px] -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 hidden"
+      aria-label="Clear search"
+      type="button"
+    >
+      &#x2715;
+    </button>
+  </div>
+</div>
+
                 
 
-                        <div class="overflow-x-auto">
-            <table id="payslipTable" class="min-w-full divide-y divide-gray-200 text-sm  overflow-hidden">
-                <thead class="bg-emerald-600 text-white">
-                <tr>
-                    <th class="px-6 py-3 text-left font-semibold tracking-wide">Pay Period</th>
-                    <th class="px-6 py-3 text-left font-semibold tracking-wide">Gross Pay</th>
-                    <th class="px-6 py-3 text-left font-semibold tracking-wide">Deductions</th>
-                    <th class="px-6 py-3 text-left font-semibold tracking-wide">Net Pay</th>
-                    <th class="px-6 py-3 text-left font-semibold tracking-wide">Actions</th>
-                </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                <?php foreach ($payslips as $payslip): ?>
-                    <tr class="hover:bg-emerald-50 transition-colors duration-200">
-                    <td class="px-6 py-4 text-gray-800">
-                        <?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_start']))) ?> -
-                        <?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_end']))) ?>
-                    </td>
-                    <td class="px-6 py-2 text-green-600 font-semibold">₱<?= number_format($payslip['gross_pay'], 2) ?></td>
-                    <td class="px-6 py-2 text-red-600">₱<?= number_format($payslip['deductions'], 2) ?></td>
-                    <td class="px-6 py-2 text-gray-900 font-bold">₱<?= number_format($payslip['net_pay'], 2) ?></td>
-                    <td class="px-6 py-2 flex items-center gap-2 mt-[9.3px]">
-                        <!-- View Button -->
-                        <a href="#"
-                          title="View"
-                          class="view-payslip-btn group inline-flex items-center justify-center w-9 h-9 rounded text-black hover:bg-emerald-600 transition duration-100 transform hover:scale-105"
-                          data-bs-toggle="modal"
-                          data-bs-target="#payslipModal"
-                          data-payroll-id="<?= $payslip['id'] ?>"
-                          data-pay-period-start="<?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_start']))) ?>"
-                          data-pay-period-end="<?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_end']))) ?>"
-                          data-gross-pay="<?= number_format($payslip['gross_pay'], 2) ?>"
-                          data-deductions="<?= number_format($payslip['deductions'], 2) ?>"
-                          data-net-pay="<?= number_format($payslip['net_pay'], 2) ?>"
-                        >
-                            <i class="bi bi-eye text-lg group-hover:text-white"></i>
-                        </a>
+            <div class="w-full overflow-x-auto">
+  <table id="payslipTable" class="w-full table-auto text-sm sm:text-base text-left border-collapse">
+    <thead class="bg-emerald-600 text-white">
+      <tr>
+        <th class="px-4 sm:px-6 py-3 font-semibold tracking-wide">Pay Period</th>
+        <!-- Table Header -->
+        <th class="px-4 sm:px-6 py-2 text-center align-middle w-[120px]">Actions</th>
 
-                        <!-- Download Button -->
-                        <button
-                          title="Download"
-                          class="download-payslip-btn group inline-flex items-center justify-center w-9 h-9 rounded text-black hover:bg-emerald-600 transition duration-100 transform hover:scale-105"
-                          data-payroll-id="<?= $payslip['id'] ?>"
-                        >
-                          <i class="bi bi-download text-lg group-hover:text-white"></i>
-                        </button>
 
-                        <!-- Print Button -->
-                        <button
-                          title="Print"
-                          class="print-payslip-btn group inline-flex items-center justify-center w-9 h-9 rounded text-black hover:bg-emerald-600 transition duration-100 transform hover:scale-105"
-                          onclick="printPayslip()"
-                        >
-                          <i class="bi bi-printer text-lg group-hover:text-white"></i>
-                        </button>
-                    </td>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-100">
+      <?php foreach ($payslips as $payslip): ?>
+        <tr class="hover:bg-emerald-50 transition-colors duration-200">
+          <td class="px-4 sm:px-6 py-3 text-gray-800">
+            <?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_start']))) ?> -
+            <?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_end']))) ?>
+          </td>
+          <td class="px-4 sm:px-6 py-2 align-middle">
+  <div class="flex justify-end items-center gap-2">
+    <!-- View Button -->
+    <!-- View Button -->
+<a href="#"
+  title="View"
+  class="view-payslip-btn group flex items-center justify-center w-8 h-8 rounded
+         hover:bg-emerald-600 active:bg-emerald-600 hover:text-white
+         transition duration-100 transform hover:scale-105 active:scale-95"
+  data-bs-toggle="modal"
+  data-bs-target="#payslipModal"
+  data-payroll-id="<?= $payslip['id'] ?>"
+  data-pay-period-start="<?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_start']))) ?>"
+  data-pay-period-end="<?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_end']))) ?>"
+  data-gross-pay="<?= number_format($payslip['gross_pay'], 2) ?>"
+  data-deductions="<?= number_format($payslip['deductions'], 2) ?>"
+  data-net-pay="<?= number_format($payslip['net_pay'], 2) ?>"
+>
+  <i class="bi bi-eye text-lg"></i>
+</a>
 
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (empty($payslips)): ?>
-                    <tr>
-                    <td colspan="5" class="text-center px-6 py-4 text-gray-500">No payslips found.</td>
-                    </tr>
-                <?php endif; ?>
-                </tbody>
-            </table>
-            </div>
+<!-- Download Button -->
+<button
+  title="Download"
+  class="download-payslip-btn group flex items-center justify-center w-8 h-8 rounded 
+         hover:bg-emerald-600 active:bg-emerald-600 hover:text-white
+         transition duration-100 transform hover:scale-105 active:scale-95"
+  data-payroll-id="<?= $payslip['id'] ?>"
+>
+  <i class="bi bi-download text-lg"></i>
+</button>
+
+<!-- Print Button -->
+<button
+  title="Print"
+  class="print-payslip-btn group flex items-center justify-center w-8 h-8 rounded
+         hover:bg-emerald-600 active:bg-emerald-600 hover:text-white
+         transition duration-100 transform hover:scale-105 active:scale-95"
+  onclick="printPayslip()"
+>
+  <i class="bi bi-printer text-lg"></i>
+</button>
+
+  </div>
+</td>
+
+
+        </tr>
+      <?php endforeach; ?>
+      <?php if (empty($payslips)): ?>
+        <tr>
+          <td colspan="2" class="text-center px-4 py-4 text-gray-500">No payslips found.</td>
+        </tr>
+      <?php endif; ?>
+    </tbody>
+  </table>
+</div>
+
         </div>
     </main>
 </div>

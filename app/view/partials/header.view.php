@@ -44,6 +44,7 @@
     <link rel="stylesheet" href="../src/output.css"> <!-- Tailwind -->
     <link rel="stylesheet" href="../public/assets/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
+    <!-- <link rel="stylesheet" href="../public/assets/css/flatpickr/flatpickr.css"> -->
 
     <!-- ✅ JS -->
     <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>

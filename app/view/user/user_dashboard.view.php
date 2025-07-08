@@ -16,15 +16,16 @@ if ($loginSuccess) {
     unset($_SESSION['username']);
 }
 
+$isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");</script>';
 ?>
 
-<div class="flex min-h-screen overflow-hidden bg-gray-100">
-    <!-- Main content -->
-    <main id="mainContent" class="flex-1 p-6 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">
+<div class="flex min-h-screen overflow-hidden <?= $isMobile ? 'bg-gray-100' : '' ?>">    
+
+    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-all duration-300 ease-in-out ">
         <?php require_once views_path("partials/user_sidebar"); ?>
 
         <!-- Page Title -->
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Welcome Back, John!</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mt-6 mb-6">Welcome Back, John!</h1>
 
         <!-- Dashboard Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

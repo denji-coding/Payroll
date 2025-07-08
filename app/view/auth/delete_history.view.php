@@ -6,6 +6,21 @@ require_once views_path("partials/nav");
 
 ?>
 
+<style>
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
+</style>
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
     <div class="space-y-6">
@@ -30,9 +45,7 @@ require_once views_path("partials/nav");
 
 
         <div class="rounded-lg border-2 border-green-200 bg-white text-[#133913] shadow-sm" 
-                    data-aos="fade-in" 
-                    data-aos-delay="<?= $index * 1 ?>"
-                    data-aos-duration="500">
+                    >
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
                 <span class="text-md font-semibold leading-none tracking-tight text-[#133913]">
                     All employees in the delete history will be permanently deleted after 60 days if not restored.
@@ -48,9 +61,8 @@ require_once views_path("partials/nav");
                         id="delete_searchInput"
                         class="flex h-10 w-full text-sm placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8  placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
                         placeholder="Search employee..."
-                        oninput="toggleClearButton()"
                     >
-                    <button id="delete_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" onclick="clearInput()">×</button>
+                    <button id="delete_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden">×</button>
                 </div>                
             </div>
 
@@ -73,7 +85,7 @@ require_once views_path("partials/nav");
                                     <?php if (count($deletedEmployees) > 0): ?>
                                         <?php $count = 1; ?>
                                         <?php foreach ($deletedEmployees as $deletedEmployee): ?>
-                                            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                            <tr class="fade-in-slide  transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                                                 <td class="px-3 py-2 align-middle"><?= $count++ ?></td>
                                                 <td class="px-3 py-2 align-middle">
                                                     <?php if (!empty($deletedEmployee['photo_path'])): ?>
@@ -376,81 +388,88 @@ document.querySelectorAll('.delete-btn').forEach(button => {
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("delete_searchInput");
-    const clearBtn = document.getElementById("delete_clearButton");
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("delete_searchInput");
+  const clearBtn = document.getElementById("delete_clearButton");
+  const tbody = document.getElementById("delete_employeeTable");
 
-    // Initialize on page load
+  let debounce;
+
+  // Initialize
+  toggleClearButton();
+  filterTable();
+
+  searchInput.addEventListener("input", () => {
+    toggleClearButton();
+
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      filterTable();
+    }, 300);
+  });
+
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = "";
     toggleClearButton();
     filterTable();
+  });
 
-    searchInput.addEventListener("input", function () {
-        toggleClearButton();
-        filterTable();
+  function toggleClearButton() {
+    clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+  }
+
+  function filterTable() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      if (row.id === "noResultRow") return;
+
+      const nameCell = row.querySelector("td:nth-child(3)");
+      const empNoCell = row.querySelector("td:nth-child(4)");
+      if (!nameCell || !empNoCell) return;
+
+      const name = nameCell.textContent.trim().toLowerCase();
+      const empNo = empNoCell.textContent.trim().toLowerCase();
+      const nameParts = name.split(" ");
+
+      const matches =
+        name.includes(searchTerm) ||
+        empNo.includes(searchTerm) ||
+        nameParts.some(p => p.startsWith(searchTerm));
+
+      if (matches) {
+        row.style.display = "";
+        // row.classList.remove("fade-in-slide");
+        void row.offsetWidth;
+        row.classList.add("fade-in-slide");
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
     });
 
-    clearBtn.addEventListener("click", function () {
-        searchInput.value = "";
-        toggleClearButton();
-        filterTable();
-    });
-
-    function toggleClearButton() {
-        clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+    // Handle no match
+    let noRow = document.getElementById("noResultRow");
+    if (visibleCount === 0) {
+      if (!noRow) {
+        noRow = document.createElement("tr");
+        noRow.id = "noResultRow";
+        noRow.innerHTML = `
+          <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+            <i class="bi bi-person-x fs-4 me-2"></i> No deleted employee records found.
+          </td>`;
+        tbody.appendChild(noRow);
+      }
+    } else {
+      if (noRow) noRow.remove();
     }
-
-    function filterTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll("#delete_employeeTable tr");
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            if (row.id === "noResultRow") return; // Skip the message row
-
-            const nameCell = row.querySelector("td:nth-child(3)");
-            const empNoCell = row.querySelector("td:nth-child(4)");
-
-            if (!nameCell || !empNoCell) return;
-
-            const name = nameCell.textContent.toLowerCase();
-            const empNo = empNoCell.textContent.toLowerCase();
-            const matches = name.includes(searchTerm) || empNo.includes(searchTerm);
-
-            row.style.display = matches ? "" : "none";
-
-            if (matches) visibleCount++;
-        });
-
-        let noResultRow = document.getElementById("noResultRow");
-
-        if (visibleCount === 0) {
-            if (!noResultRow) {
-                noResultRow = document.createElement("tr");
-                noResultRow.id = "noResultRow";
-                document.querySelector("#delete_employeeTable").appendChild(noResultRow);
-            }
-
-            if (searchTerm === "") {
-                // Empty table message (no deleted employees)
-                noResultRow.innerHTML = `
-                    <td colspan="8" class="px-4 py-6 text-center text-muted fst-italic bg-light">
-                        <i class="bi bi-info-circle fs-4 me-2" aria-hidden="true"></i>
-                        There are currently no deleted employee records.
-                    </td>`;
-            } else {
-                // Search no results message
-                noResultRow.innerHTML = `
-                    <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
-                        <i class="bi bi-person-x fs-4 me-2" aria-hidden="true"></i>
-                        No deleted employee records found.
-                    </td>`;
-            }
-        } else if (noResultRow) {
-            noResultRow.remove();
-        }
-    }
+  }
 });
 </script>
+
+
 
 
 <?php require_once views_path("partials/footer"); ?>

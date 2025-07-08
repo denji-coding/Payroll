@@ -1,5 +1,4 @@
 <?php
-
 $title = "Leave Management";
 require_once views_path("partials/header");
 
@@ -12,102 +11,130 @@ try {
 
     $feedback = null;
 
-    // Handle rejection or approval submission
+    // Handle rejection or approval
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $leaveId = $_POST['leave_id'] ?? null;
-
         if (!$leaveId) {
             throw new Exception("Leave ID is required.");
         }
 
+        $managerId = $_SESSION['manager_id'] ?? null;
+        if (!$managerId) {
+            throw new Exception("Manager ID missing from session.");
+        }
+
         if ($_POST['action'] === 'reject') {
             $rejectionReason = trim($_POST['rejection_reason'] ?? '');
-            $managerId = $_SESSION['manager_id'] ?? null;
-
             if ($rejectionReason === '') {
                 throw new Exception("Rejection reason is required.");
             }
 
-            if (!$managerId) {
-                throw new Exception("Manager ID missing from session.");
-            }
-
-            // Begin transaction
             $conn->beginTransaction();
 
-            // Insert rejection reason and manager
-            $insertSql = "INSERT INTO leave_rejections (leave_id, reason, manager_id) 
-                          VALUES (:leave_id, :reason, :manager_id)";
-            $insertStmt = $conn->prepare($insertSql);
-            $insertStmt->execute([
-                ':leave_id'   => $leaveId,
-                ':reason'     => $rejectionReason,
-                ':manager_id' => $managerId
-            ]);
+            $conn->prepare("INSERT INTO leave_rejections (leave_id, reason, manager_id) 
+                            VALUES (:leave_id, :reason, :manager_id)")
+                ->execute([
+                    ':leave_id' => $leaveId,
+                    ':reason' => $rejectionReason,
+                    ':manager_id' => $managerId
+                ]);
 
-            // Update leave status and manager
-            $updateSql = "UPDATE leaves 
-                          SET status = 'Rejected', manager_id = :manager_id, updated_at = CURRENT_TIMESTAMP 
-                          WHERE id = :leave_id";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->execute([
-                ':leave_id' => $leaveId,
-                ':manager_id' => $managerId
-            ]);
+            $conn->prepare("UPDATE leaves 
+                            SET status = 'Rejected', manager_id = :manager_id, updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = :leave_id")
+                ->execute([
+                    ':leave_id' => $leaveId,
+                    ':manager_id' => $managerId
+                ]);
 
             $conn->commit();
-
             $feedback = ['type' => 'success', 'message' => 'Leave request rejected successfully.'];
 
         } elseif ($_POST['action'] === 'approve') {
-            $managerId = $_SESSION['manager_id'] ?? null;
+            $conn->beginTransaction();
 
-            if (!$managerId) {
-                throw new Exception("Manager ID missing from session.");
+            // ✅ Fetch leave info
+            $stmt = $conn->prepare("SELECT employee_id, leave_type FROM leaves WHERE id = :leave_id");
+            $stmt->execute([':leave_id' => $leaveId]);
+            $leave = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$leave) {
+                throw new Exception("Leave record not found.");
             }
 
-            $updateSql = "UPDATE leaves 
-                          SET status = 'Approved', manager_id = :manager_id, updated_at = CURRENT_TIMESTAMP 
-                          WHERE id = :leave_id";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->execute([
-                ':leave_id' => $leaveId,
-                ':manager_id' => $managerId
+            $empId = $leave['employee_id'];
+            $type = $leave['leave_type'];
+
+            // ✅ Check leave credits
+            $creditStmt = $conn->prepare("SELECT allowed, taken FROM leave_credits 
+                                          WHERE employee_id = :eid AND leave_type = :type");
+            $creditStmt->execute([
+                ':eid' => $empId,
+                ':type' => $type
             ]);
+            $credit = $creditStmt->fetch(PDO::FETCH_ASSOC);
 
-            $feedback = ['type' => 'success', 'message' => 'Leave request approved successfully.'];
+            if (!$credit) {
+                throw new Exception("Leave credit record not found.");
+            }
+
+            $available = $credit['allowed'] - $credit['taken'];
+            if ($available < 1) {
+                throw new Exception("The employee has insufficient leave credits for this leave type.");
+            }
+
+            // ✅ Approve leave
+            $conn->prepare("UPDATE leaves 
+                            SET status = 'Approved', manager_id = :manager_id, updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = :leave_id")
+                ->execute([
+                    ':leave_id' => $leaveId,
+                    ':manager_id' => $managerId
+                ]);
+
+            // ✅ Deduct 1 leave credit only
+            $conn->prepare("UPDATE leave_credits 
+                            SET taken = taken + 1 
+                            WHERE employee_id = :eid AND leave_type = :type")
+                ->execute([
+                    ':eid' => $empId,
+                    ':type' => $type
+                ]);
+
+            $conn->commit();
+            $feedback = ['type' => 'success', 'message' => 'Leave request approved.'];
         }
-    }   
-   // Ensure manager is logged in
-$managerId = $_SESSION['manager_id'] ?? null;
-if (!$managerId) {
-    throw new Exception("Manager ID is missing from session.");
-}
+    }
 
-// Fetch leave requests of employees under the logged-in manager
-$sql = "SELECT 
-    l.*, 
-    e.first_name,
-    e.middle_name, 
-    e.last_name,
-    CONCAT(
-    UPPER(LEFT(e.first_name, 1)), LOWER(SUBSTRING(e.first_name FROM 2)), ' ',
-    IFNULL(CONCAT(UPPER(LEFT(e.middle_name, 1)), '. '), ''),
-    UPPER(LEFT(e.last_name, 1)), LOWER(SUBSTRING(e.last_name FROM 2))
-    ) AS employee_name,
-    lr.reason AS rejection_reason,
-    m.name AS rejected_by
-FROM leaves l
-JOIN employees e ON l.employee_id = e.id
-LEFT JOIN leave_rejections lr ON lr.leave_id = l.id
-LEFT JOIN managers m ON m.id = lr.manager_id
-WHERE e.branch_manager = :manager_id
-ORDER BY l.created_at DESC";
+    // Ensure manager is logged in
+    $managerId = $_SESSION['manager_id'] ?? null;
+    if (!$managerId) {
+        throw new Exception("Manager ID is missing from session.");
+    }
 
-$stmt = $conn->prepare($sql);
-$stmt->execute(['manager_id' => $managerId]);
-$leaveRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // ✅ Fetch leave requests
+    $sql = "SELECT 
+        l.*, 
+        e.first_name,
+        e.middle_name, 
+        e.last_name,
+        CONCAT(
+            UPPER(LEFT(e.first_name, 1)), LOWER(SUBSTRING(e.first_name FROM 2)), ' ',
+            IFNULL(CONCAT(UPPER(LEFT(e.middle_name, 1)), '. '), ''),
+            UPPER(LEFT(e.last_name, 1)), LOWER(SUBSTRING(e.last_name FROM 2))
+        ) AS employee_name,
+        lr.reason AS rejection_reason,
+        m.name AS rejected_by
+    FROM leaves l
+    JOIN employees e ON l.employee_id = e.id
+    LEFT JOIN leave_rejections lr ON lr.leave_id = l.id
+    LEFT JOIN managers m ON m.id = lr.manager_id
+    WHERE e.branch_manager = :manager_id
+    ORDER BY l.created_at DESC";
 
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(['manager_id' => $managerId]);
+    $leaveRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Exception $e) {
     if (isset($conn) && $conn->inTransaction()) {
@@ -115,9 +142,12 @@ $leaveRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     error_log("Error: " . $e->getMessage());
     $leaveRequests = [];
-    $feedback = ['type' => 'error', 'message' => 'An error occurred: ' . htmlspecialchars($e->getMessage())];
+    $feedback = ['type' => 'error', 'message' => $e->getMessage()];
 }
 ?>
+
+
+
 
 
 

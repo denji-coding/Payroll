@@ -6,6 +6,23 @@ require_once views_path("partials/nav");
 
 ?>
 
+<style>
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
+</style>
+
+
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
     <div class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -30,9 +47,7 @@ require_once views_path("partials/nav");
 
 
         <div class="rounded-lg border-2 border-green-200 bg-white text-[#133913] shadow-sm" 
-                    data-aos="fade-in" 
-                    data-aos-delay="<?= $index * 1 ?>"
-                    data-aos-duration="500">
+                    >
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
                 <span class="text-md font-semibold leading-none tracking-tight text-[#133913]">
                     <!-- All employees in the delete history will be permanently deleted after 60 days if not restored. -->
@@ -74,7 +89,7 @@ require_once views_path("partials/nav");
                                     <?php if (!empty($employeesApproval)) : ?>
                                         <?php $index = 1; ?>
                                         <?php foreach ($employeesApproval as $emp) : ?>
-                                            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                            <tr class="fade-in-slide transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                                                 <td class="px-3 py-2 align-middle"><?= $index++ ?></td>
                                                 <td class="px-3 py-2 align-middle">
                                                     <?php if (!empty($emp['photo_path'])): ?>
@@ -807,87 +822,198 @@ function approvaleditresetForm() {
 
 
 
-
-
-
-
 <script>
-document.querySelectorAll('.approval-view-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        const employeeId = this.getAttribute('data-id');
+document.addEventListener('DOMContentLoaded', () => {
+  // === View Details Modal ===
+  document.querySelectorAll('.approval-view-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const employeeId = button.getAttribute('data-id');
 
-        fetch(`index.php?payroll=approvals_request&id=${employeeId}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                if (data.status !== 'success' || !data.data) {
-                    throw new Error('Invalid data format');
-                }
+      fetch(`../app/api/approvals_request-api.php?id=${employeeId}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Network error');
+          return response.json();
+        })
+        .then(data => {
+          if (data.status !== 'success' || !data.data) throw new Error('Invalid employee data');
 
-                const emp = data.data;
+          const emp = data.data;
+          const lastName = (emp.last_name || '').toUpperCase();
+          const firstName = (emp.first_name || '').toUpperCase();
+          const middleInitial = emp.middle_name ? emp.middle_name.charAt(0).toUpperCase() + '.' : '';
+          const formattedName = `${lastName}, ${firstName} ${middleInitial}`.trim();
+          const formattedAddress = (emp.address || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
-                const lastName = (emp.last_name || '').toUpperCase();
-                const firstName = (emp.first_name || '').toUpperCase();
-                const middleName = (emp.middle_name || '').toUpperCase();
-                const middleInitial = middleName ? middleName.charAt(0) + '.' : '';
-                const formattedName = `${lastName}, ${firstName} ${middleInitial}`.trim();
+          const formatSSS = sss => sss?.replace(/^(\d{2,4})(\d{6,7})(\d{1})$/, '$1-$2-$3') || 'N/A';
+          const formatPagibig = pagibig => pagibig?.replace(/^(\d{4})(\d{4})(\d{4})$/, '$1-$2-$3') || 'N/A';
+          const formatPhilhealth = ph => ph?.replace(/^(\d{2})(\d{9})(\d{1})$/, '$1-$2-$3') || 'N/A';
 
-                const formattedAddress = (emp.address || '')
-                    .toLowerCase()
-                    .replace(/\b\w/g, c => c.toUpperCase());
+          setText('approvalEmployeeId', emp.id);
+          setText('approvalEmployeeName', formattedName || 'N/A');
+          setText('approvalEmployeeIdView', emp.employee_no || 'N/A');
+          setText('approvalEmployeeBloodType', emp.blood_type || 'N/A');
+          setText('approvalEmployeeCivilStatus', emp.civil_status || 'N/A');
+          setText('approvalEmployeeBirthday', emp.dob || 'N/A');
+          setText('approvalEmployeeSex', emp.sex || 'N/A');
+          setText('approvalEmployeeCitizen', (emp.citizenship || 'N/A').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()));
+          setText('approvalEmployeeRFID', emp.rfid_number || 'N/A');
+          setText('approvalEmployeePosition', emp.position || 'N/A');
+          setText('approvalEmployeeEmail', emp.email || 'N/A');
+          setText('approvalEmployeePhone', emp.contact_number || 'N/A');
+          setText('approvalEmployeePlaceOfBirth', (emp.place_of_birth || 'N/A').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()));
+          setText('approvalEmployeeBranch', emp.branch_name && emp.branch_address ? `${emp.branch_name} - ${emp.branch_address}` : 'N/A');
+          setText('approvalEmployeeSalary', emp.base_salary || 'N/A');
+          setText('approvalEmployeeSSS', formatSSS(emp.sss_number));
+          setText('approvalEmployeePagibig', formatPagibig(emp.pagibig_number));
+          setText('approvalEmployeePhilhealth', formatPhilhealth(emp.philhealth_number));
+          setText('approvalEmployeeAddress', formattedAddress || 'N/A');
 
-                const formatSSS = sss => sss?.replace(/^(\d{2,4})(\d{6,7})(\d{1})$/, '$1-$2-$3') || 'N/A';
-                const formatPagibig = pagibig => pagibig?.replace(/^(\d{4})(\d{4})(\d{4})$/, '$1-$2-$3') || 'N/A';
-                const formatPhilhealth = philhealth => philhealth?.replace(/^(\d{2})(\d{9})(\d{1})$/, '$1-$2-$3') || 'N/A';
+          const photo = document.getElementById('view_approvalEmployeePhoto');
+          if (photo) {
+            photo.src = emp.photo_path?.trim() || (
+              emp.sex?.toLowerCase() === 'female'
+                ? '../public/assets/image/default_women.png'
+                : '../public/assets/image/default_men.png'
+            );
+          }
 
-                document.getElementById('approvalEmployeeId').value = emp.id || '';
-                document.getElementById('approvalEmployeeName').textContent = formattedName || 'N/A';
-                document.getElementById('approvalEmployeeIdView').textContent = emp.employee_no || 'N/A';
-                document.getElementById('approvalEmployeeBloodType').textContent = emp.blood_type || 'N/A';
-                document.getElementById('approvalEmployeeCivilStatus').textContent = emp.civil_status || 'N/A';
-                document.getElementById('approvalEmployeeBirthday').textContent = emp.dob || 'N/A';
-                document.getElementById('approvalEmployeeSex').textContent = emp.sex || 'N/A';
-                document.getElementById('approvalEmployeeCitizen').textContent = (emp.citizenship || 'N/A').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-                document.getElementById('approvalEmployeeRFID').textContent = emp.rfid_number || 'N/A';
-                document.getElementById('approvalEmployeePosition').textContent = emp.position || 'N/A';
-                document.getElementById('approvalEmployeeEmail').textContent = emp.email || 'N/A';
-                document.getElementById('approvalEmployeePhone').textContent = emp.contact_number || 'N/A';
-                document.getElementById('approvalEmployeePlaceOfBirth').textContent = (emp.place_of_birth || 'N/A').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-                document.getElementById('approvalEmployeeBranch').textContent = (emp.branch_name && emp.branch_address) ? `${emp.branch_name} - ${emp.branch_address}` : 'N/A';
-                document.getElementById('approvalEmployeeSalary').textContent = emp.base_salary || 'N/A';
-                document.getElementById('approvalEmployeeSSS').textContent = formatSSS(emp.sss_number);
-                document.getElementById('approvalEmployeePagibig').textContent = formatPagibig(emp.pagibig_number);
-                document.getElementById('approvalEmployeePhilhealth').textContent = formatPhilhealth(emp.philhealth_number);
-                document.getElementById('approvalEmployeeAddress').textContent = formattedAddress || 'N/A';
-
-                const photoElem = document.getElementById('view_approvalEmployeePhoto');
-                if (photoElem) {
-                    if (emp.photo_path && emp.photo_path.trim() !== '') {
-                        photoElem.src = emp.photo_path;
-                    } else {
-                        // Default image based on sex
-                        if (emp.sex && emp.sex.toLowerCase() === 'female') {
-                            photoElem.src = '../public/assets/image/default_women.png';
-                        } else {
-                            // Default to men image if sex is male or unspecified
-                            photoElem.src = '../public/assets/image/default_men.png';
-                        }
-                    }
-                }
-
-
-                // Optional: show the modal here if needed
-                // new bootstrap.Modal(document.getElementById('approvalViewModal')).show();
-            })
-            .catch(error => {
-                console.error('Failed to load employee data:', error);
-                Swal.fire('Error', 'Failed to load employee details.', 'error');
-            });
+          // Show modal
+        //   new bootstrap.Modal(document.getElementById('approvalViewModal')).show();
+        })
+        .catch(error => {
+          console.error('Failed to load employee data:', error);
+          Swal.fire('Error', 'Failed to load employee details.', 'error');
+        });
     });
+  });
+
+  // === Resend Approval ===
+  document.querySelectorAll('.resend-approval-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const employeeId = button.getAttribute('data-id');
+
+      Swal.fire({
+        title: 'Resend Approval?',
+        text: "This will reset the approval status to pending.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, resend',
+        cancelButtonText: 'Cancel',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch('../app/api/approvals_request-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: employeeId, action: 'resend' })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') {
+              Swal.fire({
+                icon: 'success',
+                title: 'Sent!',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+              }).then(() => {
+                refreshApprovalTable();
+              });
+            } else {
+              Swal.fire('Error', data.message || 'Failed to resend approval.', 'error');
+            }
+          })
+          .catch(() => {
+            Swal.fire('Error', 'Failed to send request.', 'error');
+          });
+        }
+      });
+    });
+  });
+
+  // === Delete Employee ===
+  document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const employeeId = button.getAttribute('data-id');
+      const row = button.closest('tr');
+
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "This employee will be marked as deleted.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`../app/api/approvals_request-api.php?id=${employeeId}`, {
+            method: 'DELETE'
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') {
+              Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: data.message,
+                timer: 1000,
+                showConfirmButton: false
+              }).then(() => {
+                // Animate fade out
+                row.style.transition = 'opacity 0.5s ease';
+                row.style.opacity = 0;
+                setTimeout(() => {
+                  row.remove();
+                  refreshApprovalTable();
+                }, 400);
+              });
+            } else {
+              Swal.fire('Error', data.message || 'Failed to delete employee.', 'error');
+            }
+          })
+          .catch(() => {
+            Swal.fire('Error', 'Failed to send delete request.', 'error');
+          });
+        }
+      });
+    });
+  });
 });
+
+// === REFRESH APPROVAL TABLE ===
+function refreshApprovalTable() {
+  const tbody = document.querySelector('#approvalTableBody');
+  if (!tbody) return;
+
+  // Step 1: Animate all rows with fadeOutSlide
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach((row, index) => {
+    row.classList.add('fade-in-slide');
+    row.style.animationDelay = `${index * 30}ms`;
+  });
+
+  // Step 2: Fetch and update after the animation
+  setTimeout(() => {
+    fetch('../app/api/approvals_request-api.php?fetch_table=1')
+      .then(res => res.text())
+      .then(html => {
+        tbody.innerHTML = html;
+      })
+      .catch(err => {
+        console.error('Failed to refresh approval table:', err);
+      });
+  }, 300); // Match the duration of your animation
+}
+
+
+// === Helper ===
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value ?? 'N/A';
+}
 </script>
+
+
 
 
 
@@ -934,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </script> -->
 
 
-<script>
+<!-- <script>
 document.addEventListener('DOMContentLoaded', () => {
   // Resend Approval Logic
   document.querySelectorAll('.resend-approval-btn').forEach(button => {
@@ -1031,84 +1157,83 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-</script>
+</script> -->
 
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("approval_searchInput");
-    const clearBtn = document.getElementById("approval_clearButton");
+  const searchInput = document.getElementById("approval_searchInput");
+  const clearBtn = document.getElementById("approval_clearButton");
 
+  let debounceTimer;
+
+  // Initial setup
+  toggleClearButton();
+  filterTable(); // Run once on load
+
+  searchInput.addEventListener("input", function () {
     toggleClearButton();
-    filterTable(); // Run on page load to show appropriate message if table is empty
 
-    searchInput.addEventListener("input", function () {
-        toggleClearButton();
-        filterTable();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      filterTable();
+    }, 300);
+  });
+
+  clearBtn.addEventListener("click", function () {
+    searchInput.value = "";
+    toggleClearButton();
+    filterTable();
+  });
+
+  function toggleClearButton() {
+    clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+  }
+
+  function filterTable() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const rows = document.querySelectorAll("#approvalTable tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      if (row.id === "noResultRow") return;
+
+      const nameCell = row.querySelector("td:nth-child(3)");
+      const empNoCell = row.querySelector("td:nth-child(4)");
+
+      if (!nameCell || !empNoCell) return;
+
+      const name = nameCell.textContent.trim().toLowerCase();
+      const empNo = empNoCell.textContent.trim().toLowerCase();
+      const matches = name.includes(searchTerm) || empNo.includes(searchTerm);
+
+      row.style.display = matches || searchTerm === "" ? "" : "none";
+      if (matches) visibleCount++;
     });
 
-    clearBtn.addEventListener("click", function () {
-        searchInput.value = "";
-        toggleClearButton();
-        filterTable();
-    });
+    // Handle "No Result" display
+    let noResultRow = document.getElementById("noResultRow");
+    if (visibleCount === 0) {
+      if (!noResultRow) {
+        noResultRow = document.createElement("tr");
+        noResultRow.id = "noResultRow";
+        document.querySelector("#approvalTable").appendChild(noResultRow);
+      }
 
-    function toggleClearButton() {
-        clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+      noResultRow.innerHTML = searchTerm === ""
+        ? `<td colspan="8" class="px-4 py-6 text-center text-muted fst-italic bg-light">
+            <i class="bi bi-info-circle fs-5 me-2"></i>There are currently no employees pending approval.
+           </td>`
+        : `<td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
+            <i class="bi bi-person-x fs-5 me-2"></i>No matching employees found.
+           </td>`;
+    } else {
+      if (noResultRow) noResultRow.remove();
     }
-
-    function filterTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll("#approvalTable tr");
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            if (row.id === "noResultRow") return; // Skip the message row
-
-            const nameCell = row.querySelector("td:nth-child(3)");
-            const empNoCell = row.querySelector("td:nth-child(4)");
-
-            if (!nameCell || !empNoCell) return;
-
-            const name = nameCell.textContent.toLowerCase();
-            const empNo = empNoCell.textContent.toLowerCase();
-            const matches = name.includes(searchTerm) || empNo.includes(searchTerm);
-
-            row.style.display = matches ? "" : "none";
-
-            if (matches) visibleCount++;
-        });
-
-        let noResultRow = document.getElementById("noResultRow");
-
-        if (visibleCount === 0) {
-            if (!noResultRow) {
-                noResultRow = document.createElement("tr");
-                noResultRow.id = "noResultRow";
-                document.querySelector("#approvalTable").appendChild(noResultRow);
-            }
-
-            if (searchTerm === "") {
-                // Empty table message
-                noResultRow.innerHTML = `
-                    <td colspan="8" class="px-4 py-6 text-center text-muted fst-italic bg-light">
-                        <i class="bi bi-info-circle fs-4 me-2" aria-hidden="true"></i>
-                        There are currently no employees pending approval.
-                    </td>`;
-            } else {
-                // No match found
-                noResultRow.innerHTML = `
-                    <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
-                        <i class="bi bi-person-x fs-4 me-2" aria-hidden="true"></i>
-                        No matching employees found.
-                    </td>`;
-            }
-        } else if (noResultRow) {
-            noResultRow.remove();
-        }
-    }
+  }
 });
 </script>
+
 
 
 <?php require_once views_path("partials/footer"); ?>

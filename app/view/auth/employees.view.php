@@ -5,18 +5,40 @@ require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
 ?>
 
-<style>/* Hide the dropdown arrow */
+<style>
+    
+/* Hide the dropdown arrow */
 .dropdown-toggle::after {
-    display: none;
+  display: none;
 }
 
 /* Remove border from the dropdown button */
 .dropdown-toggle {
-    border: none !important;
+  border: none !important;
 }
 
-</style>
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
 
+
+#noResultRow {
+  display: table-row !important;
+  background-color: #f0fdf4 !important;
+  color: #6b7280 !important;
+  font-style: italic;
+}
+</style>
 
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
@@ -40,9 +62,7 @@ require_once views_path("partials/nav");
 
 
         <div class="rounded-lg border-2 border-green-200 bg-white text-[#133913] shadow-sm" 
-                    data-aos="fade-in" 
-                    data-aos-delay="<?= $index * 1 ?>"
-                    data-aos-duration="500">
+                    >
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
                 <span class="text-2xl font-semibold leading-none tracking-tight text-[#133913]">Employee Directory</span>
                 <div class="relative w-64">
@@ -55,15 +75,15 @@ require_once views_path("partials/nav");
                         id="employee_searchInput"
                         class="flex h-10 w-full text-sm placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8  placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
                         placeholder="Search employee..."
-                        oninput="toggleClearButton()"
                     >
-                    <button id="employee_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" onclick="clearInput()">×</button>
+                    <button id="employee_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" >×</button>
                 </div>                
             </div>
 
             <div class="p-6 pt-0">
                 <div class="relative w-full overflow-auto">
                     <div class="max-h-[calc(100vh-300px)] overflow-y-auto">
+
                         <table class="w-full caption-bottom text-sm">
                             <thead class="[&_tr]:border-b bg-[#f2f8f2] sticky top-0 z-10">
                                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
@@ -76,11 +96,13 @@ require_once views_path("partials/nav");
                                     <th class="h-12 px-3 align-middle font-bold text-[#478547] bg-white">Actions</th>
                                 </tr>
                             </thead>
-                                <tbody id="employeeTable" class="[&_tr:last-child]:border-0">
-                                    <?php if (is_array($employees) && count(array_filter($employees)) > 0): ?>
+                                <tbody id="employeeTable" class="[&_tr:last-child]:border-0 min-h-[80px]">
+                                    
+                                        <?php if (!empty($employees) && is_array($employees) && count($employees) > 0): ?>
+
                                         <?php $count = 1; ?>
                                         <?php foreach($employees as $employee): ?>
-                                            <tr class="transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                            <tr class="fade-in-slide transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                                                 <td class="p-3 align-middle font-medium"><?= $count++ ?></td>
                                                 <td class="p-3 align-middle font-medium">
                                                     <div class="flex items-center space-x-2">
@@ -176,11 +198,13 @@ require_once views_path("partials/nav");
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <!-- No employees PHP fallback -->
-                                        <!-- <tr id="employeeNoResultRow">
-                                            <td colspan="7" class="p-4 text-center text-gray-500">No Employee Found!</td>
-                                        </tr> -->
-                                    <?php endif; ?>
+    <tr id="EmployeenoResultRow">
+        <td colspan="7" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
+            <i class="bi bi-person-x me-2"></i> No employees found.
+        </td>
+    </tr>
+<?php endif; ?>
+
                                 </tbody>
                             </table>
                         </div>
@@ -204,7 +228,7 @@ require_once views_path("partials/nav");
             </div>
             <div class="modal-body">
                 <div class="container-fluid  p-2 ">
-                    <form method="post" id="addEmployeeForm" action="index.php?payroll=employees"
+                    <form method="post" id="addEmployeeForm" action="../app/api/employees-api.php"
                         enctype="multipart/form-data">
                         <div class="border rounded-lg mb-4">
                             <div class="bg-yellow-100 px-4 py-2 rounded-t-lg border-b border-b-gray-200">
@@ -612,7 +636,7 @@ require_once views_path("partials/nav");
             </div>
             <div class="modal-body">
                 <div class="container-fluid  p-2 ">
-                    <form method="post" id="editEmployeeForm" action="index.php?payroll=employees"
+                    <form method="post" id="editEmployeeForm" action="../app/api/employees-api.php"
                         enctype="multipart/form-data">
                         <?php if (isset($employee)) : ?>
                             <input type="hidden" name="isUpdate" value="1">
@@ -916,7 +940,7 @@ require_once views_path("partials/nav");
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
 
 <script>
 document.addEventListener("keydown", (event) => {
@@ -985,205 +1009,47 @@ function toggleDropdown(button) {
 
 // Update control numbers only if changed to prevent infinite loops
 function updateControlNumbers() {
-    const rows = document.querySelectorAll('tbody tr');
-    let visibleIndex = 1;
+  const rows = document.querySelectorAll('#employeeTable tr');
+  let visibleIndex = 1;
 
-    rows.forEach((row) => {
-        // Skip the "No matching employees found" or "No employees found" rows
-        if (row.id === "noResultRow" || row.id === "noDataRow") {
-            // Hide the number for these rows
-            const controlNumberCell = row.querySelector('td:first-child');
-            if (controlNumberCell) {
-                controlNumberCell.textContent = "";
-            }
-            return;
-        }
+  rows.forEach(row => {
+    const isNoResult = row.id === "noResultRow";
+    const isHidden = row.style.display === "none";
 
-        // Update only visible rows
-        if (row.style.display !== "none") {
-            const controlNumberCell = row.querySelector('td:first-child');
-            if (controlNumberCell) {
-                controlNumberCell.textContent = visibleIndex++;
-            }
-        }
-    });
+    const numberCell = row.querySelector('td:first-child');
+
+    if (isNoResult || isHidden) {
+      if (numberCell) numberCell.textContent = '';
+    } else {
+      if (numberCell) numberCell.textContent = visibleIndex++;
+    }
+  });
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    updateControlNumbers();
 
-    const tableBody = document.querySelector('tbody');
-
-    if (tableBody) {
-        const observer = new MutationObserver(() => {
-            observer.disconnect(); // prevent recursion
-            updateControlNumbers();
-            observer.observe(tableBody, { childList: true, subtree: true });
-        });
-
-        observer.observe(tableBody, { childList: true, subtree: true });
-    }
-});
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const searchInput = document.getElementById("searchInput");
-//     const clearBtn = document.getElementById("clearButton");
-
-//     searchInput.addEventListener("input", () => {
-//         toggleClearButton();
-//         filterTable();
-//     });
-
-//     clearBtn.addEventListener("click", () => {
-//         searchInput.value = "";
-//         toggleClearButton();
-//         filterTable();
-//     });
-
-//     function toggleClearButton() {
-//         clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
-//     }
-
-//     function filterTable() {
-//     const tbody = document.querySelector("tbody");
-//     console.log("Searching... tbody:", tbody);
-
-//     const searchTerm = searchInput.value.toLowerCase();
-//     const rows = tbody.querySelectorAll("tr");
-
-//     let visibleCount = 0;
-
-//     // Remove dynamic no-result row if exists
-//     const existingNoResult = document.getElementById("noResultRow");
-//     if (existingNoResult) existingNoResult.remove();
-
-//     // Hide static fallback row
-//     const staticNoDataRow = document.getElementById("noDataRow");
-//     if (staticNoDataRow) staticNoDataRow.style.display = "none";
-
-//     rows.forEach(row => {
-//         if (row.id === "noResultRow" || row.id === "noDataRow") return;
-
-//         const tds = row.querySelectorAll("td");
-//         if (tds.length < 6) return;
-
-//         const fullName = tds[2].textContent.toLowerCase();
-//         const empID    = tds[3].textContent.toLowerCase();
-//         const rfid     = tds[4].textContent.toLowerCase();
-//         const position = tds[5].textContent.toLowerCase();
-
-//         const matches = fullName.includes(searchTerm) ||
-//                         empID.includes(searchTerm) ||
-//                         rfid.includes(searchTerm) ||
-//                         position.includes(searchTerm);
-
-//         row.style.display = matches ? "" : "none";
-//         if (matches) visibleCount++;
-//     });
-
-//     // Show no result row if needed
-//     if (visibleCount === 0 && tbody) {
-//         const noResultRow = document.createElement("tr");
-//         noResultRow.id = "noResultRow";
-
-//         const td = document.createElement("td");
-//         td.colSpan = 7;
-//         td.className = "p-4 text-center text-black font-semibold";
-//         td.textContent = "No matching employees found";
-//         console.log("Appending noResultRow with message:", td.textContent);
-
-//         noResultRow.appendChild(td);
-//         tbody.appendChild(noResultRow);
-
-//         // 🔔 SweetAlert2 toast or alert
-//         Swal.fire({
-//             icon: 'warning',
-//             title: 'No employee found',
-//             text: 'No matching employees were found in the list.',
-//             timer: 2500,
-//             showConfirmButton: false,
-//             toast: true,
-//             position: 'bottom-end'
-//         });
-//     }
-
+// document.addEventListener('DOMContentLoaded', () => {
 //     updateControlNumbers();
-// }
 
+//     const tableBody = document.querySelector('tbody');
+
+//     if (tableBody) {
+//         const observer = new MutationObserver(() => {
+//             observer.disconnect(); // prevent recursion
+//             updateControlNumbers();
+//             observer.observe(tableBody, { childList: true, subtree: true });
+//         });
+
+//         observer.observe(tableBody, { childList: true, subtree: true });
+//     }
 // });
 
+
 </script>
 
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("employee_searchInput");
-    const clearBtn = document.getElementById("employee_clearButton");
 
-    // Initial setup
-    toggleClearButton();
-    filterEmployeeTable();
 
-    searchInput.addEventListener("input", function () {
-        toggleClearButton();
-        filterEmployeeTable();
-    });
 
-    clearBtn.addEventListener("click", function () {
-        searchInput.value = "";
-        toggleClearButton();
-        filterEmployeeTable();
-    });
-
-    function toggleClearButton() {
-        clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
-    }
-
-    function filterEmployeeTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll("#employeeTable tr");
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            if (row.id === "employeeNoResultRow" || row.id === "noResultRow") return;
-
-            const nameCell = row.querySelector("td:nth-child(3)");
-            const empNoCell = row.querySelector("td:nth-child(4)");
-
-            if (!nameCell || !empNoCell) return;
-
-            const name = nameCell.textContent.toLowerCase();
-            const empNo = empNoCell.textContent.toLowerCase();
-            const matches = name.includes(searchTerm) || empNo.includes(searchTerm);
-
-            row.style.display = matches ? "" : "none";
-
-            if (matches) visibleCount++;
-        });
-
-        // Handle "No matching employees found" dynamic row
-        let noResultRow = document.getElementById("noResultRow");
-        if (visibleCount === 0) {
-            if (!noResultRow) {
-                noResultRow = document.createElement("tr");
-                noResultRow.id = "noResultRow";
-                noResultRow.innerHTML = `
-                    <td colspan="7" class="p-8 text-center text-muted fst-italic bg-light">
-                        <i class="bi bi-person-x fs-5 me-2" aria-hidden="true"></i>
-                        No matching employees found.
-                    </td>`;
-                document.querySelector("#employeeTable").appendChild(noResultRow);
-            }
-        } else {
-            if (noResultRow) noResultRow.remove();
-        }
-
-        // Hide PHP fallback row if present
-        // const phpFallbackRow = document.getElementById("employeeNoResultRow");
-        // if (phpFallbackRow) phpFallbackRow.style.display = (visibleCount === 0 && searchTerm === "") ? "" : "none";
-    }
-});
-</script>
 
 <?php require_once views_path("partials/footer"); ?>

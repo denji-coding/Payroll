@@ -4,37 +4,78 @@ require_once views_path("partials/header");
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
+require_once '../app/core/database.php'; // adjust path if needed
+$db = new Database();
+$conn = $db->getConnection();
+$employeeId = $_SESSION['employee_id']; // adjust based on your session setup
 
-$leaveSummary = [
-    'Sick Leave' => ['allowed' => 10, 'taken' => 2, 'color' => 'border-l-blue-500'],
-    'Emergency Leave' => ['allowed' => 5, 'taken' => 1, 'color' => 'border-l-red-500'],
-    'Vacation Leave' => ['allowed' => 5, 'taken' => 4, 'color' => 'border-l-yellow-500'],
-    'Personal Leave' => ['allowed' => 5, 'taken' => 0, 'color' => 'border-l-purple-500'],
-    'Maternity/Paternity Leave' => ['allowed' => 8, 'taken' => 5, 'color' => 'border-l-green-500'],
-];
+// Auto-initialize leave credits if none exist
+$check = $conn->prepare("SELECT 1 FROM leave_credits WHERE employee_id = ?");
+$check->execute([$employeeId]);
+if (!$check->fetch()) {
+    $defaults = [
+        ['Sick Leave', 10],
+        ['Emergency Leave', 5],
+        ['Vacation Leave', 5],
+        ['Personal Leave', 5],
+        ['Maternity/Paternity Leave', 8],
+    ];
+    $insert = $conn->prepare("INSERT INTO leave_credits (employee_id, leave_type, allowed, taken) VALUES (?, ?, ?, 0)");
+    foreach ($defaults as [$type, $allowed]) {
+        $insert->execute([$employeeId, $type, $allowed]);
+    }
+}
 
+// Fetch dynamic leave credits from DB
+$leaveSummary = [];
+$query = $conn->prepare("SELECT leave_type, allowed, taken FROM leave_credits WHERE employee_id = ?");
+$query->execute([$employeeId]);
+$credits = $query->fetchAll(PDO::FETCH_ASSOC);
 
+foreach ($credits as $row) {
+    $type = $row['leave_type'];
+    $leaveSummary[$type] = [
+        'allowed' => (int)$row['allowed'],
+        'taken' => (int)$row['taken'],
+        'color' => getBorderColorClass($type),
+    ];
+}
+
+// Function to return border color based on leave type
 function getBorderColorClass($type) {
     switch ($type) {
-        case 'Sick Leave':
-            return 'border-l-blue-500';
-        case 'Emergency Leave':
-            return 'border-l-red-500';
-        case 'Vacation Leave':
-            return 'border-l-yellow-500';
-        case 'Personal Leave':
-            return 'border-l-purple-500';
-        case 'Maternity/Paternity Leave':
-            return 'border-l-green-500';
-        default:
-            return 'border-l-gray-400';
+        case 'Sick Leave': return 'border-l-blue-500';
+        case 'Emergency Leave': return 'border-l-red-500';
+        case 'Vacation Leave': return 'border-l-yellow-500';
+        case 'Personal Leave': return 'border-l-purple-500';
+        case 'Maternity/Paternity Leave': return 'border-l-green-500';
+        default: return 'border-l-gray-400';
     }
 }
 
 
+// Optional mobile check (not effective in PHP)
+$isMobile = false;
 ?>
 
+
 <style>
+    #leaveTableBody tr:last-child td {
+  border-bottom: none !important;
+}
+    table {
+    margin-bottom: 0 !important;
+  }
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.fade-in.show {
+  opacity: 1;
+}
+
+
+
     .btn-close {
     filter: invert(1) brightness(2);
 }
@@ -59,258 +100,581 @@ function getBorderColorClass($type) {
     border-radius: 0.5rem;
 }
 
+/* Start Date - Material Green */
+            .flatpickr-day.start-date {
+            background-color: #4CAF50 !important; /* Material Green */
+            color: white !important;
+            border-radius: 50% !important;
+            font-weight: bold;
+            }
+
+            /* End Date - Soft Red */
+            .flatpickr-day.end-date {
+            background-color: #e57373 !important; /* Soft Red */
+            color: white !important;
+            border-radius: 50% !important;
+            font-weight: bold;
+            }
+            .flatpickr-calendar .flatpickr-current-month input.cur-month {
+                background: transparent;
+                color: white;
+                font-weight: 600;
+            }
+
+            .flatpickr-calendar .flatpickr-weekday {
+              color: white;
+              font-weight: 600;
+            }
+
+            .flatpickr-calendar .flatpickr-prev-month,
+            .flatpickr-calendar .flatpickr-next-month {
+                color: white;
+                border: 1px solid transparent;
+                border-radius: 4px;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: border-color 0.2s ease;
+                margin: 7px 10px;
+                box-sizing: border-box;
+                background: transparent;
+                padding: 0;
+            }
+
+            /* Style the arrow icons */
+            .flatpickr-calendar .flatpickr-prev-month svg,
+            .flatpickr-calendar .flatpickr-next-month svg {
+                width: 14px;
+                height: 14px;
+                fill: white; /* default arrow color (light gray or as needed) */
+                transition: fill 0.2s ease;
+            }
+
+            /* On hover, border and arrow turn white */
+            .flatpickr-calendar .flatpickr-prev-month:hover,
+            .flatpickr-calendar .flatpickr-next-month:hover {
+            border-color: white;
+            cursor: pointer;
+            }
+
+            .flatpickr-calendar .flatpickr-prev-month:hover svg,
+            .flatpickr-calendar .flatpickr-next-month:hover svg {
+            fill: white; /* hover arrow becomes white */
+            }
 </style>
 
-<div class="flex min-h-screen overflow-hidden ">
-    <!-- Main content -->
-    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">
-
-        <?php require_once views_path("partials/user_sidebar"); ?>
-
-        <div class="p-1 max-w-7xl mx-auto space-y-6">
-            <!-- Page Header -->
-            <div class="space-y-1">
-                <span class="text-3xl font-bold text-gray-900">Leave Applications</span>
-                <p class="text-gray-600">View and track your leave requests and remaining days.</p>
-            </div>
-
-            <!-- Enhanced Leave Summary Cards -->
-            <div class="mt-6">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <span class="text-lg font-semibold text-gray-800 mb-4 block">Leave Credits</span>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            <?php foreach ($leaveSummary as $type => $data): 
-                                $remaining = max(0, $data['allowed'] - $data['taken']);
-                                $borderColor = getBorderColorClass($type);
-                            ?>
-                                <div class="bg-white rounded-lg shadow-sm p-2 hover:shadow-md transition text-center border-l-4 <?= $borderColor ?>">
-                                    <span class="text-sm font-medium text-gray-600"><?= htmlspecialchars($type) ?></span>
-                                    <p class="text-base mt-3 font-bold text-green-600">
-                                        <?= $remaining ?>
-                                        <span class="text-xs text-gray-500 font-normal"></span>
-                                    </p>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
 
 
-            <!-- Leave Application Actions -->
+<div class="flex min-h-screen overflow-hidden <?= $isMobile ? 'bg-gray-100' : '' ?>">    
 
-            <!-- Leave Application Table -->
-            <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
-                <div class="flex justify-between items-center">
+    <div class="flex flex-col lg:flex-row min-h-screen overflow-hidden bg-gray-100">
+
+<main id="mainContent" class="flex-1 p-4 sm:p-6 transition-all duration-300 ease-in-out">
+  <?php require_once views_path("partials/user_sidebar"); ?>
+
+  <div class="space-y-6 max-w-7xl mx-auto">
+    
+    <!-- Page Header -->
+    <div class="space-y-1 mt-14 lg:mt-0 animate-fade-in">
+      <span class="text-2xl sm:text-2xl font-bold text-gray-900">Leave Applications</span>
+      <p class="text-sm sm:text-base text-gray-600">View and track your leave requests and remaining days.</p>
+    </div>
+
+
+
+    <!-- 📦 Leave Credits Display -->
+<div id="leaveCredits">
+  <div class="animate-fade-in">
+      <span class="text-base sm:text-lg font-semibold text-gray-800 mb-2 block">Leave Credits</span>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+          <?php foreach ($leaveSummary as $type => $data): 
+              $remaining = max(0, $data['allowed'] - $data['taken']);
+              $borderColor = $data['color'];
+          ?>
+          <div class="bg-white rounded-lg shadow-sm p-3 hover:shadow-md transition text-center border-l-4 <?= $borderColor ?>">
+              <span class="text-xs sm:text-sm font-medium text-gray-600"><?= htmlspecialchars($type) ?></span>
+              <p class="text-lg sm:text-base mt-2 font-bold text-green-600"><?= $remaining ?></p>
+              <p class="text-xs text-gray-500 mt-1">Used: <?= $data['taken'] ?> / <?= $data['allowed'] ?></p>
+          </div>
+          <?php endforeach; ?>
+      </div>
+  </div>
+</div>
+
+
+
+    <!-- Leave Application Table -->
+    <div class="bg-white rounded-lg shadow p-3 sm:p-4 animate-fade-in">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <div>
-                    <span class="text-xl font-semibold">Your Leave Applications</span>
+                    <span class="text-lg sm:text-xl font-semibold">Your Leave Applications</span>
                     <p class="text-sm text-gray-500">All your submitted leave records are shown here.</p>
                 </div>
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#leaveModal">
+                <button class="btn btn-success w-full sm:w-auto" data-bs-toggle="modal" data-bs-target="#leaveModal">
                     <i class="bi bi-file-earmark-plus me-2"></i>Apply for Leave
                 </button>
             </div>
-                <div class="table-responsive shadow-sm rounded-3 border border-light">
-    <table class="table table-bordered table-hover text-sm align-middle mb-0">
-        <thead class="table-success text-center">
-            <tr>
-                <th>Type</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Actions</th>    
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($leaves): ?>
-                <?php foreach ($leaves as $leave): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($leave['leave_type']) ?></td>
-                        <td><?= htmlspecialchars($leave['start_date']) ?></td>
-                        <td><?= htmlspecialchars($leave['end_date']) ?></td>
-                        <td>
-                            <?php if (!empty($leave['reason'])): ?>
-                                <button class="btn btn-sm btn-info w-100" data-bs-toggle="modal" data-bs-target="#leaveReasonModal<?= $leave['id'] ?>">
-                                    View
-                                </button>
 
-                                <div class="modal fade" id="leaveReasonModal<?= $leave['id'] ?>" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content" style="height: 50vh;">
-                                            <div class="modal-header bg-success text-white">
-                                                <h5 class="modal-title">Leave Reason</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
+            <div class="overflow-x-auto max-h-80 rounded-md border">
+                <table class="table text-sm align-middle w-full">
+                    <thead class="table-success sticky top-0 text-center text-xs sm:text-sm">
+                        <tr>
+                            <th>Type</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaveTableBody" class="table-hover [&>tr:last-child]:border-b-0">
+                        <?php if ($leaves): ?>
+                            <?php foreach ($leaves as $leave): ?>
+                                <tr>
+                                    <td class="py-3"><?= htmlspecialchars($leave['leave_type']) ?></td>
+                                    <td class="text-center"><?= htmlspecialchars($leave['start_date']) ?></td>
+                                    <td class="text-center"><?= htmlspecialchars($leave['end_date']) ?></td>
+                                    <td class="text-center">
+                                        <?php
+                                            $hasReason = !empty($leave['reason']);
+                                            $hasMedCert = !empty($leave['med_cert_path']) && $leave['leave_type'] === 'Sick Leave' && (int)$leave['duration'] >= 3;
+                                            $alwaysShowModalTypes = ['Vacation Leave', 'Maternity/Paternity Leave'];
 
-                                            <div class="modal-body d-flex flex-column justify-content-between">
-                                                <div>
-                                                    <?= nl2br(htmlspecialchars($leave['reason'])) ?>
-                                                </div>
-                                                <?php if (!empty($leave['leave_type'])): ?>
-                                                    <div>
-                                                        <hr class="w-100 m-0">
-                                                        <small class="text-muted">Leave Type: <?= htmlspecialchars($leave['leave_type']) ?></small>
+                                            $showModal = $hasReason || $hasMedCert || in_array($leave['leave_type'], $alwaysShowModalTypes);
+                                        ?>
+
+                                        <?php if ($showModal): ?>
+                                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#leaveReasonModal<?= $leave['id'] ?>">
+                                                <i class="bi bi-eye"></i> 
+                                            </button>
+
+                                            <div class="modal fade" id="leaveReasonModal<?= $leave['id'] ?>" tabindex="-1">
+                                                <div class="modal-dialog modal-dialog-centered modal-lg ">
+                                                    <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
+                                                        <div class="modal-header bg-success text-white">
+                                                            <h5 class="modal-title">Leave Details</h5>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        </div>
+
+                                                        <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
+                                                            <!-- Leave Reason -->
+                                                            <?php if ($hasReason): ?>
+                                                                <div class="text-start">
+                                                                    <?= nl2br(htmlspecialchars($leave['reason'])) ?>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <!-- Medical Certificate -->
+                                                            <?php if ($hasMedCert): ?>
+                                                                <div class="text-left">
+                                                                    <strong>Medical Certificate:</strong>
+                                                                    <div class="d-flex justify-content-center mt-2">
+                                                                        <img src="<?= htmlspecialchars($leave['med_cert_path']) ?>"
+                                                                            alt="Medical Certificate"
+                                                                            class="img-fluid rounded border"
+                                                                            style="max-height: 280px; max-width: 100%; width: auto; ">
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <!-- No content fallback -->
+                                                            <?php if (!$hasReason && !$hasMedCert && in_array($leave['leave_type'], $alwaysShowModalTypes)): ?>
+                                                                <div class="fst-italic text-muted">No reason or certificate needed.</div>
+                                                            <?php endif; ?>
+
+                                                            <!-- Footer -->
+                                                            <div class="pt-2">
+                                                                <hr class="w-100 m-0">
+                                                                <small class="text-muted">Leave type: <?= htmlspecialchars($leave['leave_type']) ?></small>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                <?php endif; ?>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php else: ?>
-                                <span class="text-muted fst-italic">N/A</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge 
-                                <?= $leave['status'] === 'Approved' ? 'bg-success' : ($leave['status'] === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark') ?>">
-                                <?= $leave['status'] ?>
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <?php if ($leave['status'] === 'Pending'): ?>
-                                <button class="btn btn-sm btn-outline-danger delete-leave-btn"
-                                        data-id="<?= $leave['id'] ?>"
-                                        data-type="<?= htmlspecialchars($leave['leave_type']) ?>">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
-                            <?php else: ?>
-                                <span class="text-muted">—</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-3">No leave applications yet.</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+                                        <?php else: ?>
+                                            <span class="text-muted fst-italic">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
+
+
+                                    <td class="text-center">
+                                        <span class="badge <?= $leave['status'] === 'Approved' ? 'bg-success' : ($leave['status'] === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark') ?>">
+                                            <?= $leave['status'] ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if ($leave['status'] === 'Pending'): ?>
+                                            <button class="btn btn-sm btn-outline-danger delete-leave-btn" data-id="<?= $leave['id'] ?>" data-type="<?= htmlspecialchars($leave['leave_type']) ?>">
+                                                <i class="bi bi-trash"></i> 
+                                            </button>
+                                        <?php else: ?>
+                                            <span class="text-muted">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">No leave applications yet.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Leave Modal -->
+<!-- Leave Application Modal -->
+<div class="modal fade" id="leaveModal" data-bs-backdrop="static"  tabindex="-1" aria-labelledby="leaveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="index.php?payroll=user_leave" id="leaveForm" enctype="multipart/form-data">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="leaveModalLabel">
+            <i class="bi bi-file-earmark-text me-2"></i>Leave Application
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="leave_type">Leave Type</label>
+              <select name="leave_type" id="leave_type" class="block w-full px-3 py-2 cursor-pointer border border-gray-300 rounded-md focus:outline-2 focus:outline-offset-2 focus:outline-green-700 transition duration-150 ease-in-out sm:text-base"  required>
+                <option value="" disabled selected>Select leave type</option>
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Emergency Leave">Emergency Leave</option>
+                <option value="Vacation Leave">Vacation Leave</option>
+                <option value="Personal Leave">Personal Leave</option>
+                <option value="Maternity/Paternity Leave">Maternity/Paternity Leave</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label " for="duration">Duration (days)</label>
+              <input type="number" name="duration" id="duration" class="form-control py-2 pointer-events-none" readonly value="0">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="start_date">Start Date</label>
+              <input type="text" placeholder="YYYY-MM-DD" name="start_date" id="start_date" class="form-control border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2"  required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="end_date">End Date</label>
+              <input type="text" placeholder="YYYY-MM-DD" name="end_date" id="end_date" class="form-control border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2" required>
+            </div>
+          </div>
+
+          <div class="mb-3 d-none" id="reasonContainer">
+            <label class="form-label" for="reason">Reason</label>
+            <textarea name="reason" id="reason" rows="3" placeholder="Please provide a detailed reason..." class="form-control border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2" style="resize: none;"></textarea>
+          </div>
+
+          <div class="mb-3 d-none" id="medCertContainer">
+            <label class="form-label" for="med_cert">Upload Medical Certificate <span class="text-red-600"> *</span></label>
+            <input type="file" name="med_cert" id="med_cert" class="form-control border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2" accept="image/*">
+          </div>
+        </div>
+
+        <div class="modal-footer border-top-0">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-send-fill me-2"></i>Submit Application
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
-
-            </div>
-        </div>
-
-        <!-- Leave Modal -->
-        <div class="modal fade" id="leaveModal" tabindex="-1" aria-labelledby="leaveModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                <form method="POST" action="index.php?payroll=user_leave" id="leaveForm">
-                    <div class="modal-header"style="background-color: #0b5125; color: white;">
-                    <h5 class="modal-title" id="leaveModalLabel"><i class="bi bi-file-earmark-text me-2"></i>Leave Application</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-
-                    </div>
-                    <div class="modal-body">
-                    <!-- Row 1: Leave Type and Duration -->
-                    <div class="row mb-3">
-                        <div class="col">
-                        <label class="form-label" for="leave_type">Leave Type</label>
-                        <select name="leave_type" id="leave_type" class="form-select" required>
-                            <option value="" disabled selected>Select leave type</option>
-                            <option value="Sick Leave">Sick Leave</option>
-                            <option value="Emergency Leave">Emergency Leave</option>
-                            <option value="Vacation Leave">Vacation Leave</option>
-                            <option value="Personal Leave">Personal Leave</option>
-                            <option value="Maternity/Paternity Leave">Maternity/Paternity Leave</option>
-                        </select>
-                        </div>
-                        <div class="col">
-                        <label class="form-label" for="duration">Duration (days)</label>
-                        <input type="number" name="duration" id="duration" class="form-control" readonly value="0">
-                        </div>
-                    </div>
-
-                    <!-- Row 2: Start Date and End Date -->
-                    <div class="row mb-3">
-                        <div class="col">
-                        <label class="form-label" for="start_date">Start Date</label>
-                        <input type="date" name="start_date" id="start_date" class="form-control" required min="<?= date('Y-m-d') ?>">
-                        </div>
-                        <div class="col">
-                        <label class="form-label" for="end_date">End Date</label>
-                        <input type="date" name="end_date" id="end_date" class="form-control" required min="<?= date('Y-m-d') ?>">
-                        </div>
-                    </div>
-
-                    <!-- Reason -->
-                    <div>
-                        <label class="form-label" for="reason">Reason</label>
-                        <textarea 
-                            name="reason" 
-                            id="reason"
-                            placeholder="Please provide a detailed reason for your leave request..." 
-                            class="form-control" 
-                            rows="3" 
-                            required 
-                            style="resize: none; overflow-y: auto;"></textarea>
-                    </div>
-                    </div>
-
-                    <div class="modal-footer" style="border-top: none;">
-                        <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> -->
-                        <button type="submit" class="btn btn-success"><i class="bi bi-send-fill me-3"></i>Submit Application</button>
-                    </div>
-                </form>
-                </div>
-            </div>
-        </div>
-    </main>
+</main>
+</div>
 </div>
 
 <script>
-    const startDateInput = document.getElementById('start_date');
-    const endDateInput = document.getElementById('end_date');
-    const durationInput = document.getElementById('duration');
+document.addEventListener('DOMContentLoaded', () => {
+  const typeEl = document.getElementById('leave_type');
+  const durEl = document.getElementById('duration');
+  const reasonC = document.getElementById('reasonContainer');
+  const certC = document.getElementById('medCertContainer');
+  const reasonEl = document.getElementById('reason');
+  const certEl = document.getElementById('med_cert');
+  const sd = document.getElementById('start_date');
+  const ed = document.getElementById('end_date');
+  const form = document.getElementById('leaveForm');
+  const tableBody = document.getElementById('leaveTableBody');
+  const leaveModalEl = document.getElementById('leaveModal');
+  const durationEl = document.getElementById('duration');
 
-    function updateDuration() {
-        const start = new Date(startDateInput.value);
-        const end = new Date(endDateInput.value);
+  leaveModalEl.addEventListener('hidden.bs.modal', () => {
+    // Reset the form
+    leaveForm.reset();
 
-        if (start && end && end >= start) {
-        const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        durationInput.value = diffDays;
-        } else {
-        durationInput.value = 0;
-        }
+    // Set duration to 0 manually
+    durationEl.value = 0;
+
+    // Hide dynamic elements again
+    document.getElementById('reasonContainer').classList.add('d-none');
+    document.getElementById('medCertContainer').classList.add('d-none');
+  });
+
+  let s, e;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const defaultOpts = {
+    dateFormat: 'Y-m-d',
+    disableMobile: true,
+    onChange: sel => {
+      s = sel[0];
+      fpEnd.set('minDate', s);
+      markDates();
+      calc();
     }
+  };
 
-    startDateInput.addEventListener('change', updateDuration);
-    endDateInput.addEventListener('change', updateDuration);
+  const endOpts = {
+    dateFormat: 'Y-m-d',
+    disableMobile: true,
+    onChange: sel => {
+      e = sel[0];
+      markDates();
+      calc();
+    }
+  };
 
-    document.getElementById('leaveForm').addEventListener('submit', function(e) {
-        if (parseInt(durationInput.value) <= 0) {
-        e.preventDefault();
-        alert('End date cannot be before start date.');
-        }
-    });
+  const sickOpts = { ...defaultOpts, disable: [d => d > today] };
+  const sickEndOpts = { ...endOpts, disable: [d => d > today] };
 
-    document.querySelectorAll('.delete-leave-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        const leaveId = this.dataset.id;
-        const leaveType = this.dataset.type;
+  let fpStart = flatpickr(sd, defaultOpts);
+  let fpEnd = flatpickr(ed, endOpts);
+
+  typeEl.addEventListener('change', () => {
+    fpStart.destroy();
+    fpEnd.destroy();
+    s = e = undefined;
+    durEl.value = 0;
+    sd.value = ed.value = '';
+    if (typeEl.value === 'Sick Leave') {
+      fpStart = flatpickr(sd, sickOpts);
+      fpEnd = flatpickr(ed, sickEndOpts);
+    } else {
+      fpStart = flatpickr(sd, defaultOpts);
+      fpEnd = flatpickr(ed, endOpts);
+    }
+    updateFields();
+  });
+
+  function markDates() {
+    setTimeout(() => {
+      document.querySelectorAll('.flatpickr-day').forEach(d => d.classList.remove('start-date', 'end-date'));
+      if (s) {
+        document.querySelectorAll('.flatpickr-day').forEach(d => {
+          if (d.dateObj?.toDateString() === s.toDateString()) d.classList.add('start-date');
+        });
+      }
+      if (e) {
+        document.querySelectorAll('.flatpickr-day').forEach(d => {
+          if (d.dateObj?.toDateString() === e.toDateString()) d.classList.add('end-date');
+        });
+      }
+    }, 10);
+  }
+
+  function calc() {
+    if (s && e && e >= s) {
+      const diff = Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
+      durEl.value = diff;
+    } else {
+      durEl.value = 0;
+    }
+    updateFields();
+  }
+
+  function updateFields() {
+    const t = typeEl.value;
+    const d = parseInt(durEl.value) || 0;
+    reasonC.classList.add('d-none');
+    certC.classList.add('d-none');
+    if (['Personal Leave', 'Emergency Leave'].includes(t)) reasonC.classList.remove('d-none');
+    if (t === 'Sick Leave') {
+      if (d >= 3) certC.classList.remove('d-none');
+      else if (d >= 1) reasonC.classList.remove('d-none');
+    }
+  }
+
+  function fetchLeaves() {
+    fetch('../app/api/user_leave-api.php')
+      .then(res => res.text())
+      .then(html => {
+        tableBody.innerHTML = html;
+        attachDeleteHandlers();
+      })
+      .catch(() => Swal.fire('Error', 'Failed to load leaves.', 'error'));
+  }
+
+form.addEventListener('submit', eEvt => {
+  eEvt.preventDefault();
+
+  const t = typeEl.value;
+  const d = parseInt(durEl.value) || 0;
+
+  if (d <= 0) return Swal.fire('Invalid dates', 'Check your start/end dates', 'error');
+  if (t === 'Sick Leave' && d >= 3 && certEl.files.length === 0)
+    return Swal.fire('Missing File', 'Upload medical certificate', 'warning');
+  if ((t === 'Sick Leave' && d <= 2 || ['Personal Leave', 'Emergency Leave'].includes(t)) &&
+      reasonEl.value.trim() === '')
+    return Swal.fire('Missing Reason', 'Provide a reason', 'warning');
+
+  const formData = new FormData(form);
+
+  // ✅ Hide modal immediately
+  const modalEl = document.getElementById('leaveModal');
+  const modal = bootstrap.Modal.getInstance(modalEl);
+  if (modal) modal.hide();
+
+  // ✅ Delay to let modal finish closing
+  setTimeout(() => {
+    fetch('../app/api/user_leave-api.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(json => {
+        Swal.fire({
+          icon: json.status === 'success' ? 'success' : 'error',
+          title: json.status === 'success' ? 'Submitted' : 'Error',
+          text: json.message,
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          if (json.status === 'success') {
+            form.reset();
+            durEl.value = 0;
+
+            // ✅ Reload table
+            fetch('../app/api/user_leave-api.php')
+              .then(res => res.text())
+              .then(html => {
+                tableBody.innerHTML = html;
+
+                // ✅ Fade-in first row
+                const firstRow = tableBody.querySelector('tr');
+                if (firstRow) {
+                  firstRow.classList.add('fade-in');
+                  requestAnimationFrame(() => {
+                    firstRow.classList.add('show');
+                  });
+                }
+
+                attachDeleteHandlers();
+
+                // ✅ Prevent form resubmission warning on refresh
+                history.replaceState(null, '', window.location.href);
+              });
+          }
+        });
+      })
+      .catch(() => Swal.fire('Error', 'Could not connect', 'error'));
+  }, 300); // Delay to ensure modal animation completes
+});
+
+
+
+    function attachDeleteHandlers() {
+    document.querySelectorAll('.delete-leave-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        const row = btn.closest('tr');
+        const isMobile = window.innerWidth < 480;
 
         Swal.fire({
-            title: 'Are you sure?',
-            text: `Delete your ${leaveType} leave request?`,
+            title: 'Confirm Deletion',
+            text: `Are you sure you want to delete your "${type}"?`,
             icon: 'warning',
             showCancelButton: true,
-            cancelButtonText: 'Cancel',
             confirmButtonText: 'Confirm',
+            cancelButtonText: 'Cancel',
+            width: isMobile ? '90%' : undefined,
             customClass: {
-                confirmButton: 'swal2-confirm-red'
+            popup: isMobile ? 'text-sm' : 'text-base',
+            confirmButton: isMobile ? 'bg-danger text-white px-3 py-2 rounded' : 'swal2-confirm-red text-white px-4 py-2',
+            cancelButton: isMobile ? 'bg-light text-dark px-3 py-2 rounded' : 'text-dark bg-light px-4 py-2'
             }
-        }).then((result) => {
+        }).then(result => {
             if (result.isConfirmed) {
-                // Redirect or submit form to delete the leave
-                window.location.href = `index.php?payroll=user_leave&action=delete&id=${leaveId}`;
+            fetch('../app/api/user_leave-api.php', {
+                method: 'DELETE',
+                headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ id })
+            })
+                .then(res => res.json())
+                .then(json => {
+                if (json.status === 'success') {
+                    // ✅ SHOW swal first, then fade after CLOSE
+                    Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted',
+                    text: json.message,
+                    timer: 1200,
+                    showConfirmButton: false,
+                    willClose: () => {
+                        // ✅ Fade the row only after swal closes
+                        row.style.transition = 'opacity 0.5s ease';
+                        row.style.opacity = 0;
+                        setTimeout(() => {
+                        row.remove();
+                        if (document.querySelectorAll('#leaveTableBody tr').length === 0) {
+                            document.getElementById('leaveTableBody').innerHTML =
+                            `<tr><td colspan="6" class="text-center text-muted py-3">No leave applications yet.</td></tr>`;
+                        }
+                        // ✅ Remove DELETE trace from history
+                        history.replaceState(null, '', window.location.href);
+                        }, 500);
+                    }
+                    });
+                } else {
+                    Swal.fire('Failed', json.message, 'error');
+                }
+                })
+                .catch(() => Swal.fire('Error', 'Could not connect to the server.', 'error'));
             }
         });
+        });
     });
+    }
+    attachDeleteHandlers();
 });
 </script>
+
+<!-- <script>
+async function refreshLeaveData() {
+  try {
+    // Refresh Leave Table
+    const leaveRes = await fetch('index.php?payroll=user_leave-api.php');
+    const leaveHTML = await leaveRes.text();
+    document.getElementById('leaveTableBody').innerHTML = leaveHTML;
+
+    // Refresh Leave Credits
+    const creditRes = await fetch('index.php?payroll=api/leave_credits-api.php');
+    const creditHTML = await creditRes.text();
+    document.getElementById('leaveCredits').innerHTML = creditHTML;
+
+  } catch (err) {
+    console.error('Failed to refresh leave data:', err);
+  }
+}
+</script> -->
+
+
 
 <?php if (isset($_SESSION['success'])): ?>
     <script>

@@ -1,235 +1,119 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const addForm = document.getElementById('addScheduleForm');
-    const editForm = document.getElementById('editScheduleForm');
+// document.addEventListener('DOMContentLoaded', () => {
+//   const addForm = document.getElementById('addScheduleForm');
+//   const editForm = document.getElementById('editScheduleForm');
 
-    // Utility: Show missing field alert
-    function showRequiredAlert(fieldName) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Field',
-            text: `${fieldName} is required.`,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'OK'
-        });
-    }
+//   // === ADD SCHEDULE ===
+//   if (addForm) {
+//     addForm.addEventListener('submit', async (e) => {
+//       e.preventDefault();
+//       const formData = new FormData(addForm);
 
-    // Handle Add Schedule Form Submission
-    const addScheduleModal = document.getElementById('addScheduleModal');
-        if (addScheduleModal) {
-            addScheduleModal.addEventListener('hidden.bs.modal', () => {
-                if (addForm) addForm.reset();
-            });
-        }
+//       const res = await fetch('../app/api/schedules-api.php', {
+//         method: 'POST',
+//         body: formData
+//       });
 
+//       const result = await res.json();
+//       Swal.fire(result.message, '', result.icon);
 
+//       if (result.status === 'success') {
+//         addForm.reset();
+//         bootstrap.Modal.getInstance(document.getElementById('addScheduleModal')).hide();
+//         refreshScheduleTable();
+//       }
+//     });
+//   }
 
-    if (addForm) {
-        addForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
+//   // === EDIT SCHEDULE ===
+//   if (editForm) {
+//     editForm.addEventListener('submit', async (e) => {
+//       e.preventDefault();
+//       const formData = new FormData(editForm);
 
-            const employeeId = addForm.querySelector('[name="employee_id"]').value.trim();
-            const timeIn = addForm.querySelector('[name="time_in"]').value.trim();
-            const timeOut = addForm.querySelector('[name="time_out"]').value.trim();
-            const gracePeriod = addForm.querySelector('[name="grace_period"]').value.trim();
+//       const res = await fetch('../app/api/schedules-api.php', {
+//         method: 'POST',
+//         body: formData
+//       });
 
-            if (!employeeId) return showRequiredAlert("Employee");
-            if (!timeIn) return showRequiredAlert("Time In");
-            if (!timeOut) return showRequiredAlert("Time Out");
-            if (!gracePeriod) return showRequiredAlert("Grace Period");
+//       const result = await res.json();
+//       Swal.fire(result.message, '', result.icon);
 
-            const addScheduleModal = document.getElementById('addScheduleModal');
-                if (addScheduleModal) {
-                    addScheduleModal.addEventListener('hidden.bs.modal', () => {
-                        if (addForm) addForm.reset();
-                    });
-                }
+//       if (result.status === 'success') {
+//         bootstrap.Modal.getInstance(document.getElementById('editScheduleModal')).hide();
+//         refreshScheduleTable();
+//       }
+//     });
+//   }
 
-            const formData = new FormData(addForm);
+//   // === FILL EDIT MODAL ===
+//   window.populateEditSchedule = async (id) => {
+//     try {
+//       const res = await fetch(`../app/api/schedules-api.php?fetch_schedule=${id}`);
+//       const result = await res.json();
 
-            try {
-                const response = await fetch('index.php?payroll=schedules', {
-                    method: 'POST',
-                    body: formData
-                });
+//       if (result.status === 'success') {
+//         const s = result.data;
+//         document.getElementById('editScheduleId').value = s.id;
+//         document.getElementById('editScheduleName').value = s.employee_name ?? s.name;
+//         document.getElementById('editMorningIn').value = s.sched_morning_in;
+//         document.getElementById('editMorningOut').value = s.sched_morning_out;
+//         document.getElementById('editAfternoonIn').value = s.sched_afternoon_in;
+//         document.getElementById('editAfternoonOut').value = s.sched_afternoon_out;
+//         document.getElementById('editGracePeriod').value = s.grace_period;
 
-                const data = await response.json();
+//         const modal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
+//         modal.show();
+//       } else {
+//         Swal.fire('Error', result.message, 'error');
+//       }
+//     } catch (err) {
+//       Swal.fire('Error', 'Failed to fetch schedule info.', 'error');
+//       console.error(err);
+//     }
+//   };
 
-                if (data.status === 'success') {
-                    Swal.fire({
-                        icon: data.icon || 'success',
-                        title: 'Success!',
-                        text: data.message || 'Schedule added successfully!',
-                        timer: 1000,
-                        showConfirmButton: false,
-                        timerProgressBar: true
-                    }).then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('addScheduleModal'));
-                        if (modal) modal.hide();
-                        addForm.reset();
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: data.icon || 'error',
-                        title: data.title || 'Error',
-                        html: data.message || 'Something went wrong.',
-                        confirmButtonColor: '#d33',
-                        confirmButtonText: 'OK'
-                    });
-                }
+//   // === DELETE SCHEDULE ===
+//   document.addEventListener('click', async (e) => {
+//     const btn = e.target.closest('.deleteScheduleBtn');
+//     if (btn) {
+//       const scheduleId = btn.getAttribute('data-id');
 
-            } catch (error) {
-                console.error('Fetch Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Server Error',
-                    text: 'Something went wrong while submitting the form.',
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-            }
-        });
-    }
+//       const confirm = await Swal.fire({
+//         title: 'Are you sure?',
+//         text: 'This schedule will be permanently deleted.',
+//         icon: 'warning',
+//         showCancelButton: true,
+//         confirmButtonText: 'Yes, delete it!'
+//       });
 
-    // Handle Edit Schedule Form Submission
-    if (editForm) {
-        editForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
+//       if (confirm.isConfirmed) {
+//         const formData = new FormData();
+//         formData.append('action', 'delete');
+//         formData.append('schedule_id', scheduleId);
 
-            const id = editForm.querySelector('[name="id"]').value.trim();
-            const name = editForm.querySelector('[name="schedule_name"]').value.trim();
-            const timeIn = editForm.querySelector('[name="time_in"]').value.trim();
-            const timeOut = editForm.querySelector('[name="time_out"]').value.trim();
-            const gracePeriod = editForm.querySelector('[name="grace_period"]').value.trim();
+//         const res = await fetch('../app/api/schedules-api.php', {
+//           method: 'POST',
+//           body: formData
+//         });
 
-            if (!id) return showRequiredAlert("Schedule ID");
-            if (!name) return showRequiredAlert("Schedule Name");
-            if (!timeIn) return showRequiredAlert("Time In");
-            if (!timeOut) return showRequiredAlert("Time Out");
-            if (!gracePeriod) return showRequiredAlert("Grace Period");
+//         const result = await res.json();
+//         Swal.fire(result.message, '', result.icon);
 
-            const formData = new FormData(editForm);
+//         if (result.status === 'success') {
+//           refreshScheduleTable();
+//         }
+//       }
+//     }
+//   });
 
-            try {
-                const response = await fetch('index.php?payroll=schedules', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    Swal.fire({
-                        icon: data.icon || 'success',
-                        title: 'Updated!',
-                        text: data.message || 'Schedule successfully updated.',
-                        timer: 1000,
-                        showConfirmButton: false,
-                        timerProgressBar: true
-                    }).then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('editScheduleModal'));
-                        if (modal) modal.hide();
-                        editForm.reset();
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: data.icon || 'error',
-                        title: data.title || 'Error',
-                        html: data.message || 'Something went wrong.',
-                        confirmButtonColor: '#d33',
-                        confirmButtonText: 'OK'
-                    });
-                }
-
-            } catch (error) {
-                console.error('Fetch Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Server Error',
-                    text: 'Something went wrong while updating the schedule.',
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-            }
-        });
-    }
-
-    // View Schedule Modal
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const { name, timein, timeout, grace } = this.dataset;
-            document.getElementById('viewScheduleBody').innerHTML = `
-                <div><strong>Schedule Name:</strong> ${name}</div>
-                <div><strong>Time In:</strong> ${timein}</div>
-                <div><strong>Time Out:</strong> ${timeout}</div>
-                <div><strong>Grace Period:</strong> ${grace} minutes</div>
-            `;
-        });
-    });
-
-    // Edit Schedule Modal
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const { id, name, timein, timeout, grace } = this.dataset;
-            document.getElementById('editScheduleId').value = id;
-            document.getElementById('editScheduleName').value = name;
-            document.getElementById('editTimeIn').value = timein;
-            document.getElementById('editTimeOut').value = timeout;
-            document.getElementById('editGracePeriod').value = grace;
-        });
-    });
-});
-
-    // Handle Delete Schedule
-    function handleDeleteSchedule(event, scheduleId) {
-        event.preventDefault();
-
-        Swal.fire({
-            title: "Are you sure?",
-            text: "This will permanently delete the schedule.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#b91c1c",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Confirm"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = document.getElementById(`deleteScheduleForm-${scheduleId}`);
-                const formData = new FormData(form);
-
-                fetch('index.php?payroll=schedules', {  // Correct action URL for your backend
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        Swal.fire({
-                            title: 'Deleted!',
-                            text: data.message,
-                            icon: 'success', 
-                            showConfirmButton: false, // Hide the "OK" button
-                            timer: 1000, // Close the alert after 2 seconds
-                            timerProgressBar: true
-                        }).then(() => {
-                            location.reload();  // Reload the page to reflect changes
-                        });
-                    } else {
-                        Swal.fire({
-                            title: data.title || 'Error',
-                            text: data.message,
-                            icon: data.icon || 'error'
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    Swal.fire("Error", "Something went wrong while deleting the schedule.", "error");
-                });
-            }
-        });
-    }
-
-
-
+//   // === REFRESH TABLE BODY ===
+//   window.refreshScheduleTable = async () => {
+//     try {
+//       const res = await fetch('../app/api/schedules-api.php?fetch_table=1');
+//       const html = await res.text();
+//       document.getElementById('scheduleTableBody').innerHTML = html;
+//     } catch (err) {
+//       console.error("Failed to refresh schedule table", err);
+//     }
+//   };
+// });
