@@ -20,6 +20,10 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
             <div class="flex items-center justify-between p-4 border-b border-gray-200 relative">
                 <span class="text-lg font-semibold text-gray-800">Employees</span>
                 <div class="relative max-w-sm w-full sm:w-auto">
+                  <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
                     <input
                         type="text"
                         id="employeeSearch"
@@ -128,8 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Approve Employee?',
         text: "Are you sure you want to approve this employee?",
         icon: 'question',
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
         showCancelButton: true,
-        confirmButtonText: 'Yes, approve',
+        confirmButtonText: 'Yes, approved',
         cancelButtonText: 'Cancel',
       }).then((result) => {
         if (result.isConfirmed) {
@@ -155,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Reject Employee?',
         text: "Are you sure you want to reject this employee?",
         icon: 'warning',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
         showCancelButton: true,
         confirmButtonText: 'Yes, reject',
         cancelButtonText: 'Cancel',

@@ -264,6 +264,7 @@ a {
 /* Underline style for expanded (full label) */
 #sidebar:not(.collapsed) #portalLabel .underline {
     width: 100%;
+    margin-left: 89px; /* reset margin */
 }
 
 /* Ensure parent wrapper is relatively positioned */
@@ -403,8 +404,8 @@ function confirmLogout() {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Confirm',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, logout',
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {

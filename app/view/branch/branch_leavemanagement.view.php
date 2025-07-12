@@ -147,6 +147,39 @@ try {
 ?>
 
 
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;  /* for vertical scrollbar if needed */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #20b879; /* Tailwind's emerald-400 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #16a34a;/* Tailwind's emerald-500 */
+}
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
+</style>
+
 
 
 
@@ -165,6 +198,10 @@ try {
             <div class="flex items-center justify-between p-4 border-b border-gray-200 relative">
                 <span class="text-lg font-semibold text-gray-800">Employee's Leave Application</span>
                 <div class="relative max-w-sm w-full sm:w-auto">
+                    <svg class="absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
                     <input
                         type="text"
                         id="leaveSearch"
@@ -173,42 +210,44 @@ try {
                     >
                     <button
                         id="clearSearch"
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 hidden"
+                        class="absolute right-2 top-1 text-[#478547] text-xl hidden"
                         aria-label="Clear search"
                         type="button"
                     >
-                        &#x2715;
+                        ×
                     </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table id="leaveTable" class="min-w-full divide-y divide-gray-200 text-sm overflow-hidden">
-                <thead class="bg-emerald-600 text-white text-center">
+            <div class="relative w-full overflow-auto custom-scrollbar">
+                    <div class="max-h-[calc(100vh-220px)] ">
+                <table class="min-w-[1000px] w-full divide-y divide-gray-200 text-sm">
 
-                <tr>
-                    <th class="px-3 py-3  font-semibold tracking-wide">Employee</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Leave Type</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Start</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">End</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Duration</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Reason</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Rejection Reason</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Status</th>
-                    <th class="px-3 py-3 text-left font-semibold tracking-wide">Created</th>
-                    <th class="px-3 py-3 text-right font-semibold tracking-wide">Actions</th>
-                </tr>
+                <thead class="bg-emerald-600 sticky top-0 text-white text-[13.8px]">
+                    <tr>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Employee</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Leave Type</th>
+                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Start</th>
+                        <th class="px-3 py-3 text-center font-semibold tracking-wide">End</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Duration</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Reason</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide ">Rejection Reason</th>
+                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Status</th>
+                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Created</th>
+                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Actions</th>
+                    </tr>
                 </thead>
+
                 <tbody>
                 <?php if (!empty($leaveRequests)): ?>
-                    <?php foreach ($leaveRequests as $leave): ?>
-                        <tr class="text-sm">
-                            <td class="px-3 py-3"><?= htmlspecialchars($leave['employee_name']) ?></td>
-                            <td class="px-3 py-3"><?= htmlspecialchars($leave['leave_type']) ?></td>
-                            <td class="px-3 py-3"><?= htmlspecialchars($leave['start_date']) ?></td>
-                            <td class="px-3 py-3"><?= htmlspecialchars($leave['end_date']) ?></td>
-                            <td class="px-3 py-3"><?= htmlspecialchars($leave['duration']) ?></td>
-                            <td class="px-3 py-3">
+                    <?php foreach ($leaveRequests as $leaveRequest): ?>
+                        <tr class="text-sm border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-200">
+                            <td class="px-3 py-3 whitespace-nowrap"><?= htmlspecialchars($leaveRequest['employee_name']) ?></td>
+                            <td class="px-3 py-3 "><?= htmlspecialchars($leaveRequest['leave_type']) ?></td>
+                            <td class="px-3 py-3 text-center whitespace-nowrap"><?= htmlspecialchars($leaveRequest['start_date']) ?></td>
+                            <td class="px-3 py-3 text-center whitespace-nowrap"><?= htmlspecialchars($leaveRequest['end_date']) ?></td>
+                            <td class="px-3 py-3 text-center"><?= htmlspecialchars($leaveRequest['duration']) ?></td>
+                            <!-- <td class="px-3 py-3">
                                 <button class="btn btn-sm btn-primary w-100" data-bs-toggle="modal" data-bs-target="#reasonModal<?= $leave['id'] ?>">
                                     View
                                 </button>
@@ -234,14 +273,75 @@ try {
                                         </div>
                                     </div>
                                 </div>
-                            </td>
+                            </td> -->
+                            <td class="text-center">
+                                        <?php
+                                            $hasReason = !empty($leaveRequest['reason']);
+                                            $hasMedCert = !empty($leaveRequest['med_cert_path']) && $leaveRequest['leave_type'] === 'Sick Leave' && (int)$leaveRequest['duration'] >= 3;
+                                            $alwaysShowModalTypes = ['Vacation Leave', 'Maternity/Paternity Leave'];
+
+                                            $showModal = $hasReason || $hasMedCert || in_array($leaveRequest['leave_type'], $alwaysShowModalTypes);
+                                        ?>
+
+                                        <?php if ($showModal): ?>
+                                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#reasonModal<?= $leaveRequest['id'] ?>">
+                                                <i class="bi bi-eye"></i> 
+                                            </button>
+
+                                            <div class="modal fade" id="reasonModal<?= $leaveRequest['id'] ?>" tabindex="-1">
+                                                <div class="modal-dialog modal-dialog-centered modal-lg ">
+                                                    <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
+                                                        <div class="modal-header bg-success text-white">
+                                                            <h5 class="modal-title">Leave Details</h5>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        </div>
+
+                                                        <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
+                                                            <!-- Leave Reason -->
+                                                            <?php if ($hasReason): ?>
+                                                                <div class="text-start">
+                                                                    <?= nl2br(htmlspecialchars($leaveRequest['reason'])) ?>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <!-- Medical Certificate -->
+                                                            <?php if ($hasMedCert): ?>
+                                                                <div class="text-left">
+                                                                    <strong>Medical Certificate:</strong>
+                                                                    <div class="d-flex justify-content-center mt-2">
+                                                                        <img src="<?= htmlspecialchars($leaveRequest['med_cert_path']) ?>"
+                                                                            alt="Medical Certificate"
+                                                                            class="img-fluid rounded border"
+                                                                            style="max-height: 280px; max-width: 100%; width: auto; ">
+                                                                    </div>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <!-- No content fallback -->
+                                                            <?php if (!$hasReason && !$hasMedCert && in_array($leaveRequest['leave_type'], $alwaysShowModalTypes)): ?>
+                                                                <div class="fst-italic text-muted">No reason or certificate needed.</div>
+                                                            <?php endif; ?>
+
+                                                            <!-- Footer -->
+                                                            <div class="pt-2">
+                                                                <hr class="w-100 m-0">
+                                                                <small class="text-muted">Leave type: <?= htmlspecialchars($leaveRequest['leave_type']) ?></small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <span class="text-muted fst-italic">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
 
                             <td class="px-3 py-4 text-center">
-                                <?php if ($leave['status'] === 'Rejected' && !empty($leave['rejection_reason'])): ?>
-                                    <button class="btn btn-sm btn-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectReasonModal<?= $leave['id'] ?>">
-                                        View
+                                <?php if ($leaveRequest['status'] === 'Rejected' && !empty($leaveRequest['rejection_reason'])): ?>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectReasonModal<?= $leaveRequest['id'] ?>">
+                                        <i class="bi bi-eye"></i>
                                     </button>
-                                    <div class="modal fade" id="rejectReasonModal<?= $leave['id'] ?>" tabindex="-1">
+                                    <div class="modal fade" id="rejectReasonModal<?= $leaveRequest['id'] ?>" tabindex="-1">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content" style="height: 70vh;">
                                                 <div class="modal-header bg-danger text-white">
@@ -249,11 +349,11 @@ try {
                                                     <button type="button" class="btn-close" style="filter: brightness(0) invert(1);" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body d-flex flex-column justify-content-between text-left">
-                                                    <?= nl2br(htmlspecialchars($leave['rejection_reason'])) ?>
-                                                    <?php if (!empty($leave['rejected_by'])): ?>
+                                                    <?= nl2br(htmlspecialchars($leaveRequest['rejection_reason'])) ?>
+                                                    <?php if (!empty($leaveRequest['rejected_by'])): ?>
                                                       <div>
                                                         <hr class="w-100 m-0">
-                                                        <small class="text-muted">Rejected by: <?= htmlspecialchars($leave['rejected_by']) ?></small>
+                                                        <small class="text-muted">Rejected by: <?= htmlspecialchars($leaveRequest['rejected_by']) ?></small>
                                                       </div>
                                                     <?php endif; ?>
                                                 </div>
@@ -265,31 +365,31 @@ try {
                                 <?php endif; ?>
                             </td>
 
-                            <td class="px-3 py-4">
+                            <td class="px-3 py-4 text-center">
                                 <?php
-                                $badgeClass = match($leave['status']) {
+                                $badgeClass = match($leaveRequest['status']) {
                                     'Approved' => 'bg-success',
                                     'Rejected' => 'bg-danger',
                                     default => 'bg-warning text-dark'
                                 };
                                 ?>
-                                <span class="badge <?= $badgeClass ?> rounded-pill px-3 py-1"><?= htmlspecialchars($leave['status']) ?></span>
+                                <span class="badge <?= $badgeClass ?> rounded-pill px-3 py-1"><?= htmlspecialchars($leaveRequest['status']) ?></span>
                             </td>
-                            <td class="px-3 py-4"><?= htmlspecialchars($leave['created_at']) ?></td>
+                            <td class="px-3 py-4 text-center whitespace-nowrap"><?= date("M d, Y", strtotime($leaveRequest['created_at'])) ?></td>
                             <td class="px-3 py-4">
-                                <?php if ($leave['status'] === 'Pending'): ?>
+                                <?php if ($leaveRequest['status'] === 'Pending'): ?>
                                     <div class="d-flex gap-2">
-                                        <form method="POST">
-                                            <input type="hidden" name="leave_id" value="<?= $leave['id'] ?>">
+                                        <form method="POST" class="approve-form">
+                                            <input type="hidden" name="leave_id" value="<?= $leaveRequest['id'] ?>">
                                             <input type="hidden" name="action" value="approve">
                                             <button type="submit" class="btn btn-sm btn-success">
                                                 <i class="bi bi-check2-circle"></i>
                                             </button>
                                         </form>
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?= $leave['id'] ?>">
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?= $leaveRequest['id'] ?>">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
-                                        <div class="modal fade" id="rejectModal<?= $leave['id'] ?>" tabindex="-1">
+                                        <div class="modal fade" id="rejectModal<?= $leaveRequest['id'] ?>" tabindex="-1">
                                             <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content">
                                                     <form method="POST">
@@ -299,7 +399,7 @@ try {
 
                                                         </div>
                                                         <div class="modal-body">
-                                                            <input type="hidden" name="leave_id" value="<?= $leave['id'] ?>">
+                                                            <input type="hidden" name="leave_id" value="<?= $leaveRequest['id'] ?>">
                                                             <input type="hidden" name="action" value="reject">
                                                             <label class="form-label d-block text-start">Reason</label>
                                                             <textarea name="rejection_reason" class="form-control" rows="4" required style="resize: none; overflow: auto;"></textarea>
@@ -328,6 +428,34 @@ try {
         </div>
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const approveForms = document.querySelectorAll('.approve-form');
+
+    approveForms.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // Stop normal form submission
+
+            Swal.fire({
+                title: 'Approve Leave?',
+                text: 'Are you sure you want to approve this leave request?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                // cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, approve it!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Only submit if user confirms
+                }
+            });
+        });
+    });
+});
+</script>
+
 
 <script>
 const searchInput = document.getElementById('leaveSearch');
