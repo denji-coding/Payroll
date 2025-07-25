@@ -53,7 +53,7 @@ require_once views_path("partials/nav");
                     <button id="showAddEmployeeModal" 
                             class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " 
                             data-bs-toggle="modal" 
-                            data-bs-target="#addProducts">
+                            data-bs-target="#addEmployeeModal">
                     <i class="fas fa-plus me-2"></i>
                     <span class="font-semibold">Add Employee</span>
                     </button>
@@ -198,13 +198,12 @@ require_once views_path("partials/nav");
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-    <tr id="EmployeenoResultRow">
-        <td colspan="7" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
-            <i class="bi bi-person-x me-2"></i> No employees found.
-        </td>
-    </tr>
-<?php endif; ?>
-
+                                        <tr id="EmployeenoResultRow">
+                                            <td colspan="7" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
+                                                <i class="bi bi-person-x me-2"></i> No employees found.
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -217,7 +216,7 @@ require_once views_path("partials/nav");
 </main>
 
 <!-- Add Employee Modal -->
-<div class="modal fade" id="addProducts" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+<div class="modal fade" id="addEmployeeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
     aria-labelledby="addModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -292,7 +291,7 @@ require_once views_path("partials/nav");
                                             <?php if (!empty($managers)): ?>
                                                 <?php foreach ($managers as $manager): ?>
                                                     <option value="<?= htmlspecialchars($manager['id']) ?>">
-                                                        <?= htmlspecialchars(ucwords($manager['name']) . ' - ' . ucwords($manager['branch'])) ?>
+                                                        <?= htmlspecialchars(ucwords($manager['m_first_name']) . ' ' . strtoupper(substr($manager['m_middle_name'], 0, 1)) . '. ' . ucwords($manager['m_last_name']) . ' - ' . ucwords($manager['m_branch'])) ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
@@ -305,8 +304,8 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <select name="position"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Manager">Manager</option>
+                                                <option disabled selected value="">Select</option>
+                                                <!-- <option value="Manager">Manager</option> -->
                                                 <option value="Human Resources">Human Resources</option>
                                                 <option value="Staff">Staff</option>
                                                 <option value="Driver">Driver</option>
@@ -692,9 +691,9 @@ require_once views_path("partials/nav");
                                                 <?php foreach ($managers as $manager): ?>
                                                     <option 
                                                         value="<?= htmlspecialchars($manager['id']) ?>"
-                                                        data-display="<?= htmlspecialchars($manager['name'] . ' - ' . $manager['branch']) ?>"
+                                                        data-display="<?= htmlspecialchars(ucwords($manager['m_first_name']) . ' ' . strtoupper(substr($manager['m_middle_name'], 0, 1)) . '. ' . ucwords($manager['m_last_name']) . ' - ' . ucwords($manager['m_branch'])) ?>"
                                                         <?= (!empty($currentBranchManager) && $manager['id'] == $currentBranchManager) ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars(ucwords($manager['name']) . ' - ' . ucwords($manager['branch'])) ?>
+                                                        <?= htmlspecialchars(ucwords($manager['m_first_name']) . ' ' . strtoupper(substr($manager['m_middle_name'], 0, 1)) . '. ' . ucwords($manager['m_last_name']) . ' - ' . ucwords($manager['m_branch'])) ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
@@ -708,7 +707,7 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <select name="position" id="edit_position"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
+                                                <option disabled value="">Select</option>
                                                 <option value="Manager">Manager</option>
                                                 <option value="Human Resources">Human Resources</option>
                                                 <option value="Staff">Staff</option>
@@ -787,7 +786,7 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <select name="sex" id="edit_sex"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
+                                                <option disabled value="">Select</option>
                                                 <option value="Male">Male</option>
                                                 <option value="Female">Female</option>
                                             </select>
@@ -800,7 +799,7 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <select name="civilStatus" id="edit_civilStatus"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
+                                                <option disabled value="">Select</option>
                                                 <option value="Single">Single</option>
                                                 <option value="Married">Married</option>
                                                 <option value="Separated">Separated</option>
@@ -847,7 +846,7 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <select name="bloodType" id="edit_bloodType"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
+                                                <option disabled value="">Select</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
                                                 <option value="B+">B+</option>

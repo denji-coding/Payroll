@@ -1,5 +1,5 @@
 <?php
-// approval_request-api.php
+// approvals_request-api.php
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -14,7 +14,9 @@ $pdo = $db->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents("php://input"), true) ?? [];
 parse_str($_SERVER['QUERY_STRING'] ?? '', $query);
+
 $id = $_GET['id'] ?? $input['id'] ?? null;
+$action = $_GET['action'] ?? $input['action'] ?? null;
 
 try {
     switch ($method) {
@@ -22,17 +24,18 @@ try {
             if ($id) {
                 // Fetch single employee
                 $stmt = $pdo->prepare("
-                    SELECT 
-                        e.*, 
-                        a.name AS manager_name,
-                        m.name AS branch_name,
-                        m.branch AS branch_address
-                    FROM employees e
-                    LEFT JOIN admins a ON e.branch_manager = a.id
-                    LEFT JOIN managers m ON e.branch_manager = m.id
-                    WHERE e.id = :id AND e.deleted_at IS NULL
-                ");
-                $stmt->execute(['id' => $id]);
+    SELECT 
+        e.*, 
+        a.name AS manager_name,
+        CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name) AS branch_name,
+        m.m_branch AS branch_address
+    FROM employees e
+    LEFT JOIN admins a ON e.branch_manager = a.id
+    LEFT JOIN managers m ON e.branch_manager = m.id
+    WHERE e.id = :id AND e.deleted_at IS NULL
+");
+
+                $stmt->execute([':id' => $id]);
                 $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($employee) {
@@ -46,8 +49,8 @@ try {
                 $stmt = $pdo->prepare("
                     SELECT 
                         e.*, 
-                        m.name AS manager_name,
-                        m.branch AS branch_address
+                        CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name) AS manager_name,
+                        m.m_branch AS branch_address
                     FROM employees e
                     LEFT JOIN managers m ON e.branch_manager = m.id
                     WHERE e.approved_by_manager IN (0, -1) AND e.deleted_at IS NULL
@@ -56,11 +59,10 @@ try {
                 $stmt->execute();
                 $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                // Capture output buffer with <tr> HTML
                 ob_start();
                 $index = 1;
                 foreach ($employees as $emp) {
-                    include __DIR__ . '/../views/partials/approval_table_row.php';
+                    include realpath(__DIR__ . '/../..') . '/app/view/partials/approval_table_row.php';
                 }
                 $tbodyHtml = ob_get_clean();
 
@@ -69,8 +71,7 @@ try {
             break;
 
         case 'POST':
-            $action = $_POST['action'] ?? $input['action'] ?? null;
-
+            // Handle actions via JSON body
             if ($action === 'resend' && $id) {
                 $checkStmt = $pdo->prepare("SELECT approved_by_manager FROM employees WHERE id = :id AND deleted_at IS NULL");
                 $checkStmt->execute(['id' => $id]);
@@ -87,46 +88,20 @@ try {
                 } else {
                     echo json_encode(['status' => 'error', 'message' => 'Cannot resend approval for this employee']);
                 }
-            } else {
-                http_response_code(400);
-                echo json_encode(['status' => 'error', 'message' => 'Invalid POST request']);
-            }
-            break;
 
-        case 'DELETE':
-            if ($id) {
+            } elseif ($action === 'delete' && $id) {
                 $stmt = $pdo->prepare("UPDATE employees SET deleted_at = NOW() WHERE id = :id");
                 $stmt->execute(['id' => $id]);
 
                 if ($stmt->rowCount() > 0) {
-                    // Reload the updated employee table rows
-                    $stmt = $pdo->prepare("
-                        SELECT 
-                            e.*, 
-                            m.name AS manager_name,
-                            m.branch AS branch_address
-                        FROM employees e
-                        LEFT JOIN managers m ON e.branch_manager = m.id
-                        WHERE e.approved_by_manager IN (0, -1) AND e.deleted_at IS NULL
-                        ORDER BY e.id DESC
-                    ");
-                    $stmt->execute();
-                    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                    ob_start();
-                    $index = 1;
-                    foreach ($employees as $emp) {
-                        include __DIR__ . '/../views/partials/approval_table_row.php';
-                    }
-                    $tbodyHtml = ob_get_clean();
-
-                    echo json_encode(['status' => 'success', 'message' => 'Employee deleted successfully', 'tbody' => $tbodyHtml]);
+                    echo json_encode(['status' => 'success', 'message' => 'Employee marked as deleted']);
                 } else {
                     echo json_encode(['status' => 'error', 'message' => 'Failed to delete employee']);
                 }
+
             } else {
                 http_response_code(400);
-                echo json_encode(['status' => 'error', 'message' => 'Missing employee ID']);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid POST request']);
             }
             break;
 

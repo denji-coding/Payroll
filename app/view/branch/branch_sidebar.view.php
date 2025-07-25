@@ -4,8 +4,8 @@ $currentPage = $_GET['payroll'] ?? basename($_SERVER['PHP_SELF']);
 require_once views_path("partials/header");
 // require_once views_path("partials/user_navbar");
 
-$username = $_SESSION['name'] ?? 'Unknown Employee';
-$email = $_SESSION['email'] ?? 'no-email@example.com';
+// $username = $_SESSION['m_first_name'] . ' ' . $_SESSION['m_middle_name'][0] . '. ' . $_SESSION['m_last_name'] ?? 'Unknown Employee';
+// $email = $_SESSION['m_email'] ?? 'no-email@example.com';
 
 // $imagePath = (!empty($_SESSION['photo_path']))
 //     ? '../public/upload/' . basename($_SESSION['photo_path'])
@@ -15,18 +15,21 @@ $email = $_SESSION['email'] ?? 'no-email@example.com';
 
 
 
-$username = "Manager"; // Default fallback
+$username = "Manager"; // default fallback
 
 if (isset($_SESSION['manager_id'])) {
     $db = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare("SELECT name FROM managers WHERE id = :id");
+    $stmt = $conn->prepare("SELECT m_first_name, m_middle_name, m_last_name FROM managers WHERE id = :id");
     $stmt->execute([':id' => $_SESSION['manager_id']]);
     $manager = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($manager) {
-        $username = $manager['name'];
+        $first = $manager['m_first_name'] ?? '';
+        $middle = $manager['m_middle_name'] ?? '';
+        $last = $manager['m_last_name'] ?? '';
+        $username = $first . ' ' . ($middle ? $middle[0] . '. ' : '') . $last;
     }
 }
 ?>

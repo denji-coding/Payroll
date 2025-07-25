@@ -15,8 +15,8 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             e.*, 
-            m.name AS manager_name,
-            m.branch AS branch_address
+            CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name) AS manager_name,
+            m.m_branch AS branch_address
         FROM employees e
         LEFT JOIN managers m ON e.branch_manager = m.id
         WHERE e.approved_by_manager IN (0, -1) AND e.deleted_at IS NULL
@@ -30,7 +30,7 @@ try {
 
 // Fetch all managers for dropdown/filtering if needed
 try {
-    $stmt = $pdo->prepare("SELECT * FROM managers ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT * FROM managers ORDER BY m_created_at DESC");
     $stmt->execute();
     $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {

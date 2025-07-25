@@ -46,207 +46,19 @@ require_once views_path("partials/nav");
             <thead class="[&_tr]:border-b bg-white sticky top-0 z-10">
                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                 <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">#</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Employee</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Period</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Issue Date</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Net Pay</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Status</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-right align-middle font-bold text-[#478547]">Actions</th>
+                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Employee Name</th>
+                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Payroll Period</th>
+                <th class="h-10 md:h-12 px-2 md:px-4 text-center align-middle font-bold text-[#478547]">Actions</th>
                 </tr>
             </thead>
-            <tbody class="[&_tr:last-child]:border-0">
-            <!-- Employee 1 -->
-            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                <td class="p-2 md:p-4 align-middle ">1</td>
-                <td class="p-2 md:p-4 align-middle">Michael Reyes</td>
-                <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-                <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-                <td class="p-2 md:p-4 align-middle">₱25,400</td>
-                <td class="p-2 md:p-4 align-middle">
-                <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-                    PAID
-                </div>
-                </td>
-                <td class="p-2 md:p-4 align-middle text-right">
-                <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-                    <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                </button>
-                </td>
-            </tr>
+            <tbody id="payslipTableBody" class="[&_tr:last-child]:border-0">
+              
+    
+    
+</tbody>
 
-            <!-- Employee 2 -->
-            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                <td class="p-2 md:p-4 align-middle">2</td>
-                <td class="p-2 md:p-4 align-middle">Anna Cruz</td>
-                <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-                <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-                <td class="p-2 md:p-4 align-middle">₱19,850</td>
-                <td class="p-2 md:p-4 align-middle">
-                <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-                    PAID
-                </div>
-                </td>
-                <td class="p-2 md:p-4 align-middle text-right">
-                <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-                    <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                </button>
-                </td>
-            </tr>
 
-            <!-- Employee 3 -->
-            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                <td class="p-2 md:p-4 align-middle">3</td>
-                <td class="p-2 md:p-4 align-middle">Carlos Dela Cruz</td>
-                <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-                <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-                <td class="p-2 md:p-4 align-middle">₱21,100</td>
-                <td class="p-2 md:p-4 align-middle">
-                <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-                    PAID
-                </div>
-                </td>
-                <td class="p-2 md:p-4 align-middle text-right">
-                <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-                    <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                </button>
-                </td>
-            </tr>
 
-            <!-- Employee 4 -->
-            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                <td class="p-2 md:p-4 align-middle">4</td>
-                <td class="p-2 md:p-4 align-middle">Sophia Mendoza</td>
-                <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-                <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-                <td class="p-2 md:p-4 align-middle">₱23,000</td>
-                <td class="p-2 md:p-4 align-middle">
-                <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-                    PAID
-                </div>
-                </td>
-                <td class="p-2 md:p-4 align-middle text-right">
-                <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-                    <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                </button>
-                </td>
-            </tr>
-
-            <!-- Employee 5 -->
-            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                <td class="p-2 md:p-4 align-middle">5</td>
-                <td class="p-2 md:p-4 align-middle">Daniel Garcia</td>
-                <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-                <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-                <td class="p-2 md:p-4 align-middle">₱20,500</td>
-                <td class="p-2 md:p-4 align-middle">
-                <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-                    PAID
-                </div>
-                </td>
-                <td class="p-2 md:p-4 align-middle text-right">
-                <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-                    <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                </button>
-                </td>
-            </tr>
-            <!-- Additional Employees -->
-
-<!-- Employee 6 -->
-<tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-  <td class="p-2 md:p-4 align-middle">6</td>
-  <td class="p-2 md:p-4 align-middle">Patricia Santos</td>
-  <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-  <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-  <td class="p-2 md:p-4 align-middle">₱24,750</td>
-  <td class="p-2 md:p-4 align-middle">
-    <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-      PAID
-    </div>
-  </td>
-  <td class="p-2 md:p-4 align-middle text-right">
-    <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-      <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-    </button>
-  </td>
-</tr>
-
-<!-- Employee 7 -->
-<tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-  <td class="p-2 md:p-4 align-middle">7</td>
-  <td class="p-2 md:p-4 align-middle">John Paul Ramirez</td>
-  <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-  <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-  <td class="p-2 md:p-4 align-middle">₱22,300</td>
-  <td class="p-2 md:p-4 align-middle">
-    <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-      PAID
-    </div>
-  </td>
-  <td class="p-2 md:p-4 align-middle text-right">
-    <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-      <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-    </button>
-  </td>
-</tr>
-
-<!-- Employee 8 -->
-<tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-  <td class="p-2 md:p-4 align-middle">8</td>
-  <td class="p-2 md:p-4 align-middle">Isabelle Fernandez</td>
-  <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-  <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-  <td class="p-2 md:p-4 align-middle">₱18,900</td>
-  <td class="p-2 md:p-4 align-middle">
-    <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-      PAID
-    </div>
-  </td>
-  <td class="p-2 md:p-4 align-middle text-right">
-    <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-      <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-    </button>
-  </td>
-</tr>
-
-<!-- Employee 9 -->
-<tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-  <td class="p-2 md:p-4 align-middle">9</td>
-  <td class="p-2 md:p-4 align-middle">Gabriel Aquino</td>
-  <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-  <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-  <td class="p-2 md:p-4 align-middle">₱26,700</td>
-  <td class="p-2 md:p-4 align-middle">
-    <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-      PAID
-    </div>
-  </td>
-  <td class="p-2 md:p-4 align-middle text-right">
-    <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-      <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-    </button>
-  </td>
-</tr>
-
-<!-- Employee 10 -->
-<tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-  <td class="p-2 md:p-4 align-middle">10</td>
-  <td class="p-2 md:p-4 align-middle">Marianne Lopez</td>
-  <td class="p-2 md:p-4 align-middle">Apr 01 - Apr 15, 2024</td>
-  <td class="p-2 md:p-4 align-middle">Apr 16, 2024</td>
-  <td class="p-2 md:p-4 align-middle">₱20,950</td>
-  <td class="p-2 md:p-4 align-middle">
-    <div class="inline-flex items-center rounded-full border border-transparent bg-[#16a249] text-white px-2.5 py-0.5 text-xs font-semibold">
-      PAID
-    </div>
-  </td>
-  <td class="p-2 md:p-4 align-middle text-right">
-    <button class="inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md font-medium transition-colors hover:bg-[#478547] hover:text-white" onclick="openPayslip()" type="button">
-      <i class="bi bi-eye h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-    </button>
-  </td>
-</tr>
-
-            </tbody>
 
           </table>
         </div>
@@ -255,141 +67,243 @@ require_once views_path("partials/nav");
   </div>
 </main>
 
-<!-- Overlay and Modal -->
-<div id="payslip-overlay" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center opacity-0 transition-opacity duration-300">
-  <!-- Payslip Dialog -->
-  <div role="dialog" id="payslip-dialog" aria-describedby="payslip-description" aria-labelledby="payslip-title"
-    class="relative grid w-full max-w-3xl gap-4 border bg-[#f8fbf8] p-6 shadow-lg sm:rounded-lg overflow-y-auto max-h-[90vh] scale-75 transition-transform duration-300">
-    
-    <!-- Close Button (X) -->
-    <button class="absolute top-4 right-4 text-3xl font-bold ring-offset-[#f8fbf8] focus:ring-2 focus:ring-[#16a249] rounded-md" onclick="closePayslip()">
-  <i class="bi bi-x"></i>
-</button>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const tbody = document.getElementById('payslipTableBody');
+
+  tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500">Loading payslips...</td></tr>`;
+
+  fetch(`../app/api/payslips-api.php`)
+    .then(response => response.json())
+    .then(result => {
+      if (result.status === 'success' && result.data.length > 0) {
+        tbody.innerHTML = '';
+        result.data.forEach((record, i) => {
+          const payPeriod = record.pay_period_start && record.pay_period_end
+            ? new Date(record.pay_period_start).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ' - ' +
+              new Date(record.pay_period_end).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+            : '';
+
+          const employeeName = record.full_name || 'N/A';
+
+          const row = `
+            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+              <td class="p-2 md:p-4 align-middle">${i + 1}</td>
+              <td class="p-2 md:p-4 align-middle">${employeeName}</td>
+              <td class="p-2 md:p-4 align-middle">${payPeriod}</td>
+              <td class="p-2 md:p-4 align-middle text-center">
+                <button 
+                  type="button"
+                  class="btn btn-sm btn-outline-success view-payslip-btn"
+                  data-bs-toggle="modal"
+                  data-bs-target="#payslipModal"
+                  data-employee="${employeeName}"
+                  data-id="${record.employee_id}"
+                  data-position="${record.position}" 
+                  data-salary="${record.base_salary}" 
+                  data-period="${payPeriod}"
+                  data-totalhours="${record.total_hours}"
+                  data-absent="${record.absent_days}"
+                  data-leave="${record.leave_days}"
+                  data-gross="${record.gross_pay}"
+                  data-net="${record.net_pay}"
+                  data-sss="${record.sss_deduction}"
+                  data-philhealth="${record.philhealth_deduction}"
+                  data-pagibig="${record.pagibig_deduction}"
+                  data-link="/mvcPayroll/public/${record.ps_pdf_file_path}"
+                  title="View Payslip"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500">No payslip records found.</td></tr>`;
+      }
+    })
+    .catch(() => {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-red-500">Error loading payslips.</td></tr>`;
+    });
+});
+</script>
 
 
 
-    
-    <div class="flex flex-col space-y-1.5 text-left sm:text-left">
-      <h2 id="payslip-title" class="text-lg font-semibold leading-none tracking-tight">Payslip Details</h2>
-    </div>
 
-    <!-- Start of Payslip Content -->
-    <div class="space-y-6" id="payslip-content">
-      <div class="flex justify-between items-start">
-        <div>
-          <h2 class="text-2xl font-bold">Migrants Venture Corporation</h2>
-          <p class="text-[#478547]">123 Business Ave., Metro Manila</p>
-        </div>
-        <div class="text-right">
-          <h3 class="font-bold">PAYSLIP</h3>
-          <p class="text-sm">Mar 01 - Mar 15, 2024</p>
-        </div>
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+
+<!-- Modal -->
+<div class="modal fade" id="payslipModal" tabindex="-1" aria-labelledby="payslipModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-6 border shadow-lg rounded-lg overflow-auto" style="max-height: 90vh;">
+
+      <!-- Header -->
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title text-lg font-semibold" id="payslipModalLabel">Payslip Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="h-[1px] w-full bg-border"></div>
+      <!-- Body -->
+      <div class="modal-body space-y-6" id="payslip-content">
+        <!-- Header Info -->
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h2 class="text-2xl fw-bold" id="company-name">Migrants Venture Corporation</h2>
+            <p class="text-[#478547]" id="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</p>
+          </div>
+          <!-- <div class="text-end">
+            <h3 class="fw-bold">PAYSLIP</h3>
+            <p class="text-sm" id="payslip-period">—</p>
+          </div> -->
+        </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <h3 class="font-semibold mb-2">Employee Information</h3>
-          <div class="space-y-1 text-sm">
-            <p><span class="font-medium">Name:</span> John Doe</p>
-            <p><span class="font-medium">ID:</span> EMP001</p>
-            <p><span class="font-medium">Position:</span> HR Manager</p>
-            <p><span class="font-medium">Department:</span> Human Resources</p>
+        <hr class="my-3" />
+
+        <!-- Employee & Payroll Details -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <h5 class="fw-semibold mb-2">Employee Information</h5>
+            <ul class="list-unstyled small">
+              <li><strong>Name:</strong> <span id="emp-name">—</span></li>
+              <li><strong>ID:</strong> <span id="emp-id">—</span></li>
+              <li><strong>Position:</strong> <span id="emp-position">—</span></li>
+              <li><strong>Basic Salary:</strong> ₱<span id="basic-pay">—</span> <span>/ day</span></li>
+            </ul>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h5 class="fw-semibold mb-2">Payroll Details</h5>
+            <ul class="list-unstyled small">
+              <li><strong>Pay Period:</strong> <span id="emp-period">—</span></li>
+              <li><strong>Total Hours:</strong> <span id="emp-hours">—</span></li>
+              <li><strong>Absent:</strong> <span id="emp-absent">—</span></li>
+              <li><strong>Leave:</strong> <span id="emp-leave">—</span></li>
+            </ul>
           </div>
         </div>
-        <div>
-            <h3 class="font-semibold mb-2">Payment Details</h3>
-            <div class="space-y-1 text-sm">
-                <p><span class="font-medium">Basic Salary:</span> ₱50,000 / month</p>
-                <p><span class="font-medium">Pay Period:</span> Mar 01 - Mar 15, 2024</p>
-                <p><span class="font-medium">Payment Date:</span> Mar 16, 2024</p>
-                <div class="flex items-center space-x-2">
-                    <span class="font-medium">Payment Status:</span>
-                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">PAID</span>
-                </div>
-            </div>
-        </div>
-      </div>
 
-      <div class="h-[1px] w-full bg-border"></div>
+        <hr class="my-3" />
 
-      <div class="space-y-4">
-        <h3 class="font-semibold">Earnings & Deductions</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <h4 class="text-sm font-medium mb-2">Earnings</h4>
-            <table class="w-full text-sm">
+        <!-- Earnings & Deductions -->
+        <h5 class="fw-semibold">Earnings & Deductions</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <table class="table table-sm">
+              <thead><tr><th>Earnings</th><th class="text-end"></th></tr></thead>
               <tbody>
-                <tr class="border-b">
-                  <td class="p-2">Basic Pay</td>
-                  <td class="p-2 text-right">₱25,000</td>
-                </tr>
-                <tr class="border-b">
-                  <td class="p-2">Overtime</td>
-                  <td class="p-2 text-right">₱1,500</td>
-                </tr>
-                <tr class="font-bold">
-                  <td class="p-2 text-[#478547]">Total Earnings</td>
-                  <td class="p-2 text-right font-semibold">₱26,500</td>
+                <tr><td>Basic Pay</td><td class="text-end">₱<span id="earn-basic-pay">0.00</span></td></tr>
+                <tr class="fw-bold">
+                  <td class="text-success">Total Earnings</td>
+                  <td class="text-end text-success">₱<span id="total-earnings">0.00</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div>
-            <h4 class="text-sm font-medium mb-2">Deductions</h4>
-            <table class="w-full text-sm">
+          <div class="col-md-6">
+            <table class="table table-sm">
+              <thead><tr><th>Deductions</th><th class="text-end"></th></tr></thead>
               <tbody>
-                <tr class="border-b">
-                  <td class="p-2">Tax</td>
-                  <td class="p-2 text-right">₱2,500</td>
-                </tr>
-                <tr class="border-b">
-                  <td class="p-2">SSS</td>
-                  <td class="p-2 text-right">₱1,000</td>
-                </tr>
-                <tr class="border-b">
-                  <td class="p-2">PhilHealth</td>
-                  <td class="p-2 text-right">₱375</td>
-                </tr>
-                <tr class="border-b">
-                  <td class="p-2">Pag-IBIG</td>
-                  <td class="p-2 text-right">₱100</td>
-                </tr>
-                <tr class="font-bold">
-                  <td class="p-2 text-[#478547]">Total Deductions</td>
-                  <td class="p-2 text-right">₱3,925</td>
+                <tr><td>SSS</td><td class="text-end">₱<span id="deduct-sss">0.00</span></td></tr>
+                <tr><td>PhilHealth</td><td class="text-end">₱<span id="deduct-philhealth">0.00</span></td></tr>
+                <tr><td>Pag-IBIG</td><td class="text-end">₱<span id="deduct-pagibig">0.00</span></td></tr>
+                <tr class="fw-bold">
+                  <td class="text-success">Total Deductions</td>
+                  <td class="text-end text-success">₱<span id="total-deductions">0.00</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        <hr class="shrink-0 bg-[#cde4cd] h-[1px] w-full">
-        <div class="bg-[#f2f8f2] grid grid-cols-2 gap-4 p-4 rounded-lg">
-            <div>
-                <h4 class="font-semibold">Net Pay</h4>
-                <p class="text-xs text-[#478547]">Total earnings minus total deductions</p>
-            </div>
-            <div class="text-right">
-                <p class="font-bold text-lg">₱22,000</p>
-            </div>
-            </div>
+
+        <hr class="my-3" />
+
+        <!-- Net Pay Summary -->
+        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+          <div>
+            <h6 class="fw-semibold mb-1">Net Pay</h6>
+            <p class="mb-0 text-muted small">Total earnings minus total deductions</p>
+          </div>
+          <div class="text-end">
+            <h4 class="text-success fw-bold mb-0">₱<span id="net-pay">0.00</span></h4>
+          </div>
+        </div>
       </div>
-    </div>
-    <!-- End of Payslip Content -->
 
-    <!-- Action Buttons -->
-    <div class="flex justify-end gap-4 mt-6" id="payslip-buttons">
-      <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#cde4cd] bg-[#f8fbf8] px-4 py-2 text-sm font-medium ring-offset-[#f8fbf8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 hover:bg-[#16a249] hover:text-[#ffffff] disabled:pointer-events-none disabled:opacity-50 w-32" onclick="downloadPayslip()">
-      <i class="bi bi-download me-2 fs-5"></i>
-      Download</button>
-      <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#16a249] text-[#ffffff] hover:bg-[#16a249]/90 text-sm font-medium ring-offset-[#f8fbf8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-32" onclick="printPayslip()">
-      <i class="bi bi-printer me-2 fs-5"></i>
-      Print</button>
-    </div>
+      <!-- Footer -->
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-outline-success" id="download-btn" onclick="downloadPayslip()">
+          <i class="bi bi-download me-1"></i> Download
+        </button>
+        <button type="button" class="btn btn-success" id="print-btn" onclick="printPayslip()">
+          <i class="bi bi-printer me-1"></i> Print
+        </button>
+      </div>
 
+    </div>
   </div>
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const payslipModalEl = document.getElementById('payslipModal');
+
+  payslipModalEl.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+
+    // Get data attributes
+    const name = button.getAttribute('data-employee') || '—';
+    const empId = button.getAttribute('data-id') || '—';
+    const position = button.getAttribute('data-position') || '—';
+    const basicSalary = parseFloat(button.getAttribute('data-salary') || 0).toFixed(2);
+    const payPeriod = button.getAttribute('data-period') || '—';
+    const totalHours = button.getAttribute('data-totalhours') || '0';
+    const absentDays = button.getAttribute('data-absent') || '0';
+    const leaveDays = button.getAttribute('data-leave') || '0';
+    const grossPay = parseFloat(button.getAttribute('data-gross') || 0).toFixed(2);
+    const netPay = parseFloat(button.getAttribute('data-net') || 0).toFixed(2);
+    const sss = parseFloat(button.getAttribute('data-sss') || 0).toFixed(2);
+    const philhealth = parseFloat(button.getAttribute('data-philhealth') || 0).toFixed(2);
+    const pagibig = parseFloat(button.getAttribute('data-pagibig') || 0).toFixed(2);
+    const link = button.getAttribute('data-link') || '#';
+
+    const totalDeductions = (parseFloat(sss) + parseFloat(philhealth) + parseFloat(pagibig)).toFixed(2);
+
+    // Fill modal content
+    document.getElementById('emp-name').textContent = name;
+    document.getElementById('emp-id').textContent = empId;
+    document.getElementById('emp-position').textContent = position;
+    document.getElementById('basic-pay').textContent = basicSalary;
+    document.getElementById('emp-period').textContent = payPeriod;
+    // document.getElementById('payslip-period').textContent = payPeriod;
+    document.getElementById('emp-hours').textContent = totalHours;
+    document.getElementById('emp-absent').textContent = absentDays;
+    document.getElementById('emp-leave').textContent = leaveDays;
+
+    document.getElementById('earn-basic-pay').textContent = grossPay;
+    document.getElementById('deduct-sss').textContent = sss;
+    document.getElementById('deduct-philhealth').textContent = philhealth;
+    document.getElementById('deduct-pagibig').textContent = pagibig;
+    document.getElementById('total-deductions').textContent = totalDeductions;
+
+    document.getElementById('total-earnings').textContent = grossPay;
+    document.getElementById('net-pay').textContent = netPay;
+
+    window.downloadPayslip = () => window.open(link, '_blank');
+    window.printPayslip = () => {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`<iframe src="${link}" frameborder="0" style="width:100%;height:100vh;"></iframe>`);
+    };
+  });
+});
+</script>
+
+
+
+
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -435,46 +349,6 @@ require_once views_path("partials/nav");
     }
   }
 
-  // Open modal
-  function openPayslip() {
-    const overlay = document.getElementById("payslip-overlay");
-    const dialog = document.getElementById("payslip-dialog");
-
-    overlay.classList.remove("hidden");
-
-    // Smooth transition for overlay
-    overlay.classList.remove("opacity-0");
-    overlay.classList.add("opacity-100");
-
-    // Smooth transition for dialog (scale-up effect)
-    dialog.classList.remove("scale-75");
-    dialog.classList.add("scale-100");
-
-    // Add event listener to close modal when clicking outside
-    overlay.addEventListener('click', closePayslip);
-  }
-
-  // Close modal
-  function closePayslip() {
-    const overlay = document.getElementById("payslip-overlay");
-    const dialog = document.getElementById("payslip-dialog");
-
-    // Smooth transition for overlay
-    overlay.classList.remove("opacity-100");
-    overlay.classList.add("opacity-0");
-
-    // Smooth transition for dialog (scale-down effect)
-    dialog.classList.remove("scale-100");
-    dialog.classList.add("scale-75");
-
-    setTimeout(() => {
-      overlay.classList.add("hidden");
-    }, 200); // Delay to match animation duration
-
-    // Remove the event listener to prevent multiple listeners being added
-    overlay.removeEventListener('click', closePayslip);
-  }
-
   // Print function
   function printPayslip() {
     var printContent = document.getElementById('payslip-content');
@@ -487,39 +361,31 @@ require_once views_path("partials/nav");
     printWindow.print();
   }
 
-  // Download as PDF
-  function downloadPayslip() {
-    // Show loading toast
-    Swal.fire({
-      title: 'Downloading Payslip...',
-      text: 'Please wait...',
-      icon: 'info',
-      showConfirmButton: false,
-      allowOutsideClick: false,
-      willOpen: () => {
-        Swal.showLoading();
+  function downloadPayslip(employeeId) {
+  fetch(`../app/api/get_payslip-file.php?employee_id=${employeeId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.file) {
+        const downloadUrl = `../app/api/download_payslip.php?file=${encodeURIComponent(data.file)}`;
+
+        // Force download using a temporary <a> with download attribute
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.setAttribute('download', '');
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        alert('Payslip not found.');
       }
-    });
-
-    // Hide the buttons temporarily
-    document.getElementById('payslip-buttons').style.display = 'none';
-
-    var element = document.getElementById('payslip-content');
-    var opt = {
-      margin:       0.5,
-      filename:     'payslip.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-
-    html2pdf().from(element).set(opt).save().then(() => {
-      // After download, show the buttons back and close the modal
-      document.getElementById('payslip-buttons').style.display = 'flex';
-      closePayslip();
-      Swal.close();  // Close the loading toast
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      alert('Error downloading payslip.');
     });
   }
+
 </script>
 
 

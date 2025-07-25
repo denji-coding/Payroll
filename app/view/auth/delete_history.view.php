@@ -125,18 +125,29 @@ require_once views_path("partials/nav");
                                                         <!-- Restore Button -->
                                                         <form method="POST" action="index.php?payroll=delete_history" style="display:inline;">
                                                             <input type="hidden" name="restore_id" value="<?= $deletedEmployee['id'] ?>">
-                                                            <button type="button" class="restore-button inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white" title="Restore">
+                                                            <button 
+                                                                type="button"
+                                                                class="restore-button inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white"
+                                                                title="Restore"
+                                                                data-id="<?= $deletedEmployee['id'] ?>"
+                                                            >
                                                                 <i class="fas fa-trash-restore"></i>
                                                             </button>
-                                                        </form>                                                                                                              
-                                                        
+                                                        </form>
+
                                                         <!-- Delete Permanently Button -->
-                                                        <form method="POST" action="index.php?payroll=delete_history" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently delete this employee?');">
+                                                        <form method="POST" action="index.php?payroll=delete_history" style="display:inline;">
                                                             <input type="hidden" name="delete_id" value="<?= $deletedEmployee['id'] ?>">
-                                                            <button type="button" class="delete-btn inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-red-600 hover:text-white" title="Delete Permanently">
+                                                            <button 
+                                                                type="button"
+                                                                class="delete-btn inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-red-600 hover:text-white"
+                                                                title="Delete Permanently"
+                                                                data-id="<?= $deletedEmployee['id'] ?>" 
+                                                            >
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
                                                         </form>
+
                                                     </div>
                                                 </td>
 
@@ -264,210 +275,275 @@ require_once views_path("partials/nav");
 
 
 <script>
-document.querySelectorAll('.view-deleted-employee').forEach(button => {
-    button.addEventListener('click', function () {
-        const employeeId = this.getAttribute('data-id');
+document.addEventListener('DOMContentLoaded', () => {
+    bindRestoreAndDeleteButtons();
 
-        fetch(`index.php?payroll=delete_history&id=${employeeId}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                // Format full name: LASTNAME, FIRSTNAME M.
-                const lastName = (data.last_name || '').toUpperCase();
-                const firstName = (data.first_name || '').toUpperCase();
-                const middleName = (data.middle_name || '').toUpperCase();
-                const middleInitial = middleName ? middleName.charAt(0) + '.' : '';
-                const formattedName = `${lastName}, ${firstName} ${middleInitial}`.trim();
-                // const citizenShip = (data.citizenship || '').toUpperCase();
+    const searchInput = document.getElementById("delete_searchInput");
+    const clearBtn = document.getElementById("delete_clearButton");
+    const tbody = document.getElementById("delete_employeeTable");
 
-                // Format address: Capitalize first letter of each word
-                const formattedAddress = (data.address || '')
-                    .toLowerCase()
-                    .replace(/\b\w/g, c => c.toUpperCase());
+    let debounce;
 
-                // Format account numbers
-                const formatSSS = sss => sss?.replace(/^(\d{4})(\d{7})(\d{1})$/, '$1-$2-$3') || 'N/A';
-                const formatPagibig = pagibig => pagibig?.replace(/^(\d{4})(\d{4})(\d{4})$/, '$1-$2-$3') || 'N/A';
-                const formatPhilhealth = philhealth => philhealth?.replace(/^(\d{2})(\d{9})(\d{1})$/, '$1-$2-$3') || 'N/A';
-
-                // Populate modal fields
-                document.getElementById('deletedEmployeeId').value = data.id || '';
-                document.getElementById('view_deleted_employee_id').value = data.employee_no || '';
-                document.getElementById('deletedEmployeeName').textContent = formattedName || 'N/A';
-                document.getElementById('deletedEmployeeIdView').textContent = data.employee_no || 'N/A';
-                document.getElementById('deletedEmployeeBloodType').textContent = data.blood_type || 'N/A';
-                document.getElementById('deletedEmployeeCivilStatus').textContent = data.civil_status || 'N/A';
-                document.getElementById('deletedEmployeeBirthday').textContent = data.dob || 'N/A';
-                document.getElementById('deletedEmployeeSex').textContent = data.sex || 'N/A';
-                document.getElementById('deletedEmployeeCitizen').textContent = (data.citizenship || 'N/A').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-                document.getElementById('deletedEmployeeRFID').textContent = data.rfid_number || 'N/A';
-                document.getElementById('deletedEmployeePosition').textContent = data.position || 'N/A';
-                document.getElementById('deletedEmployeeEmail').textContent = data.email || 'N/A';
-                document.getElementById('deletedEmployeePhone').textContent = data.contact_number || 'N/A';
-                document.getElementById('deletedEmployeePlaceOfBirth').textContent = (data.place_of_birth || 'N/A').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-                document.getElementById('deletedEmployeeBranch').textContent =  (data.manager_name && data.manager_address) ? `${data.manager_name} - ${data.manager_address}` : 'N/A';
-                document.getElementById('deletedEmployeeAddress').textContent = formattedAddress || 'N/A';
-                document.getElementById('deletedEmployeeSalary').textContent = data.base_salary || '0.00';
-                document.getElementById('deletedEmployeeSSS').textContent = formatSSS(data.sss_number);
-                document.getElementById('deletedEmployeePagibig').textContent = formatPagibig(data.pagibig_number);
-                document.getElementById('deletedEmployeePhilhealth').textContent = formatPhilhealth(data.philhealth_number);
-
-                // Only set values if the hidden inputs exist
-                const restoreInput = document.getElementById('restore_id');
-                const deleteInput = document.getElementById('delete_id');
-                if (restoreInput) restoreInput.value = data.id || '';
-                if (deleteInput) deleteInput.value = data.id || '';
-
-                // Set employee photo
-                const photoElem = document.getElementById('view_deletedEmployeePhoto');
-                if (photoElem) {
-                    if (data.photo_path && data.photo_path.trim() !== '') {
-                        photoElem.src = data.photo_path;
-                    } else {
-                        if (data.sex && data.sex.toLowerCase() === 'female') {
-                            photoElem.src = '../public/assets/image/default_women.png';
-                        } else {
-                            photoElem.src = '../public/assets/image/default_men.png';
-                        }
-                    }
-                }
-
-
-                // Show the modal
-                const deletedModal = new bootstrap.Modal(document.getElementById('viewDeletedEmployeeModal'));
-                deletedModal.show();
-            })
-            .catch(error => {
-                console.error('Failed to load deleted employee data:', error);
-                Swal.fire('Error', 'Failed to load employee details.', 'error');
-            });
-    });
-});
-
-
-
-
-document.querySelectorAll('.restore-button').forEach(button => {
-    button.addEventListener('click', function () {
-        const form = this.closest('form');
-        Swal.fire({
-            title: 'Restore Employee?',
-            text: "This will restore the employee's data.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#478547',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Confirm'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit();
-            }
-        });
-    });
-});
-
-document.querySelectorAll('.delete-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Confirm'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.closest('form').submit();
-            }
-        });
-    });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("delete_searchInput");
-  const clearBtn = document.getElementById("delete_clearButton");
-  const tbody = document.getElementById("delete_employeeTable");
-
-  let debounce;
-
-  // Initialize
-  toggleClearButton();
-  filterTable();
-
-  searchInput.addEventListener("input", () => {
-    toggleClearButton();
-
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      filterTable();
-    }, 300);
-  });
-
-  clearBtn.addEventListener("click", () => {
-    searchInput.value = "";
     toggleClearButton();
     filterTable();
-  });
 
-  function toggleClearButton() {
-    clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
-  }
-
-  function filterTable() {
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    const rows = tbody.querySelectorAll("tr");
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-      if (row.id === "noResultRow") return;
-
-      const nameCell = row.querySelector("td:nth-child(3)");
-      const empNoCell = row.querySelector("td:nth-child(4)");
-      if (!nameCell || !empNoCell) return;
-
-      const name = nameCell.textContent.trim().toLowerCase();
-      const empNo = empNoCell.textContent.trim().toLowerCase();
-      const nameParts = name.split(" ");
-
-      const matches =
-        name.includes(searchTerm) ||
-        empNo.includes(searchTerm) ||
-        nameParts.some(p => p.startsWith(searchTerm));
-
-      if (matches) {
-        row.style.display = "";
-        // row.classList.remove("fade-in-slide");
-        void row.offsetWidth;
-        row.classList.add("fade-in-slide");
-        visibleCount++;
-      } else {
-        row.style.display = "none";
-      }
+    searchInput.addEventListener("input", () => {
+        toggleClearButton();
+        clearTimeout(debounce);
+        debounce = setTimeout(filterTable, 300);
     });
 
-    // Handle no match
-    let noRow = document.getElementById("noResultRow");
-    if (visibleCount === 0) {
-      if (!noRow) {
-        noRow = document.createElement("tr");
-        noRow.id = "noResultRow";
-        noRow.innerHTML = `
-          <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
-            <i class="bi bi-person-x fs-4 me-2"></i> No deleted employee records found.
-          </td>`;
-        tbody.appendChild(noRow);
-      }
-    } else {
-      if (noRow) noRow.remove();
+    clearBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        toggleClearButton();
+        filterTable();
+    });
+
+    function toggleClearButton() {
+        clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
     }
-  }
+
+    function filterTable() {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const rows = tbody.querySelectorAll("tr");
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            if (row.id === "noResultRow") return;
+
+            const nameCell = row.querySelector("td:nth-child(3)");
+            const empNoCell = row.querySelector("td:nth-child(4)");
+            if (!nameCell || !empNoCell) return;
+
+            const name = nameCell.textContent.trim().toLowerCase();
+            const empNo = empNoCell.textContent.trim().toLowerCase();
+            const nameParts = name.split(" ");
+
+            const matches =
+                name.includes(searchTerm) ||
+                empNo.includes(searchTerm) ||
+                nameParts.some(p => p.startsWith(searchTerm));
+
+            if (matches) {
+                row.style.display = "";
+                row.classList.add("fade-in-slide");
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        let noRow = document.getElementById("noResultRow");
+        if (visibleCount === 0) {
+            if (!noRow) {
+                noRow = document.createElement("tr");
+                noRow.id = "noResultRow";
+                noRow.innerHTML = `
+                    <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+                        <i class="bi bi-person-x fs-4 me-2"></i> No deleted employee records found.
+                    </td>`;
+                tbody.appendChild(noRow);
+            }
+        } else {
+            if (noRow) noRow.remove();
+        }
+    }
+
+    window.applyFilter = filterTable;
 });
+
+function bindRestoreAndDeleteButtons() {
+    // Restore Button
+    document.querySelectorAll('.restore-button').forEach(button => {
+        button.addEventListener('click', function () {
+            const id = this.dataset.id;
+            const row = this.closest('tr');
+
+            Swal.fire({
+                title: 'Restore Employee?',
+                text: "This will restore the employee's data.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#478547',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Confirm'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Employee Restored!',
+                        showConfirmButton: false,
+                        timer: 1200
+                    }).then(() => {
+                        row.style.transition = 'opacity 0.5s ease';
+                        row.style.opacity = 0;
+
+                        setTimeout(() => {
+                            fetch('../app/api/delete_history-api.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ restore_id: id })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === 'restored') {
+                                    updateTable(data.html);
+                                } else {
+                                    Swal.fire('Error', data.error || 'Unexpected error', 'error');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Fetch failed:', err);
+                                Swal.fire('Error', 'Request failed.', 'error');
+                            });
+                        }, 500);
+                    });
+                }
+            });
+        });
+    });
+
+    // Delete Button
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const id = this.dataset.id;
+            const row = this.closest('tr');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Confirm'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Employee Deleted!',
+                        showConfirmButton: false,
+                        timer: 1200
+                    }).then(() => {
+                        row.style.transition = 'opacity 0.5s ease';
+                        row.style.opacity = 0;
+
+                        setTimeout(() => {
+                            fetch('../app/api/delete_history-api.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ delete_id: id })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === 'deleted') {
+                                    updateTable(data.html);
+                                } else {
+                                    Swal.fire('Error', data.error || 'Unexpected error', 'error');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Delete request failed:', err);
+                                Swal.fire('Error', 'Request failed.', 'error');
+                            });
+                        }, 500);
+                    });
+                }
+            });
+        });
+    });
+
+    // View Button
+    document.querySelectorAll('.view-deleted-employee').forEach(button => {
+        button.addEventListener('click', function () {
+            const employeeId = this.dataset.id;
+
+            fetch(`../app/api/delete_history-api.php?id=${employeeId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    function toTitleCase(str) {
+                    return str
+                        .toLowerCase()
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    }
+                    const lastName = (data.last_name || '').toUpperCase();
+                    const firstName = (data.first_name || '').toUpperCase();
+                    const middleName = (data.middle_name || '').toUpperCase();
+                    const middleInitial = middleName ? middleName.charAt(0) + '.' : '';
+                    const formattedName = `${lastName}, ${firstName} ${middleInitial}`.trim();
+
+                    const formattedAddress = (data.address || '')
+                        .toLowerCase()
+                        .replace(/\b\w/g, c => c.toUpperCase());
+
+                    const formatSSS = sss => sss?.replace(/^(\d{4})(\d{7})(\d{1})$/, '$1-$2-$3') || 'N/A';
+                    const formatPagibig = pagibig => pagibig?.replace(/^(\d{4})(\d{4})(\d{4})$/, '$1-$2-$3') || 'N/A';
+                    const formatPhilhealth = philhealth => philhealth?.replace(/^(\d{2})(\d{9})(\d{1})$/, '$1-$2-$3') || 'N/A';
+
+                    document.getElementById('deletedEmployeeId').value = data.id || '';
+                    document.getElementById('view_deleted_employee_id').value = data.employee_no || '';
+                    document.getElementById('deletedEmployeeName').textContent = formattedName || 'N/A';
+                    document.getElementById('deletedEmployeeIdView').textContent = data.employee_no || 'N/A';
+                    document.getElementById('deletedEmployeeBloodType').textContent = data.blood_type || 'N/A';
+                    document.getElementById('deletedEmployeeCivilStatus').textContent = data.civil_status || 'N/A';
+                    document.getElementById('deletedEmployeeBirthday').textContent = data.dob || 'N/A';
+                    document.getElementById('deletedEmployeeSex').textContent = data.sex || 'N/A';
+                    document.getElementById('deletedEmployeeCitizen').textContent = (data.citizenship || 'N/A').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                    document.getElementById('deletedEmployeeRFID').textContent = data.rfid_number || 'N/A';
+                    document.getElementById('deletedEmployeePosition').textContent = data.position || 'N/A';
+                    document.getElementById('deletedEmployeeEmail').textContent = data.email || 'N/A';
+                    document.getElementById('deletedEmployeePhone').textContent = data.contact_number || 'N/A';
+                    document.getElementById('deletedEmployeePlaceOfBirth').textContent = (data.place_of_birth || 'N/A').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                    document.getElementById('deletedEmployeeBranch').textContent = (data.manager_name && data.manager_address) ? `${toTitleCase(data.manager_name)} - ${toTitleCase(data.manager_address)}`: 'N/A';
+                    document.getElementById('deletedEmployeeAddress').textContent = formattedAddress || 'N/A';
+                    document.getElementById('deletedEmployeeSalary').textContent = data.base_salary || '0.00';
+                    document.getElementById('deletedEmployeeSSS').textContent = formatSSS(data.sss_number);
+                    document.getElementById('deletedEmployeePagibig').textContent = formatPagibig(data.pagibig_number);
+                    document.getElementById('deletedEmployeePhilhealth').textContent = formatPhilhealth(data.philhealth_number);
+
+                    const restoreInput = document.getElementById('restore_id');
+                    const deleteInput = document.getElementById('delete_id');
+                    if (restoreInput) restoreInput.value = data.id || '';
+                    if (deleteInput) deleteInput.value = data.id || '';
+
+                    const photoElem = document.getElementById('view_deletedEmployeePhoto');
+                    if (photoElem) {
+                        if (data.photo_path && data.photo_path.trim() !== '') {
+                            photoElem.src = data.photo_path;
+                        } else {
+                            photoElem.src = (data.sex && data.sex.toLowerCase() === 'female')
+                                ? '../public/assets/image/default_women.png'
+                                : '../public/assets/image/default_men.png';
+                        }
+                    }
+
+                    const deletedModal = new bootstrap.Modal(document.getElementById('viewDeletedEmployeeModal'));
+                    deletedModal.show();
+                })
+                .catch(error => {
+                    console.error('Failed to load deleted employee data:', error);
+                    Swal.fire('Error', 'Failed to load employee details.', 'error');
+                });
+        });
+    });
+}
+
+function updateTable(html) {
+    const tbody = document.getElementById('delete_employeeTable');
+    tbody.innerHTML = html;
+    bindRestoreAndDeleteButtons();
+    if (typeof applyFilter === 'function') applyFilter();
+}
 </script>
+
+
+
+
 
 
 

@@ -125,6 +125,7 @@ try {
         SELECT *
         FROM employees
         WHERE branch_manager = :managerId AND approved_by_manager IN (0, -1)
+        ORDER BY id DESC
     ");
     $stmt->execute(['managerId' => $managerId]);
     $list = $stmt->fetchAll(PDO::FETCH_ASSOC);

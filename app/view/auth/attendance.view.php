@@ -6,8 +6,24 @@ $title = "RFID Attendance";
 require_once views_path("partials/header");
 ?>
 
+<style>
+   @keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
+</style>
+
 <!-- SweetAlert2 CDN for alert popups -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
 
 
 
@@ -33,7 +49,7 @@ require_once views_path("partials/header");
         <!-- Attendance Form -->
         <form id="manualAttendanceForm"
               method="POST"
-              action="index.php?payroll=attendance"
+              action="../app/api/attendance-api.php"
               class="mt-10 flex flex-col gap-6">
 
             <!-- Employee ID Input -->
@@ -161,96 +177,139 @@ require_once views_path("partials/header");
         </style>
 
 
-            <!-- Date Filter Form with Flatpickr -->
-          <form method="GET" action="index.php" class="bg-white p-2 rounded-md mb-2 text-sm max-w-xs w-full mx-auto">
-            <input type="hidden" name="payroll" value="attendance">
+           <!-- Date Filter with Flatpickr (No Page Reload) -->
+<div class="bg-white p-2 rounded-md mb-2 text-sm max-w-xs w-full mx-auto">
+  <div class="flex items-center gap-2 w-full">
+    
+    <!-- Flatpickr Date Input -->
+    <div class="relative flex-1 min-w-0">
+      <input 
+        type="text" 
+        id="date" 
+        name="date" 
+        value="<?= htmlspecialchars($filterDate ?? date('Y-m-d')) ?>"
+        placeholder="Select a date"
+        class="invisible w-full p-1 border border-emerald-300 rounded focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-700 text-center bg-white"
+      >
+    </div>
 
-            <div class="flex items-center gap-2 w-full">
-              <!-- Flatpickr Date Input -->
-              <div class="relative flex-1 min-w-0">
-                <input 
-                  type="text" 
-                  id="date" 
-                  name="date" 
-                  value="<?= htmlspecialchars($filterDate ?? date('Y-m-d')) ?>"
-                  placeholder="Select a date"
-                  class="w-full p-1 border border-emerald-300 rounded focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-emerald-700 text-center bg-white"
-                >
-              </div>
-              
+    <!-- Buttons -->
+    <div class="flex-shrink-0 flex gap-1">
+      <!-- Filter Button -->
+      <button 
+        type="button" 
+        id="filterBtn"
+        class="w-20 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs whitespace-nowrap flex items-center justify-center px-2"
+      >
+        <span class="text-sm">Filter</span>
+        <i class="bi bi-filter text-sm ml-1"></i>
+      </button>
 
-              <!-- Buttons -->
-              <div class="flex-shrink-0 flex gap-1">
-                <!-- Filter Button -->
-                <button 
-                  type="submit" 
-                  class="w-20 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs whitespace-nowrap flex items-center justify-center px-2"
-                >
-                  <span class="text-sm">Filter</span> <i class="bi bi-filter text-sm ml-1"></i>
-                </button>
+      <!-- Clear Filter Button (shown via JS) -->
+      <button 
+        type="button" 
+        id="clearFilterBtn"
+        class="w-auto h-8 flex items-center justify-center gap-1 px-3 py-1 bg-red-700 hover:bg-red-800 text-white rounded text-xs whitespace-nowrap <?= (!isset($_GET['date']) || $_GET['date'] === date('Y-m-d')) ? 'hidden' : '' ?>"
+      >
+        <i class="bi bi-eraser text-sm"></i>
+      </button>
+    </div>
+  </div>
+</div>
 
-                <!-- Show Clear Button only if filtered -->
-                <?php if (isset($_GET['date']) && $_GET['date'] !== date('Y-m-d')): ?>
-                  <button 
-                    type="button" 
-                    id="clearFilterBtn"
-                    class="w-auto h-8 flex items-center justify-center gap-1 px-3 py-1 bg-red-700 hover:bg-red-800 text-white rounded text-xs whitespace-nowrap"
-                  >
-                  <i class="bi bi-eraser text-sm"></i>
-                  </button>
-                <?php endif; ?>
-              </div>
-            </div>
-          </form>
 
-          <!-- Scripts -->
-          <script>
-            
-                flatpickr("#date", {
-                altInput: true,
-                altFormat: "F j, Y",
-                dateFormat: "Y-m-d",
-                disableMobile: true,
-                allowInput: true, // optional but helpful
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById("date");
+  const clearBtn = document.getElementById("clearFilterBtn");
+  const filterBtn = document.getElementById("filterBtn");
+  const todayStr = new Date().toISOString().split('T')[0];
 
-                onReady: function(selectedDates, dateStr, instance) {
-                    // Ensure calendar stays open when selecting month/year
-                    const monthNav = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-                    if (monthNav) {
-                        monthNav.addEventListener('click', function(e) {
-                            e.stopPropagation(); // prevent close
-                        });
-                    }
+  const fp = flatpickr(dateInput, {
+  altInput: true,
+  altFormat: "F j, Y",
+  dateFormat: "Y-m-d",
+  defaultDate: dateInput.value || todayStr,
+  disableMobile: true,
+  allowInput: true,
 
-                    const yearInput = instance.calendarContainer.querySelector('.numInputWrapper');
-                    if (yearInput) {
-                        yearInput.addEventListener('click', function(e) {
-                            // e.stopPropagation(); // prevent close
-                        });
-                    }
-                }
-            });
-            // Clear Filter Button Logic
-            const clearBtn = document.getElementById("clearFilterBtn");
-            if (clearBtn) {
-              clearBtn.addEventListener("click", function () {
-                const dateInput = document.getElementById("date");
-                if (dateInput) {
-                  dateInput._flatpickr.clear(); // Clear using Flatpickr API
-                }
+  onReady: function (selectedDates, dateStr, instance) {
+    // Remove glitch: hide raw input until ready
+    instance._input.classList.remove('invisible');
 
-                // Submit form without date
-                const form = clearBtn.closest("form");
-                const hiddenInput = document.createElement("input");
-                hiddenInput.type = "hidden";
-                hiddenInput.name = "payroll";
-                hiddenInput.value = "attendance";
-                form.innerHTML = "";
-                form.appendChild(hiddenInput);
-                form.submit();
-              });
-            }
-          </script>
+    // Prevent Flatpickr from closing when clicking month/year dropdowns
+    const monthNav = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+    if (monthNav) {
+      monthNav.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    }
+
+    const yearInput = instance.calendarContainer.querySelector('.numInputWrapper');
+    if (yearInput) {
+      yearInput.addEventListener('click', function (e) {
+        // Optional: prevent close when clicking year input
+        e.stopPropagation();
+      });
+    }
+
+    // ✅ Show/hide clear button initially
+    toggleClearBtn(dateInput.value);
+  }
+});
+
+  function toggleClearBtn(selectedDate) {
+    if (clearBtn) {
+      if (selectedDate && selectedDate !== todayStr) {
+        clearBtn.classList.remove("hidden");
+      } else {
+        clearBtn.classList.add("hidden");
+      }
+    }
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", function () {
+      fp.setDate(todayStr, true); // Reset to today
+      toggleClearBtn(todayStr);
+      refreshAttendanceTable(todayStr);
+    });
+  }
+
+  if (filterBtn) {
+    filterBtn.addEventListener("click", () => {
+      const selectedDate = dateInput.value;
+      if (selectedDate) {
+        toggleClearBtn(selectedDate);
+        refreshAttendanceTableFilter(selectedDate);
+      }
+    });
+  }
+
+  function refreshAttendanceTableFilter(date = todayStr) {
+    fetch(`../app/api/attendance-api.php?date=${date}`)
+      .then(res => res.json())
+      .then(res => {
+        const tbody = document.getElementById('attendance-table-body');
+        if (res.status === 'success' && res.html) {
+          tbody.innerHTML = res.html;
+        } else {
+          tbody.innerHTML = `
+                            <tr>
+                                <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+                                <i class="bi bi-calendar-x fs-5 me-2"></i>No attendance records found.
+                                </td>
+                            </tr>
+                            `;
+        }
+      })
+      .catch(err => console.error("Table fetch error:", err));
+  }
+});
+
+</script>
+
+
 
         <!-- Table of records -->
         <div class="overflow-x-auto max-h-[60vh] rounded-lg shadow-md bg-white">
@@ -276,28 +335,28 @@ require_once views_path("partials/header");
                         <tbody id="attendance-table-body">
                                 <?php if (count($attendanceRecords) > 0): ?>
                                     <?php foreach ($attendanceRecords as $index => $record): ?>
-                                        <tr>
-                                            <td class="py-2 px-4 text-center"><?= $index + 1 . '.)' ?></td>
-                                            <td class="py-2 px-4">
+                                        <tr class="fade-in-slide ">
+                                            <td class="py-3 px-4 text-center"><?= $index + 1?></td>
+                                            <td class="py-3 px-4">
                                                 <img src="<?= htmlspecialchars($record['photo_path'] ?: 'assets/image/default_user_image.svg') ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" />
                                             </td>
-                                            <td class="py-2 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td>
-                                            <td class="py-2 text-sm px-4"><?= htmlspecialchars(ucwords(strtolower($record['full_name']))) ?></td>
+                                            <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td>
+                                            <td class="py-3 text-sm px-4"><?= htmlspecialchars(ucwords(strtolower($record['full_name']))) ?></td>
 
-                                            <td class="py-2 text-sm px-4"><?= htmlspecialchars($record['position']) ?></td>
-                                            <td class="py-2 text-sm text-center px-4">
+                                            <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['position']) ?></td>
+                                            <td class="py-3 text-sm text-center px-4">
                                                 <?= $record['morning_in'] ? date('h:i A', strtotime($record['morning_in'])) : '-' ?>
                                             </td>
-                                            <td class="py-2 text-sm text-center px-4">
+                                            <td class="py-3 text-sm text-center px-4">
                                                 <?= $record['morning_out'] ? date('h:i A', strtotime($record['morning_out'])) : '-' ?>
                                             </td>
-                                            <td class="py-2 text-sm text-center px-4">
+                                            <td class="py-3 text-sm text-center px-4">
                                                 <?= $record['afternoon_in'] ? date('h:i A', strtotime($record['afternoon_in'])) : '-' ?>
                                             </td>
-                                            <td class="py-2 text-sm text-center px-4">
+                                            <td class="py-3 text-sm text-center px-4">
                                                 <?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '-' ?>
                                             </td>
-                                            <td class="py-2 px-4 text-sm text-center"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
+                                            <td class="py-3 px-4 text-sm text-center"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -316,213 +375,260 @@ require_once views_path("partials/header");
 
 <script>
 function updateClock() {
-    const now = new Date();
-    const timeElement = document.getElementById('time');
-    const dateElement = document.getElementById('date');
+  const now = new Date();
+  const timeElement = document.getElementById('time');
+  const dateElement = document.getElementById('date');
 
-    const timeString = now.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-    });
+  const timeString = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
 
-    const dateString = now.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-    });
+  const dateString = now.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
-    if (timeElement) timeElement.textContent = timeString;
-    if (dateElement) dateElement.textContent = dateString;
+  if (timeElement) timeElement.textContent = timeString;
+  if (dateElement) dateElement.textContent = dateString;
 }
-
 updateClock();
 setInterval(updateClock, 1000);
 
 function formatName(str) {
-    return str
-        .toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+  return str.toLowerCase().split(' ').map(word =>
+    word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+// === Refresh attendance table
+function refreshAttendanceTable() {
+  const today = new Date().toISOString().split('T')[0];
+  fetch(`../app/api/attendance-api.php?date=${today}`)
+    .then(res => res.json())
+    .then(res => {
+  console.log("Fetch Log Response:", res);
+  const tbody = document.getElementById('attendance-table-body');
+  if (res.status === 'success' && res.html) {
+    tbody.innerHTML = res.html;
+  } else {
+    console.warn('No HTML returned:', res.message);
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-sm">No data found.</td></tr>';
+  }
+})
+
+    .catch(err => {
+      console.error('Table refresh error:', err);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const rfidInput = document.getElementById('rfidInput');
-    const employeeIdInput = document.getElementById('employeeIdInput');
-    const manualTimeInBtn = document.getElementById('manualTimeInBtn');
-    const manualTimeOutBtn = document.getElementById('manualTimeOutBtn');
+  const rfidInput = document.getElementById('rfidInput');
+  const employeeIdInput = document.getElementById('employeeIdInput');
+  const timeInBtn = document.getElementById('manualTimeInBtn');
+  const timeOutBtn = document.getElementById('manualTimeOutBtn');
 
-    const showSimpleAlert = (type, title, text) => {
-        Swal.fire({
-            icon: type,
-            title: title,
-            text: text,
-            timer: 2500,
-            showConfirmButton: false
-        });
-    };
+  const showSimpleAlert = (type, title, text) => {
+    Swal.fire({ icon: type, title, text, timer: 2500, showConfirmButton: false });
+  };
 
-    const showCustomToast = (message, bgColor) => {
-        let container = document.getElementById('custom-toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'custom-toast-container';
-            container.style.position = 'fixed';
-            container.style.bottom = '20px';
-            container.style.right = '20px';
-            container.style.zIndex = 9999;
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.gap = '10px';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.style.background = bgColor;
-        toast.style.color = '#133913';
-        toast.style.padding = '12px 20px';
-        toast.style.borderRadius = '10px';
-        toast.style.fontWeight = '600';
-        toast.style.fontSize = '14px';
-        toast.style.opacity = '1';
-        toast.style.transition = 'opacity 0.5s ease';
-        toast.style.display = 'flex';
-        toast.style.flexDirection = 'column';
-        toast.style.width = '300px';
-
-        const header = document.createElement('strong');
-        header.textContent = 'Attendance time recorded';
-        header.style.fontSize = '16px';
-        header.style.marginBottom = '6px';
-
-        const messageElem = document.createElement('span');
-        messageElem.textContent = message;
-        messageElem.style.fontWeight = 'normal';
-        messageElem.style.fontSize = '14px';
-
-        toast.appendChild(header);
-        toast.appendChild(messageElem);
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => {
-                container.removeChild(toast);
-                if (container.childElementCount === 0) container.remove();
-            }, 500);
-        }, 2000);
-    };
-
-    const submitAttendance = (dataObj) => {
-        fetch('index.php?payroll=attendance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams(dataObj).toString()
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response failed');
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                const type = data.type;
-                const isIn = type.endsWith('in');
-                const borderColor = isIn ? 'rgb(76, 180, 76)' : 'rgb(255, 119, 119)';
-                const bgColor = isIn ? '#ecfdf5' : '#fef2f2';
-
-                const name = formatName(data.name);
-                const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-                const imageUrl = data.image_url || 'assets/image/default_user_image.svg';
-
-                Swal.fire({
-                    html: `
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                            <img src="${imageUrl}" alt="Employee Photo"
-                                style="height: 150px; width: 150px; border-radius: 50%; margin: 10px 0;
-                                    border: 2px solid ${borderColor}; object-fit: cover;">
-                            <h2 style="margin: 5px 0 2px 0; font-weight: bold; font-size: 2rem;">${name}</h2>
-                            <p style="margin: 0;">${type.replace('-', ' ').toUpperCase()} successfully recorded</p>
-                        </div>
-                    `,
-                    showConfirmButton: false,
-                    timer: 2000,
-                    didOpen: () => {
-                        const popup = document.querySelector('.swal2-popup');
-                        if (popup) popup.style.border = '5px solid ' + borderColor;
-                        showCustomToast(`You have ${type.replace('-', ' ')} at ${currentTime}.`, bgColor);
-                    }
-                }).then(() => location.reload());
-
-            } else {
-                showSimpleAlert(data.status || 'info', data.status?.toUpperCase() || 'Info', data.message || '');
-            }
-
-            if (rfidInput) rfidInput.value = '';
-            if (employeeIdInput) employeeIdInput.value = '';
-            if (rfidInput) rfidInput.focus();
-        })
-        .catch(error => {
-            console.error('Fetch Error:', error);
-            showSimpleAlert('error', 'Error', 'Failed to submit attendance.');
-        });
-    };
-
-    if (rfidInput) {
-        rfidInput.focus();
-        rfidInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const rfid = rfidInput.value.trim();
-                if (!rfid) {
-                    showSimpleAlert('warning', 'Missing Input', 'Please enter your RFID.');
-                    return;
-                }
-                submitAttendance({ rfid });
-            }
-        });
+  const showCustomToast = (message, bgColor) => {
+    let container = document.getElementById('custom-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'custom-toast-container';
+      Object.assign(container.style, {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
+      });
+      document.body.appendChild(container);
     }
 
-    if (employeeIdInput) {
-        employeeIdInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') e.preventDefault();
-        });
-    }
-
-    if (manualTimeInBtn) {
-        manualTimeInBtn.addEventListener('click', () => {
-            const empId = employeeIdInput?.value.trim();
-            if (!empId) {
-                showSimpleAlert('warning', 'Missing Input', 'Please enter your Employee ID.');
-                employeeIdInput.focus();
-                return;
-            }
-            submitAttendance({ employee_id: empId, manual_type: 'morning-in' });
-        });
-    }
-
-    if (manualTimeOutBtn) {
-        manualTimeOutBtn.addEventListener('click', () => {
-            const empId = employeeIdInput?.value.trim();
-            if (!empId) {
-                showSimpleAlert('warning', 'Missing Input', 'Please enter your Employee ID.');
-                employeeIdInput.focus();
-                return;
-            }
-            submitAttendance({ employee_id: empId, manual_type: 'afternoon-out' });
-        });
-    }
-
-    document.body.addEventListener('click', (e) => {
-        if (!rfidInput) return;
-        const tag = e.target.tagName.toLowerCase();
-        if (!['input', 'button', 'textarea'].includes(tag) && !e.target.closest('#manualAttendanceForm')) {
-            rfidInput.focus();
-        }
+    const toast = document.createElement('div');
+    Object.assign(toast.style, {
+      background: bgColor,
+      color: '#133913',
+      padding: '12px 20px',
+      borderRadius: '10px',
+      fontWeight: '600',
+      fontSize: '14px',
+      opacity: '1',
+      transition: 'opacity 0.5s ease',
+      display: 'flex',
+      flexDirection: 'column',
+      width: '300px'
     });
+
+    const header = document.createElement('strong');
+    header.textContent = 'Attendance time recorded';
+    header.style.fontSize = '16px';
+    header.style.marginBottom = '6px';
+
+    const messageElem = document.createElement('span');
+    messageElem.textContent = message;
+    messageElem.style.fontWeight = 'normal';
+    messageElem.style.fontSize = '14px';
+
+    toast.appendChild(header);
+    toast.appendChild(messageElem);
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        container.removeChild(toast);
+        if (!container.hasChildNodes()) container.remove();
+      }, 500);
+    }, 2000);
+  };
+
+  const fetchLogStatusAndSubmit = (empId, typeGroup) => {
+    const today = new Date().toISOString().split('T')[0];
+    fetch(`../app/api/attendance-api.php?date=${today}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.status !== 'success' || !Array.isArray(res.data)) {
+          showSimpleAlert('error', 'Error', 'Could not fetch log status.');
+          return;
+        }
+
+        const record = res.data.find(r => r.employee_no === empId);
+        if (!record) {
+          if (typeGroup === 'in') {
+            submitAttendance({ employee_id: empId, manual_type: 'morning-in' });
+          } else {
+            showSimpleAlert('info', 'Not allowed', 'You need to Time In first.');
+          }
+          return;
+        }
+
+        const { morning_in, morning_out, afternoon_in, afternoon_out } = record;
+
+        if (typeGroup === 'in') {
+          if (!morning_in) {
+            submitAttendance({ employee_id: empId, manual_type: 'morning-in' });
+          } else if (!afternoon_in) {
+            submitAttendance({ employee_id: empId, manual_type: 'afternoon-in' });
+          } else {
+            showSimpleAlert('info', 'Already logged', 'Both Time Ins already done.');
+          }
+        } else if (typeGroup === 'out') {
+          if (!morning_in) {
+            showSimpleAlert('info', 'Not allowed', 'You must log Morning In first.');
+          } else if (!morning_out) {
+            submitAttendance({ employee_id: empId, manual_type: 'morning-out' });
+          } else if (!afternoon_in) {
+            showSimpleAlert('info', 'Not allowed', 'You must log Afternoon In first.');
+          } else if (!afternoon_out) {
+            submitAttendance({ employee_id: empId, manual_type: 'afternoon-out' });
+          } else {
+            showSimpleAlert('info', 'Complete', 'You already logged all today.');
+          }
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        showSimpleAlert('error', 'Fetch Error', 'Unable to fetch attendance log.');
+      });
+  };
+
+  const submitAttendance = (dataObj) => {
+    fetch('../app/api/attendance-api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(dataObj).toString()
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          const type = data.type;
+          const isIn = type.endsWith('in');
+          const borderColor = isIn ? 'rgb(76, 180, 76)' : 'rgb(255, 119, 119)';
+          const bgColor = isIn ? '#ecfdf5' : '#fef2f2';
+          const name = formatName(data.name);
+          const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+          const imageUrl = data.image_url || 'assets/image/default_user_image.svg';
+
+          Swal.fire({
+  html: `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <img src="${imageUrl}" alt="Employee Photo"
+        style="height: 150px; width: 150px; border-radius: 50%; margin: 10px 0;
+            border: 2px solid ${borderColor}; object-fit: cover;">
+      <h2 style="margin: 5px 0 2px 0; font-weight: bold; font-size: 2rem;">${name}</h2>
+      <p style="margin: 0;">${type.replace('-', ' ').toUpperCase()} successfully recorded</p>
+    </div>
+  `,
+  showConfirmButton: false,
+  timer: 2000,
+  didOpen: () => {
+    const popup = document.querySelector('.swal2-popup');
+    if (popup) popup.style.border = '5px solid ' + borderColor;
+    showCustomToast(`You have ${type.replace('-', ' ')} at ${currentTime}.`, bgColor);
+  }
+}).then(() => {
+  // Refresh table only after the Swal popup finishes
+  refreshAttendanceTable();
+});
+
+        } else {
+          showSimpleAlert(data.status || 'error', 'Error', data.message || 'Something went wrong.');
+        }
+
+        if (rfidInput) rfidInput.value = '';
+        if (employeeIdInput) employeeIdInput.value = '';
+        rfidInput?.focus();
+      })
+      .catch(error => {
+        console.error('Fetch Error:', error);
+        showSimpleAlert('error', 'Error', 'Failed to submit attendance.');
+      });
+  };
+
+  if (timeInBtn) {
+    timeInBtn.addEventListener('click', () => {
+      const empId = employeeIdInput?.value.trim();
+      if (!empId) return showSimpleAlert('warning', 'Missing Input', 'Enter your Employee ID.');
+      fetchLogStatusAndSubmit(empId, 'in');
+    });
+  }
+
+  if (timeOutBtn) {
+    timeOutBtn.addEventListener('click', () => {
+      const empId = employeeIdInput?.value.trim();
+      if (!empId) return showSimpleAlert('warning', 'Missing Input', 'Enter your Employee ID.');
+      fetchLogStatusAndSubmit(empId, 'out');
+    });
+  }
+
+  if (rfidInput) {
+    rfidInput.focus();
+    rfidInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const rfid = rfidInput.value.trim();
+        if (!rfid) return showSimpleAlert('warning', 'Missing RFID', 'Scan your RFID first.');
+        submitAttendance({ rfid });
+      }
+    });
+  }
+
+  document.body.addEventListener('click', (e) => {
+    if (!rfidInput) return;
+    const tag = e.target.tagName.toLowerCase();
+    if (!['input', 'button', 'textarea'].includes(tag)) rfidInput.focus();
+  });
 });
 </script>
+
+
+
 
 
 

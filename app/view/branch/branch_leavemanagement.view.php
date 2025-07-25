@@ -351,10 +351,10 @@ try {
                                                 <div class="modal-body d-flex flex-column justify-content-between text-left">
                                                     <?= nl2br(htmlspecialchars($leaveRequest['rejection_reason'])) ?>
                                                     <?php if (!empty($leaveRequest['rejected_by'])): ?>
-                                                      <div>
-                                                        <hr class="w-100 m-0">
-                                                        <small class="text-muted">Rejected by: <?= htmlspecialchars($leaveRequest['rejected_by']) ?></small>
-                                                      </div>
+                                                        <div>
+                                                            <hr class="w-100 m-0">
+                                                            <small class="text-muted">Rejected by: <?= htmlspecialchars($leaveRequest['rejected_by']) ?></small>
+                                                        </div>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>

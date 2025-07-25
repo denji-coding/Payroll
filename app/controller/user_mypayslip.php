@@ -63,7 +63,7 @@ $query = "
         payroll.pay_period_start,
         payroll.pay_period_end,
         payroll.gross_pay,
-        payroll.deductions,
+        payroll.total_deductions,
         payroll.net_pay,
         employees.first_name,
         employees.last_name,

@@ -41,83 +41,88 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table id="employeeTable" class="min-w-full divide-y divide-gray-200 text-sm overflow-hidden">
-                    <thead class="bg-emerald-600 text-white">
-                        <tr>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Photo</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Employee Name</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Employee ID</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">RFID Number</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Position</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Status</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
-                        <?php if (!empty($list) && is_array($list)): ?>
-                            <?php foreach ($list as $lists): ?>
-                                <tr>
-                                    <td class="px-6 py-4">
-                                        <?php if (!empty($lists['photo_path'])): ?>
-                                            <img src="/mvcPayroll/public/<?= htmlspecialchars($lists['photo_path']) ?>" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
-                                        <?php else: ?>
-                                            <div class="h-10 w-10 rounded-full border-1 border-gray-500 bg-gray-300 flex items-center justify-center text-sm text-white">
-                                                <img src="../public/assets/image/man (1).png" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars(ucwords(strtolower($lists['full_name']))) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($lists['employee_no']) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($lists['rfid_number']) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($lists['position']) ?></td>
-                                    
-                                    <td class="px-6 py-4">
-                                        <?php if ($lists['approved_by_manager'] == 1): ?>
-                                            <span class="text-green-600 font-medium">Approved</span>
-                                        <?php elseif ($lists['approved_by_manager'] == -1): ?>
-                                            <span class="text-red-600 font-medium">Rejected</span>
-                                        <?php else: ?>
-                                            <span class="text-yellow-500 text-xs font-medium">Waiting for approval..</span>
-                                        <?php endif; ?>
-                                    </td>
+            <div class="relative w-full max-h-[calc(100vh-220px)] overflow-y-auto">
+                  <table class="min-w-full divide-y divide-gray-200 text-sm">
+                      <thead>
+                          <tr>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Photo</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Employee Name</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Employee ID</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">RFID Number</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Position</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Status</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-100">
+                          <?php if (!empty($list) && is_array($list)): ?>
+                              <?php foreach ($list as $lists): ?>
+                                  <tr>
+                                      <td class="px-6 py-4">
+                                          <?php
+                                              // Determine which photo to display
+                                              if (!empty($lists['photo_path'])) {
+                                                  $imagePath = '/mvcPayroll/public/' . htmlspecialchars($lists['photo_path']);
+                                              } else {
+                                                  $sex = strtolower($lists['sex'] ?? '');
+                                                  $imagePath = in_array($sex, ['f', 'female', 'woman'])
+                                                      ? '/mvcPayroll/public/assets/image/default_women.png'
+                                                      : '/mvcPayroll/public/assets/image/default_men.png';
+                                              }
+                                          ?>
+                                          <img src="<?= $imagePath ?>" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
+                                      </td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars(ucwords(strtolower($lists['full_name']))) ?></td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars($lists['employee_no']) ?></td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars($lists['rfid_number']) ?></td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars($lists['position']) ?></td>
 
-                                    <td class="px-6 py-4">
-                                        <?php if ($lists['approved_by_manager'] == 0): ?>
-                                            <div class="flex space-x-2 gap-2">
-                                                <button 
-                                                    class="btn btn-success text-white rounded flex items-center justify-center p-1 w-8 h-8 approve-btn" 
-                                                    data-id="<?= $lists['id'] ?>"
-                                                    title="Approve"
-                                                    type="button"
-                                                >
-                                                    <i class="bi bi-check-circle"></i>
-                                                </button>
+                                      <td class="px-6 py-4">
+                                          <?php if ($lists['approved_by_manager'] == 1): ?>
+                                              <span class="text-green-600 font-medium">Approved</span>
+                                          <?php elseif ($lists['approved_by_manager'] == -1): ?>
+                                              <span class="text-red-600 font-medium">Rejected</span>
+                                          <?php else: ?>
+                                              <span class="text-yellow-500 text-xs font-medium">Waiting for approval..</span>
+                                          <?php endif; ?>
+                                      </td>
 
-                                                <button 
-                                                    class="btn btn-danger text-white rounded flex items-center justify-center p-1 w-8 h-8 reject-btn" 
-                                                    data-id="<?= $lists['id'] ?>"
-                                                    title="Reject"
-                                                    type="button"
-                                                >
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-gray-400 italic">No Action</span>
-                                        <?php endif; ?>
-                                    </td>
+                                      <td class="px-6 py-4">
+                                          <?php if ($lists['approved_by_manager'] == 0): ?>
+                                              <div class="flex space-x-2 gap-2">
+                                                  <button 
+                                                      class="btn btn-success text-white rounded flex items-center justify-center p-1 w-8 h-8 approve-btn" 
+                                                      data-id="<?= $lists['id'] ?>"
+                                                      title="Approve"
+                                                      type="button"
+                                                  >
+                                                      <i class="bi bi-check-circle"></i>
+                                                  </button>
 
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="8" class="text-center px-6 py-4 text-gray-500">No employees found.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                                                  <button 
+                                                      class="btn btn-danger text-white rounded flex items-center justify-center p-1 w-8 h-8 reject-btn" 
+                                                      data-id="<?= $lists['id'] ?>"
+                                                      title="Reject"
+                                                      type="button"
+                                                  >
+                                                      <i class="bi bi-x-circle"></i>
+                                                  </button>
+                                              </div>
+                                          <?php else: ?>
+                                              <span class="text-gray-400 italic">No Action</span>
+                                          <?php endif; ?>
+                                      </td>
+                                  </tr>
+                              <?php endforeach; ?>
+                          <?php else: ?>
+                              <tr>
+                                  <td colspan="7" class="text-center px-6 py-4 text-gray-500">No employees found.</td>
+                              </tr>
+                          <?php endif; ?>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
         </div>
     </main>
 </div>

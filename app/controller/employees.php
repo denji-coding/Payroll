@@ -22,14 +22,14 @@ $stmt->execute();
 $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch all managers (for dropdowns or assignments)
-$sql = "SELECT * FROM managers ORDER BY created_at DESC";
+$sql = "SELECT * FROM managers ORDER BY m_created_at DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get last manager (optional)
 $lastManager = null;
-$lastManagerQuery = $conn->query("SELECT * FROM managers ORDER BY id DESC LIMIT 1");
+$lastManagerQuery = $conn->query("SELECT * FROM managers ORDER BY m_created_at DESC LIMIT 1");
 if ($lastManagerQuery && $lastManagerQuery->rowCount() > 0) {
     $lastManager = $lastManagerQuery->fetch(PDO::FETCH_ASSOC);
 }

@@ -50,32 +50,117 @@ function resetAddEmployeeForm() {
 // ========== Refresh Employee Table ==========
 async function refreshEmployeeTable() {
   try {
-    const res = await fetch('../app/api/employee-api.php?fetch_table=1');
-    const html = await res.text();
-
-    const temp = document.createElement('tbody');
-    temp.innerHTML = html.trim();
+    const res = await fetch('../app/api/employees-api.php?fetch_table=1');
+    const json = await res.json();
 
     const tbody = document.querySelector('#employeeTable');
     if (!tbody) return;
+    tbody.innerHTML = ''; // Clear current rows
 
-    // Clear previous rows (avoid duplicating)
-    tbody.innerHTML = '';
+    if (!json.status || !Array.isArray(json.data) || json.data.length === 0) {
+      tbody.innerHTML = `
+        <tr id="EmployeenoResultRow">
+          <td colspan="7" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
+            <i class="bi bi-person-x me-2"></i> No employees found.
+          </td>
+        </tr>
+      `;
+      return;
+    }
 
-    // Append new rows with fade-in animation
-    const rows = temp.querySelectorAll('tr');
-    rows.forEach((row, index) => {
-      row.classList.remove('fade-in-slide'); // reset class if needed
-      setTimeout(() => {
-        row.classList.add('fade-in-slide');
-        tbody.appendChild(row);
-      }, index * 50);
+    json.data.forEach((employee, index) => {
+      const defaultImage = employee.sex === 'Female'
+        ? '../public/assets/image/default_women.png'
+        : '../public/assets/image/default_men.png';
+
+      const imageSrc = employee.photo_path || defaultImage;
+
+      let positionColor = '';
+      switch (employee.position) {
+        case 'Manager': positionColor = 'bg-green-600 text-white'; break;
+        case 'Human Resources': positionColor = 'bg-blue-600 text-white'; break;
+        case 'Staff': positionColor = 'bg-yellow-600 text-white'; break;
+        case 'Driver': positionColor = 'bg-red-600 text-white'; break;
+        default: positionColor = 'bg-gray-500 text-white'; break;
+      }
+
+      const middleInitial = employee.middle_name
+        ? employee.middle_name.charAt(0).toUpperCase() + '.'
+        : '';
+
+      const fullName = `${capitalize(employee.first_name)} ${middleInitial} ${capitalize(employee.last_name)}`;
+
+      const tr = document.createElement('tr');
+      tr.className = 'fade-in-slide transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]';
+      tr.innerHTML = `
+        <td class="p-3 align-middle font-medium">${index + 1}</td>
+        <td class="p-3 align-middle font-medium">
+          <div class="flex items-center space-x-2">
+            <span class="relative flex shrink-0 overflow-hidden rounded-full h-12 w-12">
+              <img class="aspect-square h-full w-full" src="${imageSrc}" alt="Employee Photo">
+            </span>
+          </div>
+        </td>
+        <td class="p-3 align-middle font-medium">
+          <div class="flex items-center space-x-2">
+            <span>${fullName}</span>
+          </div>
+        </td>
+        <td class="p-3 align-middle">${employee.employee_no}</td>
+        <td class="p-3 align-middle">${employee.rfid_number}</td>
+        <td class="p-3 align-middle text-center">
+          <div class="inline-flex items-center rounded-full border border-transparent ${positionColor} px-2.5 py-0.5 text-xs font-semibold">
+            ${employee.position}
+          </div>
+        </td>
+        <td class="p-3 align-middle text-right">
+          <div class="flex gap-2">
+            <button type="button"
+              class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white"
+              data-bs-toggle="modal"
+              data-bs-target="#viewEmployeeModal"
+              onclick="viewEmployee('${employee.employee_no}')">
+              <i class="bi bi-eye text-lg"></i>
+            </button>
+            <div class="dropdown relative inline-block">
+              <button class="dropdown-toggle-btn inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false">
+                <i class="bi bi-person-gear text-lg"></i>
+              </button>
+              <ul class="dropdown-menu absolute right-0 mt-2 w-48 rounded-md shadow-md bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <li>
+                  <a href="#" class="dropdown-item flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-[#f2f8f2] hover:text-[#478547]" onclick="openModal('viewAttendanceModal', ${employee.id})">
+                    <i class="bi bi-calendar-check h-4 w-4"></i>
+                    <span>View Attendance</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" class="dropdown-item flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-[#f2f8f2] hover:text-[#478547]" onclick="openModal('viewSlipsModal', ${employee.id})">
+                    <i class="bi bi-receipt h-4 w-4"></i>
+                    <span>View Slips</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
     });
 
-  } catch (err) {
-    console.error('Error refreshing employee table:', err);
+  } catch (error) {
+    console.error('Error refreshing employee table:', error);
   }
 }
+
+// Capitalize helper function
+function capitalize(str) {
+  return (str || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 
 
 // ========== Document Ready ==========
@@ -212,9 +297,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
       if (isMatch) {
-        row.style.display = "";
-        row.classList.remove("fade-in-slide");
+        
+        // row.classList.remove("fade-in-slide");
         void row.offsetWidth;
+        row.style.display = "";
         row.classList.add("fade-in-slide");
         visibleCount++;
       } else {

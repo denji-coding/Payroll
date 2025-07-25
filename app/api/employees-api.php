@@ -32,8 +32,8 @@ if ($method === 'GET') {
             $stmt = $conn->prepare("
                 SELECT 
                     e.*, 
-                    m.name AS manager_name,
-                    m.branch AS branch_name
+                    m.m_full_name AS manager_name,
+                    m.m_branch AS branch_name
                 FROM employees e
                 LEFT JOIN managers m ON e.branch_manager = m.id
                 WHERE e.employee_no = ? AND e.deleted_at IS NULL
@@ -51,8 +51,8 @@ if ($method === 'GET') {
             $stmt = $conn->prepare("
                 SELECT 
                     e.*, 
-                    m.name AS manager_name,
-                    m.branch AS branch_name
+                    m.m_full_name AS manager_name,
+                    m.m_branch AS branch_name
                 FROM employees e
                 LEFT JOIN managers m ON e.branch_manager = m.id
                 WHERE e.deleted_at IS NULL AND e.approved_by_manager = 1
@@ -97,8 +97,8 @@ if ($method === 'POST') {
                 $stmt = $conn->prepare("
                     SELECT 
                         e.*, 
-                        m.name AS manager_name,
-                        m.branch AS branch_name
+                        m.m_full_name AS manager_name,
+                        m.m_branch AS branch_name
                     FROM employees e
                     LEFT JOIN managers m ON e.branch_manager = m.id
                     WHERE e.deleted_at IS NULL AND e.approved_by_manager = 1

@@ -44,10 +44,12 @@
     <link rel="stylesheet" href="../src/output.css"> <!-- Tailwind -->
     <link rel="stylesheet" href="../public/assets/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
+    <link rel="stylesheet" href="../public/assets/css/flatpickr/monthSelect/style.css">
     <!-- <link rel="stylesheet" href="../public/assets/css/flatpickr/flatpickr.css"> -->
 
     <!-- ✅ JS -->
     <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
+    <script src="../public/assets/js/flatpickr/monthSelect/index.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>

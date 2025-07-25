@@ -60,11 +60,20 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
     <span class="block text-center font-extrabold text-white text-xl md:text-lg mb-2">Migrants Venture Corporation</span>
     <div class="border-b border-white-500 mb-4"></div>
 
-    <div class="flex flex-col">
+    <div class="flex flex-col space-y-4">
+
+    <!-- Section: Dashboard -->
+    <div>
+        <span class="text-xs uppercase tracking-wide text-gray-300 px-4 mb-1 block">Main</span>
         <a href="index.php?payroll=dashboard1"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'dashboard1') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-house-door"></i> Dashboard
         </a>
+    </div>
+
+    <!-- Section: Employee Management -->
+    <div>
+        <span class="text-xs uppercase tracking-wide text-gray-300 px-4 mb-1 block">Employee Management</span>
 
         <!-- Employees Dropdown -->
         <div class="w-full mb-2.5">
@@ -76,7 +85,6 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            
 
             <div id="employeeDropdown" class="dropdown-container <?= $isEmployeeDropdownOpen ? 'open' : '' ?> ml-5 mt-2 -mb-3">
                 <a href="index.php?payroll=employees" prefetch={false} 
@@ -85,7 +93,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
                 </a>
                 <a href="index.php?payroll=approvals_request" 
                 class="block py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'approvals_request' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">                    
-                    <i class="bi bi-check-circle"></i> Approvals by manager
+                    <i class="bi bi-check-circle"></i> Approvals by Manager
                 </a>
                 <a href="index.php?payroll=delete_history" 
                 class="block py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'delete_history' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
@@ -98,23 +106,44 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'schedules') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-clock"></i> Schedules
         </a>
+
         <a href="index.php?payroll=leave_history"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'leave_history') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-calendar-check"></i> Leave History
         </a>
+
+        <a href="index.php?payroll=managers_account"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'managers_account') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-person-badge"></i> Managers
+        </a>
+    </div>
+
+    <!-- Section: Payroll -->
+    <div>
+        <span class="text-xs uppercase tracking-wide text-gray-300 px-4 mb-1 block">Payroll Management</span>
+
         <a href="index.php?payroll=timerecords"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'timerecords') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-calendar2-week"></i> Time Records
         </a>
+
+        <a href="index.php?payroll=benefit_rates"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'benefit_rates') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-pencil-square"></i> Benefit Rates
+        </a>
+
         <a href="index.php?payroll=payslips"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'payslips') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-file-earmark-text"></i> Payslips
         </a>
+
         <a href="index.php?payroll=reports"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'reports') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="fas fa-chart-column"></i> Reports
         </a>
     </div>
+</div>
+
 </div>
 
 <script>

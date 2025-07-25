@@ -156,10 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['employee_id'])) {
                 <?= $i++ ?>
             </td>
             <td class="px-2 md:px-6 py-2"><?= htmlspecialchars($newRow['name']) ?></td>
-            <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($newRow['sched_morning_in'])) ?></td>
-            <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($newRow['sched_morning_out'])) ?></td>
-            <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($newRow['sched_afternoon_in'])) ?></td>
-            <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($newRow['sched_afternoon_out'])) ?></td>
+            <td class="px-2 md:px-6 py-2 text-center"><?= date("g:i A", strtotime($newRow['sched_morning_in'])) ?></td>
+            <td class="px-2 md:px-6 py-2 text-center"><?= date("g:i A", strtotime($newRow['sched_morning_out'])) ?></td>
+            <td class="px-2 md:px-6 py-2 text-center"><?= date("g:i A", strtotime($newRow['sched_afternoon_in'])) ?></td>
+            <td class="px-2 md:px-6 py-2 text-center"><?= date("g:i A", strtotime($newRow['sched_afternoon_out'])) ?></td>
             <td class="px-2 md:px-6 py-2 text-center whitespace-nowrap"><?= (int)$newRow['grace_period'] ?> mins</td>
             <td class="px-2 md:px-6 py-2 text-center whitespace-nowrap">
                 <!-- Edit Button -->

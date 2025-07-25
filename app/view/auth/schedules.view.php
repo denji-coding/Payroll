@@ -223,7 +223,7 @@ require_once views_path("partials/nav");
 
           <!-- Action Buttons -->
           <div class="flex justify-end gap-2 pt-4">
-            <button type="submit" class="btn btn-success">Add Schedule</button>
+            <button type="submit" class="btn btn-success"><i class="fa fa-plus me-2"></i>Add Schedule</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           </div>
         </div>
@@ -292,7 +292,7 @@ require_once views_path("partials/nav");
 
           <!-- Grace Period -->
           <div>
-            <label class="form-label text-success ml-2">Grace Period (minutes)</label>
+            <label class="form-label text-[#396A39] font-semibold ml-2">Grace Period (minutes)</label>
             <input type="number" name="grace_period" id="editGracePeriod" class="form-control" required>
           </div>
 

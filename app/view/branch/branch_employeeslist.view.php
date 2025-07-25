@@ -117,13 +117,21 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                                 <?php foreach ($list as $lists): ?>
                                     <tr class="fade-in-slide hover:bg-gray-50 transition-colors duration-200 even:bg-[#cde4cd]">
                                         <td class="px-6 py-3">
-                                            <?php if (!empty($lists['photo_path'])): ?>
-                                                <img src="/mvcPayroll/public/<?= htmlspecialchars($lists['photo_path']) ?>" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
-                                            <?php else: ?>
-                                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-sm text-white">
-                                                    <?= strtoupper(substr($lists['full_name'], 0, 1)) ?>
-                                                </div>
-                                            <?php endif; ?>
+                                            <?php
+                                                if (!empty($lists['photo_path'])) {
+                                                    $imagePath = '/mvcPayroll/public/' . htmlspecialchars($lists['photo_path']);
+                                                } else {
+                                                    $sex = strtolower($lists['sex'] ?? '');
+                                                    if (in_array($sex, ['f', 'female', 'woman'])) {
+                                                        $imagePath = '/mvcPayroll/public/assets/image/default_women.png';
+                                                    } else {
+                                                        $imagePath = '/mvcPayroll/public/assets/image/default_men.png';
+                                                    }
+                                                }
+                                            ?>
+
+                                            <img src="<?= $imagePath ?>" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
+
                                         </td>
                                         <td class="px-6 py-3"><?= htmlspecialchars(ucwords(strtolower($lists['full_name']))) ?></td>
                                         <td class="px-6 py-3"><?= htmlspecialchars($lists['employee_no']) ?></td>
