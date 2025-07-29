@@ -68,6 +68,11 @@ function addManager($conn) {
         return;
     }
 
+    // Create full name
+    $fullName = trim($data['firstName'] . ' ' . $data['middleName'] . ' ' . $data['lastName']);
+    $fullName = preg_replace('/\s+/', ' ', $fullName); // Remove extra spaces
+
+    // Hash the employee ID as the default password
     $hashedPassword = password_hash($data['employeeId'], PASSWORD_DEFAULT);
     $photo = '';
 
@@ -89,11 +94,11 @@ function addManager($conn) {
     }
 
     $sql = "INSERT INTO managers (
-        m_employee_id, m_branch, m_position, m_rfid_number, m_first_name, m_middle_name, m_last_name, m_dob,
+        m_employee_id, m_branch, m_position, m_rfid_number, m_first_name, m_middle_name, m_last_name, m_full_name, m_dob,
         m_place_of_birth, m_sex, m_civil_status, m_contact_number, m_email, m_citizenship, m_blood_type,
         m_address, m_base_salary, m_sss_number, m_pagibig_number, m_philhealth_number, m_photo_path, m_password
     ) VALUES (
-        :employeeId, :branchManager, :position, :rfidNumber, :firstName, :middleName, :lastName, :dob,
+        :employeeId, :branchManager, :position, :rfidNumber, :firstName, :middleName, :lastName, :fullName, :dob,
         :placeOfBirth, :sex, :civilStatus, :contactNumber, :email, :citizenship, :bloodType,
         :address, :baseSalary, :sssNumber, :pagibigNumber, :philhealthNumber, :photo, :password
     )";
@@ -107,6 +112,7 @@ function addManager($conn) {
         ':firstName' => $data['firstName'],
         ':middleName' => $data['middleName'],
         ':lastName' => $data['lastName'],
+        ':fullName' => $fullName,
         ':dob' => $data['dob'],
         ':placeOfBirth' => $data['placeOfBirth'],
         ':sex' => $data['sex'],
@@ -126,7 +132,7 @@ function addManager($conn) {
 
     echo json_encode([
         'status' => $success ? 'success' : 'error',
-        'message' => $success ? 'Manager added successfully' : 'Failed to add manager'
+        'message' => $success ? 'Manager added successfully. Default password is their Employee ID: ' . $data['employeeId'] : 'Failed to add manager'
     ]);
 }
 

@@ -953,6 +953,24 @@ function updateManager(event) {
     .then(response => response.json())
     .then(data => {
       if (data.status === 'success') {
+        // Close the update modal first
+        const updateModal = document.getElementById("updateManagerAccountModal");
+        if (updateModal) {
+          try {
+            const modal = bootstrap.Modal.getInstance(updateModal);
+            if (modal) {
+              modal.hide();
+            }
+          } catch (error) {
+            // Fallback: direct DOM manipulation
+            updateModal.classList.remove('show');
+            updateModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+          }
+        }
+
         Swal.fire({
           icon: 'success',
           title: 'Manager Updated!',
@@ -960,7 +978,7 @@ function updateManager(event) {
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
-          location.reload();
+          refreshManagersTable();
         });
       } else {
         Swal.fire({ icon: 'error', title: 'Failed', text: data.message });
@@ -1305,13 +1323,76 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then(data => {
         if (data.status === "success") {
+          // Close the add modal first
+          const addModal = document.getElementById("addManagerAccountModal");
+          if (addModal) {
+            try {
+              const modal = bootstrap.Modal.getInstance(addModal);
+              if (modal) {
+                modal.hide();
+              }
+            } catch (error) {
+              // Fallback: direct DOM manipulation
+              addModal.classList.remove('show');
+              addModal.style.display = 'none';
+              document.body.classList.remove('modal-open');
+              const backdrop = document.querySelector('.modal-backdrop');
+              if (backdrop) backdrop.remove();
+            }
+          }
+
+          // Reset the form
+          if (form) {
+            form.reset();
+            // Clear photo preview
+            const photoPreview = document.getElementById('employeePhotoPreview');
+            const placeholder = document.getElementById('photoPlaceholder');
+            const fileName = document.getElementById('photoFileName');
+            if (photoPreview) photoPreview.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'flex';
+            if (fileName) fileName.textContent = '';
+            
+            // Clear any validation messages
+            const validationMessages = form.querySelectorAll('.validation-message');
+            validationMessages.forEach(msg => {
+              if (msg) msg.textContent = '';
+            });
+            
+            // Reset validation icons
+            const validationIcons = form.querySelectorAll('.validation-icon');
+            validationIcons.forEach(icon => {
+              if (icon) {
+                icon.className = 'validation-icon absolute right-2 top-1/2 transform -translate-y-1/2';
+              }
+            });
+          }
+
           Swal.fire({
             icon: "success",
             title: id ? "Manager Updated!" : "Manager Added!",
             text: data.message,
             timer: 1500,
             showConfirmButton: false
-          }).then(() => refreshManagersTable());
+          }).then(() => {
+            // Close the update modal if it's open
+            const updateModal = document.getElementById("updateManagerAccountModal");
+            if (updateModal) {
+              try {
+                const modal = bootstrap.Modal.getInstance(updateModal);
+                if (modal) {
+                  modal.hide();
+                }
+              } catch (error) {
+                // Fallback: direct DOM manipulation
+                updateModal.classList.remove('show');
+                updateModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+              }
+            }
+            refreshManagersTable();
+          });
         } else {
           Swal.fire({ icon: "error", title: "Failed", text: data.message });
         }
@@ -1372,6 +1453,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("manager_searchInput");
   const clearBtn = document.getElementById("manager_clearButton");
   const tbody = document.getElementById("managersTable");
+
+  // Make searchInput globally available
+  window.searchInput = searchInput;
 
   let debounce;
 
@@ -1441,6 +1525,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.applyFilter = filterTable;
+  window.filterTable = filterTable;
   
   // Function to refresh the managers table
   function refreshManagersTable() {
@@ -1485,6 +1570,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, 300);
   }
+
+  // Make refreshManagersTable globally available
+  window.refreshManagersTable = refreshManagersTable;
 
   // Function to bind event listeners for manager buttons
   function bindManagerEventListeners() {

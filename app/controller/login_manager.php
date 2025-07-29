@@ -30,12 +30,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['login_type']) && $_PO
             if ($result && count($result) > 0) {
                 $manager = $result[0];
 
+                // Debug: Check if password field exists and is not empty
+                if (empty($manager['m_password'])) {
+                    echo "
+                        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                        <script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Account Setup Issue',
+                                text: 'Manager account is not properly set up. Please contact administrator.'
+                            });
+                        </script>
+                    ";
+                    exit;
+                }
+
                 // Check if password is hashed or plain (for debugging)
                 // If passwords are not hashed in DB, use: $password === $manager['m_password']
                 if (password_verify($password, $manager['m_password'])) {
                     // Store session data
                     $_SESSION['manager_id'] = $manager['id'];
-                    $_SESSION['manager_name'] = $manager['m_full_name'];
+                    $_SESSION['manager_name'] = !empty($manager['m_full_name']) ? $manager['m_full_name'] : 
+                        trim($manager['m_first_name'] . ' ' . $manager['m_middle_name'] . ' ' . $manager['m_last_name']);
 
                     // Success alert and redirect
                     echo "
@@ -61,14 +77,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['login_type']) && $_PO
                     ";
                     exit;
                 } else {
-                    // Password incorrect
+                    // Password incorrect - provide helpful message
                     echo "
                         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
                         <script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Invalid Credentials',
-                                text: 'Incorrect password.'
+                                text: 'Incorrect password. Default password is your Employee ID: " . $manager['m_employee_id'] . "'
                             });
                         </script>
                     ";

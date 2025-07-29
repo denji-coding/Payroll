@@ -19,6 +19,29 @@ require_once views_path("partials/nav");
 .fade-in-slide {
   animation: fadeInSlide 0.4s ease-out;
 }
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
 </style>
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
@@ -32,7 +55,7 @@ require_once views_path("partials/nav");
 
     <div class="rounded-lg border-2 border-green-200 bg-white text-[#133913] shadow-sm">
       <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
-        <span class="text-2xl font-semibold leading-none tracking-tight text-[#133913]">Employee Directory</span>
+        <span class="text-2xl font-semibold leading-none tracking-tight text-[#133913]">Leave Records</span>
         <div class="relative w-64">
           <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
@@ -63,6 +86,7 @@ require_once views_path("partials/nav");
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">End Date</th>
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Status</th>
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Approved/Rejected By</th>
+                  <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Date Applied</th>
                 </tr>
               </thead>
               <tbody id="LeaveemployeeTable" class="[&_tr:last-child]:border-0">
@@ -76,7 +100,7 @@ require_once views_path("partials/nav");
                             : '../public/assets/image/default_men.png';
 
                           $photoPath = !empty($employee['photo_path']) 
-                            ? htmlspecialchars($employee['photo_path']) 
+                            ? '../public/' . htmlspecialchars($employee['photo_path']) 
                             : $defaultImage;
                         ?>
                         <img src="<?= $photoPath ?>" alt="Photo" class="w-10 h-10 rounded-full object-cover border border-gray-300">
@@ -84,19 +108,42 @@ require_once views_path("partials/nav");
                       <td class="p-3 font-medium"><?= htmlspecialchars($employee['employee_name']) ?></td>
                       <td class="p-3"><?= htmlspecialchars($employee['employee_no']) ?></td>
                       <td class="p-3"><?= htmlspecialchars($employee['leave_type']) ?></td>
-                      <td class="p-3 whitespace-nowrap"><?= htmlspecialchars($employee['start_date']) ?></td>
-                      <td class="p-3 whitespace-nowrap"><?= htmlspecialchars($employee['end_date']) ?></td>
-                      <td class="p-3"><?= htmlspecialchars($employee['status']) ?></td>
+                      <td class="p-3 whitespace-nowrap"><?= date('M d, Y', strtotime($employee['start_date'])) ?></td>
+                      <td class="p-3 whitespace-nowrap"><?= date('M d, Y', strtotime($employee['end_date'])) ?></td>
+                      <td class="p-3">
+                        <?php
+                          $statusClass = '';
+                          switch ($employee['status']) {
+                            case 'Pending':
+                              $statusClass = 'status-pending';
+                              break;
+                            case 'Approved':
+                              $statusClass = 'status-approved';
+                              break;
+                            case 'Rejected':
+                              $statusClass = 'status-rejected';
+                              break;
+                          }
+                        ?>
+                        <span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($employee['status']) ?></span>
+                      </td>
                       <td class="p-3 text-center">
-                        <?= $employee['status'] === 'Rejected' && $employee['rejection_reason'] 
-                          ? $employee['manager_name']
-                          : ($employee['status'] === 'Approved' ? $employee['manager_name'] : '—') ?>
+                        <?php if ($employee['status'] === 'Approved' || $employee['status'] === 'Rejected'): ?>
+                          <?= !empty($employee['manager_name']) ? htmlspecialchars($employee['manager_name']) : '—' ?>
+                        <?php else: ?>
+                          <span class="text-gray-400">—</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="p-3 text-sm text-gray-600">
+                        <?= date('M d, Y', strtotime($employee['created_at'])) ?>
                       </td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
                   <tr>
-                    <td colspan="9" class="p-4 text-center text-gray-500">No leave history found.</td>
+                    <td colspan="9" class="p-4 text-center text-gray-500">
+                      <i class="bi bi-calendar-x me-2"></i> No leave history found.
+                    </td>
                   </tr>
                 <?php endif; ?>
               </tbody>
@@ -134,15 +181,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const nameCell = row.querySelector("td:nth-child(2)");
       const empNoCell = row.querySelector("td:nth-child(3)");
-      if (!nameCell || !empNoCell) return;
+      const leaveTypeCell = row.querySelector("td:nth-child(4)");
+      if (!nameCell || !empNoCell || !leaveTypeCell) return;
 
       const name = nameCell.textContent.trim().toLowerCase();
       const empNo = empNoCell.textContent.trim().toLowerCase();
+      const leaveType = leaveTypeCell.textContent.trim().toLowerCase();
       const nameParts = name.split(" ");
 
       const matches =
         name.includes(searchTerm) ||
         empNo.includes(searchTerm) ||
+        leaveType.includes(searchTerm) ||
         nameParts.some(p => p.startsWith(searchTerm));
 
       if (matches) {
@@ -160,8 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
         noRow = document.createElement("tr");
         noRow.id = "noResultRow";
         noRow.innerHTML = `
-          <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
-            <i class="bi bi-person-x fs-4 me-2"></i> No leaves records found.
+          <td colspan="9" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+            <i class="bi bi-calendar-x fs-4 me-2"></i> No leave records found.
           </td>`;
         tbody.appendChild(noRow);
       }
@@ -191,6 +241,5 @@ document.addEventListener("DOMContentLoaded", () => {
   window.applyFilter = LeaveHistoryfilterTable;
 });
 </script>
-
 
 <?php require_once views_path("partials/footer"); ?>
