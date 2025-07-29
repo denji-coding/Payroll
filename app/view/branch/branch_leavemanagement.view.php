@@ -124,7 +124,11 @@ try {
             UPPER(LEFT(e.last_name, 1)), LOWER(SUBSTRING(e.last_name FROM 2))
         ) AS employee_name,
         lr.reason AS rejection_reason,
-        m.name AS rejected_by
+        CONCAT(
+            UPPER(LEFT(m.m_first_name, 1)), LOWER(SUBSTRING(m.m_first_name FROM 2)), ' ',
+            IFNULL(CONCAT(UPPER(LEFT(m.m_middle_name, 1)), '. '), ''),
+            UPPER(LEFT(m.m_last_name, 1)), LOWER(SUBSTRING(m.m_last_name FROM 2))
+        ) AS rejected_by
     FROM leaves l
     JOIN employees e ON l.employee_id = e.id
     LEFT JOIN leave_rejections lr ON lr.leave_id = l.id

@@ -3,6 +3,7 @@ $title = "Login";
 require_once views_path("partials/header");
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
+$loginType = 'manager';
 ?>
 
 <div class="relative min-h-screen flex items-center justify-center bg-center bg-no-repeat bg-cover px-4" style="background-image: url('../public/assets/image/image_bg.jpg');">
@@ -32,9 +33,9 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
           <input
             type="email"
             class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43] focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2 w-full rounded"
-            name="email"
+            name="m_email"
             placeholder="Enter your email"
-            value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
+            value="<?php echo isset($_POST['m_email']) ? htmlspecialchars($_POST['m_email']) : ''; ?>"
             required
           >
           <i class="bi bi-envelope position-absolute top-1/2 left-3 transform -translate-y-1/2" style="color: #396A39; font-size: 1.4rem;" data-aos="fade-up" data-aos-delay="70"></i>
@@ -48,7 +49,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
           <input
             type="password"
             class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43] focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2 w-full rounded"
-            name="password"
+            name="m_password"
             id="managerPassword"
             placeholder="Enter your password"
             required
