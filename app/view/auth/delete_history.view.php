@@ -27,7 +27,7 @@ require_once views_path("partials/nav");
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <span class="text-2xl font-bold tracking-tight text-[#133913]">Delete History</span>
-                    <p class="text-[#478547]">View and restore deleted employees</p>
+                    <p class="text-[#478547]">View and restore deleted employees and managers</p>
                 </div>
 
 
@@ -48,7 +48,7 @@ require_once views_path("partials/nav");
                     >
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
                 <span class="text-md font-semibold leading-none tracking-tight text-[#133913]">
-                    All employees in the delete history will be permanently deleted after 60 days if not restored.
+                    <!-- All employees and managers in the delete history will be permanently deleted after 60 days if not restored. -->
                 </span>
 
                 <div class="relative w-64">
@@ -60,7 +60,7 @@ require_once views_path("partials/nav");
                         type="text"
                         id="delete_searchInput"
                         class="flex h-10 w-full text-sm placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8  placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
-                        placeholder="Search employee..."
+                        placeholder="Search employee or manager..."
                     >
                     <button id="delete_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden">×</button>
                 </div>                
@@ -77,89 +77,131 @@ require_once views_path("partials/nav");
                                     <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Fullname</th>
                                     <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Employee ID</th>
                                     <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">RFID Number</th>
-                                    <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Position</th>
+                                    <th class="h-12 px-3 text-center  font-bold text-[#478547] bg-white">Position</th>
                                     <th class="h-12 px-3 align-middle font-bold text-[#478547] text-center bg-white">Actions</th>
                                 </tr>
                             </thead>
                                 <tbody id="delete_employeeTable" class="[&_tr:last-child]:border-0">
-                                    <?php if (count($deletedEmployees) > 0): ?>
+                                    <?php if (count($allRecords) > 0): ?>
                                         <?php $count = 1; ?>
-                                        <?php foreach ($deletedEmployees as $deletedEmployee): ?>
-                                            <tr class="fade-in-slide  transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                        <?php foreach ($allRecords as $record): ?>
+                                            <tr class="fade-in-slide transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]" data-record-type="<?= $record['record_type'] ?>">
                                                 <td class="px-3 py-2 align-middle"><?= $count++ ?></td>
                                                 <td class="px-3 py-2 align-middle">
-                                                    <?php if (!empty($deletedEmployee['photo_path'])): ?>
-                                                        <img src="<?= htmlspecialchars($deletedEmployee['photo_path']) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover">
+                                                    <?php if ($record['record_type'] === 'employee'): ?>
+                                                        <?php if (!empty($record['photo_path'])): ?>
+                                                            <img src="<?= htmlspecialchars($record['photo_path']) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover">
+                                                        <?php else: ?>
+                                                            <?php
+                                                                $defaultImage = ($record['sex'] === 'Female')
+                                                                    ? '../public/assets/image/default_women.png'
+                                                                    : '../public/assets/image/default_men.png';
+                                                            ?>
+                                                            <img src="<?= $defaultImage ?>" alt="Default Photo" class="h-10 w-10 rounded-full object-cover">
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <?php if (!empty($record['m_photo_path'])): ?>
+                                                            <img src="../public/<?= htmlspecialchars($record['m_photo_path']) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover">
                                                     <?php else: ?>
                                                         <?php
-                                                            $defaultImage = ($deletedEmployee['sex'] === 'Female')
+                                                                $defaultImage = ($record['m_sex'] === 'Female')
                                                                 ? '../public/assets/image/default_women.png'
                                                                 : '../public/assets/image/default_men.png';
                                                         ?>
                                                         <img src="<?= $defaultImage ?>" alt="Default Photo" class="h-10 w-10 rounded-full object-cover">
+                                                        <?php endif; ?>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="px-3 py-2 align-middle">
+                                                    <?php if ($record['record_type'] === 'employee'): ?>
+                                                        <?= htmlspecialchars(
+                                                            ucwords(strtolower($record['first_name'])) . ' ' .
+                                                            (!empty($record['middle_name']) ? strtoupper(substr($record['middle_name'], 0, 1)) . '. ' : '') .
+                                                            ucwords(strtolower($record['last_name']))
+                                                        ) ?>
+                                                    <?php else: ?>
                                                     <?= htmlspecialchars(
-                                                        ucwords(strtolower($deletedEmployee['first_name'])) . ' ' .
-                                                        (!empty($deletedEmployee['middle_name']) ? strtoupper(substr($deletedEmployee['middle_name'], 0, 1)) . '. ' : '') .
-                                                        ucwords(strtolower($deletedEmployee['last_name']))
-                                                    ) ?>
+                                                            ucwords(strtolower($record['m_first_name'])) . ' ' .
+                                                            (!empty($record['m_middle_name']) ? strtoupper(substr($record['m_middle_name'], 0, 1)) . '. ' : '') .
+                                                            ucwords(strtolower($record['m_last_name']))
+                                                        ) ?>
+                                                    <?php endif; ?>
                                                 </td>
-
-                                                <td class="px-3 py-2 align-middle"><?= htmlspecialchars($deletedEmployee['employee_no']) ?></td>
-                                                <td class="px-3 py-2 align-middle"><?= htmlspecialchars($deletedEmployee['rfid_number']) ?></td>
-                                                <td class="px-3 py-2 align-middle"><?= htmlspecialchars($deletedEmployee['position']) ?></td>
+                                                <td class="px-3 py-2 align-middle">
+                                                    <?= $record['record_type'] === 'employee' ? htmlspecialchars($record['employee_no']) : htmlspecialchars($record['m_employee_id']) ?>
+                                                </td>
+                                                <td class="px-3 py-2 align-middle">
+                                                    <?= $record['record_type'] === 'employee' ? htmlspecialchars($record['rfid_number']) : htmlspecialchars($record['m_rfid_number']) ?>
+                                                </td>
+                                                <td class="px-3 py-2 align-middle text-center">
+                                                    <?php 
+                                                        $position = $record['record_type'] === 'employee' ? $record['position'] : $record['m_position'];
+                                                        $bgColor = '';
+                                                        switch ($position) {
+                                                            case 'Manager':
+                                                                $bgColor = 'bg-green-600 text-white';
+                                                                break;
+                                                            case 'Human Resources':
+                                                                $bgColor = 'bg-blue-600 text-white';
+                                                                break;
+                                                            case 'Staff':
+                                                                $bgColor = 'bg-yellow-600 text-white';
+                                                                break;
+                                                            case 'Driver':
+                                                                $bgColor = 'bg-red-600 text-white';
+                                                                break;
+                                                            default:
+                                                                $bgColor = 'bg-gray-500 text-white';
+                                                                break;
+                                                        }
+                                                    ?>
+                                                    <div class="inline-flex items-center rounded-full border border-transparent <?= $bgColor ?> px-2.5 py-0.5 text-xs font-semibold">
+                                                        <?= htmlspecialchars($position) ?>
+                                                    </div>
+                                                </td>
                                                 <td class="px-3 py-2 align-middle text-center">
                                                     <div class="flex justify-center items-center gap-2">
                                                         <!-- View Details Button -->
                                                         <button 
                                                             type="button"
-                                                            class="view-deleted-employee inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-blue-500 hover:text-white" 
+                                                            class="view-deleted-record inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-blue-500 hover:text-white" 
                                                             title="View Details"
-                                                            data-id="<?= $deletedEmployee['id'] ?>"
+                                                            data-id="<?= $record['id'] ?>"
+                                                            data-type="<?= $record['record_type'] ?>"
                                                         >
                                                             <i class="bi bi-eye"></i>
                                                         </button>
 
                                                         <!-- Restore Button -->
-                                                        <form method="POST" action="index.php?payroll=delete_history" style="display:inline;">
-                                                            <input type="hidden" name="restore_id" value="<?= $deletedEmployee['id'] ?>">
                                                             <button 
                                                                 type="button"
                                                                 class="restore-button inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white"
                                                                 title="Restore"
-                                                                data-id="<?= $deletedEmployee['id'] ?>"
+                                                            data-id="<?= $record['id'] ?>"
+                                                            data-type="<?= $record['record_type'] ?>"
                                                             >
                                                                 <i class="fas fa-trash-restore"></i>
                                                             </button>
-                                                        </form>
 
                                                         <!-- Delete Permanently Button -->
-                                                        <form method="POST" action="index.php?payroll=delete_history" style="display:inline;">
-                                                            <input type="hidden" name="delete_id" value="<?= $deletedEmployee['id'] ?>">
                                                             <button 
                                                                 type="button"
                                                                 class="delete-btn inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-red-600 hover:text-white"
                                                                 title="Delete Permanently"
-                                                                data-id="<?= $deletedEmployee['id'] ?>" 
+                                                            data-id="<?= $record['id'] ?>"
+                                                            data-type="<?= $record['record_type'] ?>"
                                                             >
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
-                                                        </form>
-
                                                     </div>
                                                 </td>
-
-
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <!-- <td colspan="8" class="px-4 py-6 text-center text-muted fst-italic bg-light">
-                                                <i class="bi bi-info-circle fs-4 me-2" aria-hidden="true"></i>
-                                                There are currently no deleted employee records.
-                                            </td> -->
+                                            <td colspan="7" class="px-4 py-6 text-center text-muted fst-italic bg-light">
+                                                <i class="bi bi-trash fs-4 me-2"></i> No deleted records found.
+                                            </td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -339,8 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 noRow = document.createElement("tr");
                 noRow.id = "noResultRow";
                 noRow.innerHTML = `
-                    <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
-                        <i class="bi bi-person-x fs-4 me-2"></i> No deleted employee records found.
+                    <td colspan="7" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+                        <i class="bi bi-trash fs-4 me-2"></i> No deleted records found.
                     </td>`;
                 tbody.appendChild(noRow);
             }
@@ -358,10 +400,11 @@ function bindRestoreAndDeleteButtons() {
         button.addEventListener('click', function () {
             const id = this.dataset.id;
             const row = this.closest('tr');
+            const recordType = this.dataset.type;
 
             Swal.fire({
-                title: 'Restore Employee?',
-                text: "This will restore the employee's data.",
+                title: 'Restore Record?',
+                text: "This will restore the record's data.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#478547',
@@ -371,7 +414,7 @@ function bindRestoreAndDeleteButtons() {
                 if (result.isConfirmed) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Employee Restored!',
+                        title: 'Record Restored!',
                         showConfirmButton: false,
                         timer: 1200
                     }).then(() => {
@@ -382,7 +425,7 @@ function bindRestoreAndDeleteButtons() {
                             fetch('../app/api/delete_history-api.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ restore_id: id })
+                                body: JSON.stringify({ restore_id: id, record_type: recordType })
                             })
                             .then(res => res.json())
                             .then(data => {
@@ -408,6 +451,7 @@ function bindRestoreAndDeleteButtons() {
         button.addEventListener('click', function () {
             const id = this.dataset.id;
             const row = this.closest('tr');
+            const recordType = this.dataset.type;
 
             Swal.fire({
                 title: 'Are you sure?',
@@ -421,7 +465,7 @@ function bindRestoreAndDeleteButtons() {
                 if (result.isConfirmed) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Employee Deleted!',
+                        title: 'Record Deleted!',
                         showConfirmButton: false,
                         timer: 1200
                     }).then(() => {
@@ -432,7 +476,7 @@ function bindRestoreAndDeleteButtons() {
                             fetch('../app/api/delete_history-api.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ delete_id: id })
+                                body: JSON.stringify({ delete_id: id, record_type: recordType })
                             })
                             .then(res => res.json())
                             .then(data => {
@@ -454,11 +498,12 @@ function bindRestoreAndDeleteButtons() {
     });
 
     // View Button
-    document.querySelectorAll('.view-deleted-employee').forEach(button => {
+    document.querySelectorAll('.view-deleted-record').forEach(button => {
         button.addEventListener('click', function () {
-            const employeeId = this.dataset.id;
+            const recordId = this.dataset.id;
+            const recordType = this.dataset.type;
 
-            fetch(`../app/api/delete_history-api.php?id=${employeeId}`)
+            fetch(`../app/api/delete_history-api.php?id=${recordId}&type=${recordType}`)
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
@@ -471,6 +516,8 @@ function bindRestoreAndDeleteButtons() {
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
                     }
+                    
+                    if (recordType === 'employee') {
                     const lastName = (data.last_name || '').toUpperCase();
                     const firstName = (data.first_name || '').toUpperCase();
                     const middleName = (data.middle_name || '').toUpperCase();
@@ -506,11 +553,6 @@ function bindRestoreAndDeleteButtons() {
                     document.getElementById('deletedEmployeePagibig').textContent = formatPagibig(data.pagibig_number);
                     document.getElementById('deletedEmployeePhilhealth').textContent = formatPhilhealth(data.philhealth_number);
 
-                    const restoreInput = document.getElementById('restore_id');
-                    const deleteInput = document.getElementById('delete_id');
-                    if (restoreInput) restoreInput.value = data.id || '';
-                    if (deleteInput) deleteInput.value = data.id || '';
-
                     const photoElem = document.getElementById('view_deletedEmployeePhoto');
                     if (photoElem) {
                         if (data.photo_path && data.photo_path.trim() !== '') {
@@ -521,13 +563,66 @@ function bindRestoreAndDeleteButtons() {
                                 : '../public/assets/image/default_men.png';
                         }
                     }
+                    } else {
+                        // Manager data
+                        const lastName = (data.m_last_name || '').toUpperCase();
+                        const firstName = (data.m_first_name || '').toUpperCase();
+                        const middleName = (data.m_middle_name || '').toUpperCase();
+                        const middleInitial = middleName ? middleName.charAt(0) + '.' : '';
+                        const formattedName = `${lastName}, ${firstName} ${middleInitial}`.trim();
+
+                        const formattedAddress = (data.m_address || '')
+                            .toLowerCase()
+                            .replace(/\b\w/g, c => c.toUpperCase());
+
+                        const formatSSS = sss => sss?.replace(/^(\d{4})(\d{7})(\d{1})$/, '$1-$2-$3') || 'N/A';
+                        const formatPagibig = pagibig => pagibig?.replace(/^(\d{4})(\d{4})(\d{4})$/, '$1-$2-$3') || 'N/A';
+                        const formatPhilhealth = philhealth => philhealth?.replace(/^(\d{2})(\d{9})(\d{1})$/, '$1-$2-$3') || 'N/A';
+
+                        document.getElementById('deletedEmployeeId').value = data.id || '';
+                        document.getElementById('view_deleted_employee_id').value = data.m_employee_id || '';
+                        document.getElementById('deletedEmployeeName').textContent = formattedName || 'N/A';
+                        document.getElementById('deletedEmployeeIdView').textContent = data.m_employee_id || 'N/A';
+                        document.getElementById('deletedEmployeeBloodType').textContent = data.m_blood_type || 'N/A';
+                        document.getElementById('deletedEmployeeCivilStatus').textContent = data.m_civil_status || 'N/A';
+                        document.getElementById('deletedEmployeeBirthday').textContent = data.m_dob || 'N/A';
+                        document.getElementById('deletedEmployeeSex').textContent = data.m_sex || 'N/A';
+                        document.getElementById('deletedEmployeeCitizen').textContent = (data.m_citizenship || 'N/A').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                        document.getElementById('deletedEmployeeRFID').textContent = data.m_rfid_number || 'N/A';
+                        document.getElementById('deletedEmployeePosition').textContent = data.m_position || 'N/A';
+                        document.getElementById('deletedEmployeeEmail').textContent = data.m_email || 'N/A';
+                        document.getElementById('deletedEmployeePhone').textContent = data.m_contact_number || 'N/A';
+                        document.getElementById('deletedEmployeePlaceOfBirth').textContent = (data.m_place_of_birth || 'N/A').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                        document.getElementById('deletedEmployeeBranch').textContent = data.m_branch || 'N/A';
+                        document.getElementById('deletedEmployeeAddress').textContent = formattedAddress || 'N/A';
+                        document.getElementById('deletedEmployeeSalary').textContent = data.m_base_salary || '0.00';
+                        document.getElementById('deletedEmployeeSSS').textContent = formatSSS(data.m_sss_number);
+                        document.getElementById('deletedEmployeePagibig').textContent = formatPagibig(data.m_pagibig_number);
+                        document.getElementById('deletedEmployeePhilhealth').textContent = formatPhilhealth(data.m_philhealth_number);
+
+                        const photoElem = document.getElementById('view_deletedEmployeePhoto');
+                        if (photoElem) {
+                            if (data.m_photo_path && data.m_photo_path.trim() !== '') {
+                                photoElem.src = '../public/' + data.m_photo_path;
+                            } else {
+                                photoElem.src = (data.m_sex && data.m_sex.toLowerCase() === 'female')
+                                    ? '../public/assets/image/default_women.png'
+                                    : '../public/assets/image/default_men.png';
+                            }
+                        }
+                    }
+
+                    const restoreInput = document.getElementById('restore_id');
+                    const deleteInput = document.getElementById('delete_id');
+                    if (restoreInput) restoreInput.value = data.id || '';
+                    if (deleteInput) deleteInput.value = data.id || '';
 
                     const deletedModal = new bootstrap.Modal(document.getElementById('viewDeletedEmployeeModal'));
                     deletedModal.show();
                 })
                 .catch(error => {
-                    console.error('Failed to load deleted employee data:', error);
-                    Swal.fire('Error', 'Failed to load employee details.', 'error');
+                    console.error('Failed to load deleted record data:', error);
+                    Swal.fire('Error', 'Failed to load record details.', 'error');
                 });
         });
     });

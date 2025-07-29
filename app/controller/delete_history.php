@@ -7,18 +7,15 @@ require_once '../app/core/database.php';
 $db = new Database();
 $pdo = $db->getConnection();
 
+// --- Fetch soft-deleted employees and managers for listing ---
+$employees = $pdo->query("SELECT *, 'employee' as record_type FROM employees WHERE deleted_at IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
+$managers = $pdo->query("SELECT *, 'manager' as record_type FROM managers WHERE deleted_at IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
 
-// --- Fetch soft-deleted employees for listing ---
-$sql = "SELECT * FROM employees WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC";
-$stmt = $pdo->prepare($sql);
-$stmt->execute();
-$deletedEmployees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// $sql = "SELECT * FROM managers ORDER BY created_at DESC";
-// $stmt = $pdo->prepare($sql);
-// $stmt->execute();
-// $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+// Combine and sort by deletion date (most recent first)
+$allRecords = array_merge($employees, $managers);
+usort($allRecords, function($a, $b) {
+    return strtotime($b['deleted_at']) - strtotime($a['deleted_at']);
+});
 
 require views_path("auth/delete_history");
 ?>

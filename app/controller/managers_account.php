@@ -5,10 +5,18 @@ require_once '../app/core/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// Assuming you already have a database connection in $conn
-$stmt = $conn->prepare("SELECT * FROM managers ");
-$stmt->execute();
-$managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+// Fetch non-deleted managers ordered by ID descending (most recent first)
+try {
+    // Check if deleted_at column exists
+    $stmt = $conn->prepare("SELECT * FROM managers WHERE deleted_at IS NULL ORDER BY id DESC");
+    $stmt->execute();
+    $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    // Fallback if deleted_at column doesn't exist
+    $stmt = $conn->prepare("SELECT * FROM managers ORDER BY id DESC");
+    $stmt->execute();
+    $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 require views_path("auth/managers_account");
+?>

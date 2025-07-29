@@ -5,6 +5,36 @@ require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
 ?>
 
+<style>
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.fade-out {
+  animation: fadeOut 0.3s ease-in;
+}
+</style>
+
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
     <div class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -133,12 +163,12 @@ require_once views_path("partials/nav");
                                                         <!-- View -->
                                                         <button type="button"
                                                         class="viewManagerBtn"
-                                                        data-manager='<?= json_encode($manager) ?>'
+                                                        data-manager='<?= json_encode($manager, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>'
+                                                        data-manager-id="<?= $manager['id'] ?>"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#viewManagerModal">
                                                         <i class="bi bi-eye"></i>
                                                         </button>
-
 
                                                         <!-- Dropdown -->
                                                         <div class="dropdown relative inline-block">
@@ -206,7 +236,7 @@ require_once views_path("partials/nav");
                                         class="relative w-32 h-32 mb-2 mt-1 flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#16a249] transition-all duration-200">
                                         <input type="file" id="employeePhoto" name="photo_path" accept="image/*"
                                             class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                            onchange="previewEmployeePhoto(event); displayFileName(this); validateInput(this);">
+                                            onchange="previewEmployeePhoto(event); displayFileName(this);">
                                         <img id="employeePhotoPreview" alt="Employee Photo"
                                             class="w-full h-full object-cover rounded-lg absolute top-0 left-0 z-0"
                                             style="display:none;">
@@ -510,6 +540,7 @@ require_once views_path("partials/nav");
                     <form method="post" id="updateManagerForm" onsubmit="return updateManager(event)" action="../app/api/managers_account-api.php"
                         enctype="multipart/form-data">
                         <input type="hidden" name="id" id="m_edit_managerId" value="<?= htmlspecialchars($manager['id']) ?>">
+                        <input type="hidden" name="existingPhoto" id="m_existing_photo" value="">
                         <!-- <input type="hidden" name="id" value="<?= htmlspecialchars($manager['id']) ?>"> -->
 
 
@@ -812,7 +843,7 @@ require_once views_path("partials/nav");
         <p class="text-success small mb-4">View complete manager information</p>
 
         <!-- 🔒 Hidden Inputs for future actions like Edit/Delete -->
-        <input type="hidden" id="view_manager_id" name="id">
+        <input type="hidden" id="manager_id" name="id">
         <input type="hidden" id="view_manager_employee_id" name="employee_id">
         <input type="hidden" id="view_manager_photo" name="photo">
 
@@ -892,7 +923,7 @@ require_once views_path("partials/nav");
                 <i class="bi bi-pencil me-2"></i>Edit
            </button>
 
-            <button type="button" id="modalDeleteManagerBtn" class="btn btn-danger deleteManagerBtn">
+            <button type="button" id="modalDeleteManagerBtn" class="btn btn-danger deleteManagerBtn" data-id="">
                 <i class="bi bi-trash me-1"></i>Delete
             </button>
         </div>
@@ -1051,6 +1082,9 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       try {
         const data = JSON.parse(button.dataset.manager || '{}');
+        console.log("Manager data received:", data); // Debug log
+        console.log("Raw dataset.manager:", button.dataset.manager); // Debug log
+        
         const defaultImg = data.m_sex?.toLowerCase() === 'female'
           ? '../public/assets/image/default_women.png'
           : '../public/assets/image/default_men.png';
@@ -1080,10 +1114,120 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("managerAddress").textContent = capitalize(data.m_address) || 'N/A';
 
         window.lastViewedManager = data;
-        document.getElementById("manager_id").value = data.id || '';
-        document.getElementById("view_manager_employee_id").value = data.m_employee_id || '';
+        
+        // Set hidden input values with error handling
+        const managerIdInput = document.getElementById("manager_id");
+        const employeeIdInput = document.getElementById("view_manager_employee_id");
+        
+        if (managerIdInput) managerIdInput.value = data.id || '';
+        if (employeeIdInput) employeeIdInput.value = data.m_employee_id || '';
+        
+        // Set the delete button data-id with better error handling
+        const deleteBtn = document.getElementById("modalDeleteManagerBtn");
+        if (deleteBtn) {
+          const managerId = data.id || data.m_id || button.getAttribute('data-manager-id') || '';
+          console.log("data.id value:", data.id); // Debug log
+          console.log("data.m_id value:", data.m_id); // Debug log
+          console.log("data-manager-id attribute:", button.getAttribute('data-manager-id')); // Debug log
+          console.log("Final managerId:", managerId); // Debug log
+          deleteBtn.setAttribute("data-id", managerId);
+          console.log("Set delete button data-id to:", managerId); // Debug log
+          console.log("Available data fields:", Object.keys(data)); // Debug log
+        } else {
+          console.error("Delete button not found!"); // Debug log
+        }
       } catch (e) {
         console.error("❌ Error displaying view modal:", e);
+      }
+    });
+  });
+
+  // Add delete functionality for the view modal delete button
+  document.getElementById("modalDeleteManagerBtn").addEventListener("click", function() {
+    const managerId = this.getAttribute("data-id");
+    console.log("Delete button clicked, managerId:", managerId); // Debug log
+    
+    if (!managerId || managerId === '') {
+      Swal.fire({ 
+        icon: "error", 
+        title: "Error", 
+        text: "Manager ID not found. Please try refreshing the page." 
+      });
+      return;
+    }
+
+    // Close the modal immediately when delete button is clicked
+    const modalElement = document.getElementById("viewManagerModal");
+    console.log('🔒 Closing modal immediately...', modalElement);
+    
+    // Close modal using multiple methods to ensure it works
+    if (modalElement) {
+      try {
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+          modal.hide();
+          console.log('✅ Modal closed using Bootstrap API');
+        }
+      } catch (error) {
+        console.log('⚠️ Bootstrap modal close failed, using fallback...');
+      }
+      
+      // Fallback: direct DOM manipulation
+      modalElement.classList.remove('show');
+      modalElement.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) backdrop.remove();
+      console.log('✅ Modal closed using fallback method');
+    }
+
+    // Show confirmation SweetAlert after modal is closed
+    Swal.fire({
+      title: "Are you sure?",
+      text: "This will move the manager to delete history. You can restore them later.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, move to history!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const formData = new FormData();
+        formData.append("id", managerId);
+        formData.append("action", "soft_delete");
+
+        fetch("../app/api/managers_account-api.php", {
+          method: "POST",
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            // Show success message
+            Swal.fire({
+              icon: "success",
+              title: "Moved to History!",
+              text: data.message,
+              timer: 1500,
+              showConfirmButton: false
+            }).then(() => {
+              // Refresh the table after a short delay
+              setTimeout(() => {
+                refreshManagersTable();
+              }, 200);
+            });
+          } else {
+            Swal.fire({ icon: "error", title: "Delete failed", text: data.message });
+          }
+        })
+        .catch(err => {
+          console.error("❌ Error during delete:", err);
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Something went wrong while deleting the manager."
+          });
+        });
       }
     });
   });
@@ -1167,7 +1311,7 @@ document.addEventListener("DOMContentLoaded", () => {
             text: data.message,
             timer: 1500,
             showConfirmButton: false
-          }).then(() => location.reload());
+          }).then(() => refreshManagersTable());
         } else {
           Swal.fire({ icon: "error", title: "Failed", text: data.message });
         }
@@ -1190,27 +1334,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
       Swal.fire({
         title: "Are you sure?",
-        text: "This action cannot be undone.",
+        text: "This will move the manager to delete history. You can restore them later.",
         icon: "warning",
         showCancelButton: true,
-        confirmButtonText: "Yes, delete it!",
+        confirmButtonText: "Yes, move to history!",
         cancelButtonText: "Cancel"
       }).then(result => {
         if (result.isConfirmed) {
+          const formData = new FormData();
+          formData.append("id", id);
+          formData.append("action", "soft_delete");
+
           fetch("../app/api/managers_account-api.php", {
-            method: "DELETE",
-            body: new URLSearchParams({ id })
+            method: "POST",
+            body: formData
           })
           .then(res => res.json())
           .then(data => {
             if (data.status === "success") {
               Swal.fire({
                 icon: "success",
-                title: "Deleted!",
+                title: "Moved to History!",
                 text: data.message,
                 timer: 1500,
                 showConfirmButton: false
-              }).then(() => location.reload());
+              }).then(() => refreshManagersTable());
             } else {
               Swal.fire({ icon: "error", title: "Delete failed", text: data.message });
             }
@@ -1219,5 +1367,238 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+
+  // Search functionality
+  const searchInput = document.getElementById("manager_searchInput");
+  const clearBtn = document.getElementById("manager_clearButton");
+  const tbody = document.getElementById("managersTable");
+
+  let debounce;
+
+  toggleClearButton();
+  filterTable();
+
+  searchInput.addEventListener("input", () => {
+    toggleClearButton();
+    clearTimeout(debounce);
+    debounce = setTimeout(filterTable, 300);
+  });
+
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    toggleClearButton();
+    filterTable();
+  });
+
+  function toggleClearButton() {
+    clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+  }
+
+  function filterTable() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      if (row.id === "noResultRow") return;
+
+      const nameCell = row.querySelector("td:nth-child(3)");
+      const empNoCell = row.querySelector("td:nth-child(4)");
+      if (!nameCell || !empNoCell) return;
+
+      const name = nameCell.textContent.trim().toLowerCase();
+      const empNo = empNoCell.textContent.trim().toLowerCase();
+      const nameParts = name.split(" ");
+
+      const matches =
+        name.includes(searchTerm) ||
+        empNo.includes(searchTerm) ||
+        nameParts.some(p => p.startsWith(searchTerm));
+
+      if (matches) {
+        row.style.display = "";
+        row.classList.add("fade-in-slide");
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    let noRow = document.getElementById("noResultRow");
+    if (visibleCount === 0) {
+      if (!noRow) {
+        noRow = document.createElement("tr");
+        noRow.id = "noResultRow";
+        noRow.innerHTML = `
+          <td colspan="7" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+            <i class="bi bi-person-x fs-4 me-2"></i> No managers found.
+          </td>`;
+        tbody.appendChild(noRow);
+      }
+    } else {
+      if (noRow) noRow.remove();
+    }
+  }
+
+  window.applyFilter = filterTable;
+  
+  // Function to refresh the managers table
+  function refreshManagersTable() {
+    const tbody = document.getElementById('managersTable');
+    console.log('🔄 Refreshing managers table...');
+    
+    // Add fade out animation
+    tbody.style.transition = 'opacity 0.3s ease';
+    tbody.style.opacity = '0';
+    
+    setTimeout(() => {
+      fetch('../app/api/managers_account-api.php?action=get_managers')
+        .then(response => {
+          console.log('📡 API Response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('📊 API Response data:', data);
+          if (data.status === 'success') {
+            console.log('✅ Updating table with HTML:', data.html.substring(0, 100) + '...');
+            tbody.innerHTML = data.html;
+            
+            // Rebind event listeners for new elements
+            bindManagerEventListeners();
+            
+            // Reapply search filter if there's a search term
+            if (searchInput.value.trim()) {
+              filterTable();
+            }
+            
+            // Add fade in animation
+            tbody.style.opacity = '1';
+            console.log('✅ Table refresh completed');
+          } else {
+            console.error('❌ API returned error:', data.message);
+            tbody.style.opacity = '1'; // Restore opacity on error
+          }
+        })
+        .catch(err => {
+          console.error('❌ Error refreshing table:', err);
+          tbody.style.opacity = '1'; // Restore opacity on error
+        });
+    }, 300);
+  }
+
+  // Function to bind event listeners for manager buttons
+  function bindManagerEventListeners() {
+    // Rebind view buttons
+    document.querySelectorAll(".viewManagerBtn").forEach(button => {
+      button.addEventListener("click", () => {
+        try {
+          const data = JSON.parse(button.dataset.manager || '{}');
+          console.log("Manager data received:", data);
+          console.log("Raw dataset.manager:", button.dataset.manager);
+          
+          const defaultImg = data.m_sex?.toLowerCase() === 'female'
+            ? '../public/assets/image/default_women.png'
+            : '../public/assets/image/default_men.png';
+
+          const img = document.getElementById("view_managerPhoto");
+          if (img) img.src = data.m_photo_path ? "../public/" + data.m_photo_path : defaultImg;
+
+          const fullName = `${capitalize(data.m_last_name)}, ${capitalize(data.m_first_name)} ${data.m_middle_name ? data.m_middle_name.charAt(0).toUpperCase() + '.' : ''}`;
+          document.getElementById("managerName").textContent = fullName.trim();
+          document.getElementById("managerIdView").textContent = data.m_employee_id || 'N/A';
+          document.getElementById("managerBloodType").textContent = data.m_blood_type || 'N/A';
+          document.getElementById("managerCivilStatus").textContent = data.m_civil_status || 'N/A';
+          document.getElementById("managerBirthday").textContent = data.m_dob || 'N/A';
+          document.getElementById("managerSex").textContent = data.m_sex || 'N/A';
+          document.getElementById("managerCitizen").textContent = capitalize(data.m_citizenship) || 'N/A';
+          document.getElementById("managerRFID").textContent = data.m_rfid_number || 'N/A';
+          document.getElementById("managerPosition").textContent = data.m_position || 'N/A';
+          document.getElementById("managerEmail").textContent = data.m_email || 'N/A';
+          document.getElementById("managerPhone").textContent = data.m_contact_number || 'N/A';
+          document.getElementById("managerPlaceOfBirth").textContent = capitalize(data.m_place_of_birth) || 'N/A';
+          document.getElementById("managerBranch").textContent = data.branch_name
+            ? `${data.branch_name} - ${data.branch_address}` : data.m_branch || 'N/A';
+          document.getElementById("managerSalary").textContent = parseFloat(data.m_base_salary || 0).toFixed(2);
+          document.getElementById("managerSSS").textContent = formatSSS(data.m_sss_number);
+          document.getElementById("managerPagibig").textContent = formatPagibig(data.m_pagibig_number);
+          document.getElementById("managerPhilhealth").textContent = formatPhilhealth(data.m_philhealth_number);
+          document.getElementById("managerAddress").textContent = capitalize(data.m_address) || 'N/A';
+
+          window.lastViewedManager = data;
+          
+          const managerIdInput = document.getElementById("manager_id");
+          const employeeIdInput = document.getElementById("view_manager_employee_id");
+          
+          if (managerIdInput) managerIdInput.value = data.id || '';
+          if (employeeIdInput) employeeIdInput.value = data.m_employee_id || '';
+          
+          const deleteBtn = document.getElementById("modalDeleteManagerBtn");
+          if (deleteBtn) {
+            const managerId = data.id || data.m_id || button.getAttribute('data-manager-id') || '';
+            deleteBtn.setAttribute("data-id", managerId);
+          }
+        } catch (e) {
+          console.error("❌ Error displaying view modal:", e);
+        }
+      });
+    });
+
+    // Rebind edit buttons
+    document.querySelectorAll(".editManagerBtn").forEach(button => {
+      button.addEventListener("click", () => {
+        try {
+          const data = JSON.parse(button.dataset.manager || '{}');
+          populateEditModal(data);
+        } catch (e) {
+          console.error("❌ Failed to parse manager data:", e);
+        }
+      });
+    });
+
+    // Rebind delete buttons
+    document.querySelectorAll(".deleteManagerBtn").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.id;
+        if (!id) return;
+
+        Swal.fire({
+          title: "Are you sure?",
+          text: "This will move the manager to delete history. You can restore them later.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, move to history!",
+          cancelButtonText: "Cancel"
+        }).then(result => {
+          if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append("id", id);
+            formData.append("action", "soft_delete");
+
+            fetch("../app/api/managers_account-api.php", {
+              method: "POST",
+              body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === "success") {
+                Swal.fire({
+                  icon: "success",
+                  title: "Moved to History!",
+                  text: data.message,
+                  timer: 1500,
+                  showConfirmButton: false
+                }).then(() => refreshManagersTable());
+              } else {
+                Swal.fire({ icon: "error", title: "Delete failed", text: data.message });
+              }
+            });
+          }
+        });
+      });
+    });
+  }
+  
+  // Initial binding of event listeners
+  bindManagerEventListeners();
 });
 </script>
