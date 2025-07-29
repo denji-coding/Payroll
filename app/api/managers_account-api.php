@@ -189,6 +189,25 @@ function updateManager($conn) {
         $uniqueName = uniqid('emp_', true) . '.' . strtolower($ext);
         $targetPath = $uploadDir . '/' . $uniqueName;
 
+        // Get the uploaded file's content hash
+        $uploadedFileHash = md5_file($_FILES['photo_path']['tmp_name']);
+
+        // Check if any existing manager has the same image content
+        $stmt = $conn->prepare("SELECT id, m_photo_path FROM managers WHERE id != ? AND m_photo_path IS NOT NULL AND m_photo_path != ''");
+        $stmt->execute([$id]);
+        $existingManagers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($existingManagers as $manager) {
+            $existingPhotoPath = __DIR__ . '/../../public/' . $manager['m_photo_path'];
+            if (file_exists($existingPhotoPath)) {
+                $existingFileHash = md5_file($existingPhotoPath);
+                if ($uploadedFileHash === $existingFileHash) {
+                    echo json_encode(['status' => 'error', 'message' => 'This image is already used by another manager. Please upload a different photo.']);
+                    return;
+                }
+            }
+        }
+
         if (move_uploaded_file($_FILES['photo_path']['tmp_name'], $targetPath)) {
             $photo = 'upload/' . $uniqueName;
         }

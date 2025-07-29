@@ -19,7 +19,7 @@ require_once views_path("partials/nav");
                             data-bs-toggle="modal" 
                             data-bs-target="#addManagerAccountModal">
                     <i class="fas fa-plus me-2"></i>
-                    <span class="font-semibold">Add Employee</span>
+                    <span class="font-semibold">Add Manager</span>
                     </button>
                 </div>
             </div>
@@ -36,11 +36,11 @@ require_once views_path("partials/nav");
                     </svg>
                     <input
                         type="text"
-                        id="employee_searchInput"
+                        id="manager_searchInput"
                         class="flex h-10 w-full text-sm placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8  placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
-                        placeholder="Search employee..."
+                        placeholder="Search manager..."
                     >
-                    <button id="employee_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" >×</button>
+                    <button id="manager_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" >×</button>
                 </div>                
             </div>
 
@@ -132,12 +132,12 @@ require_once views_path("partials/nav");
                                                     <div class="flex gap-2">
                                                         <!-- View -->
                                                         <button type="button"
-  class="viewManagerBtn"
-  data-manager='<?= json_encode($manager) ?>'
-  data-bs-toggle="modal"
-  data-bs-target="#viewManagerModal">
-  <i class="bi bi-eye"></i>
-</button>
+                                                        class="viewManagerBtn"
+                                                        data-manager='<?= json_encode($manager) ?>'
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#viewManagerModal">
+                                                        <i class="bi bi-eye"></i>
+                                                        </button>
 
 
                                                         <!-- Dropdown -->
@@ -180,7 +180,6 @@ require_once views_path("partials/nav");
             </div>
         </div>
     </div>
-</div>
 </main>
 
 <!-- Add Manager Modal -->
@@ -883,22 +882,19 @@ require_once views_path("partials/nav");
 
         <!-- Buttons -->
         <div class="d-flex justify-content-end mt-3 mb-2 mr-2">
-          <button
-  type="button"
-  class="btn btn-outline-success me-2 w-[90px] editManagerBtn"
-  data-bs-toggle="modal"
-  data-bs-target="#updateManagerAccountModal"
-  onclick='editManagerFromObject(<?= json_encode($manager, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>)'
->
-  <i class="bi bi-pencil me-2"></i>Edit
-</button>
+           <button
+                type="button"
+                class="btn btn-outline-success me-2 w-[90px] editManagerBtn"
+                data-bs-toggle="modal"
+                data-bs-target="#updateManagerAccountModal"
+                onclick='editManagerFromObject(<?= json_encode($manager, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>)'
+                >
+                <i class="bi bi-pencil me-2"></i>Edit
+           </button>
 
-
-
-
-          <button type="button" id="modalDeleteManagerBtn" class="btn btn-danger deleteManagerBtn">
-            <i class="bi bi-trash me-1"></i>Delete
-          </button>
+            <button type="button" id="modalDeleteManagerBtn" class="btn btn-danger deleteManagerBtn">
+                <i class="bi bi-trash me-1"></i>Delete
+            </button>
         </div>
       </div>
     </div>
@@ -913,6 +909,43 @@ require_once views_path("partials/nav");
 
 
 <script>
+function updateManager(event) {
+  event.preventDefault();
+  const form = document.getElementById('updateManagerForm');
+  const formData = new FormData(form);
+  formData.append('_method', 'PUT');
+
+  fetch('../app/api/managers_account-api.php', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Manager Updated!',
+          text: data.message,
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          location.reload();
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Failed', text: data.message });
+      }
+    })
+    .catch(err => {
+      console.error('❌ Error during fetch:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Something went wrong while updating the manager.'
+      });
+    });
+  return false;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("addManagerForm");
   const saveBtn = document.getElementById("managersaveBtn");
@@ -983,7 +1016,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Photo preview
-    const photoPreview = document.getElementById("m_edit_photo_preview");
+    const photoPreview = document.getElementById("edit_managerPhotoPreview");
     const placeholder = document.getElementById("edit_photoPlaceholder");
     const fileNameLabel = document.getElementById("edit_photoFileName");
     const photoPath = manager.m_photo_path || "";
@@ -1023,9 +1056,9 @@ document.addEventListener("DOMContentLoaded", () => {
           : '../public/assets/image/default_men.png';
 
         const img = document.getElementById("view_managerPhoto");
-        if (img) img.src = data.m_photo_path ? "upload/" + data.m_photo_path : defaultImg;
+        if (img) img.src = data.m_photo_path ? "../public/" + data.m_photo_path : defaultImg;
 
-        const fullName = `${capitalize(data.m_first_name)} ${data.m_middle_name?.charAt(0).toUpperCase() || ''}. ${capitalize(data.m_last_name)}`;
+        const fullName = `${capitalize(data.m_last_name)}, ${capitalize(data.m_first_name)} ${data.m_middle_name ? data.m_middle_name.charAt(0).toUpperCase() + '.' : ''}`;
         document.getElementById("managerName").textContent = fullName.trim();
         document.getElementById("managerIdView").textContent = data.m_employee_id || 'N/A';
         document.getElementById("managerBloodType").textContent = data.m_blood_type || 'N/A';
@@ -1054,6 +1087,38 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // Add file input handling for edit modal
+  function editpreviewManagerPhoto(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('edit_managerPhotoPreview');
+        const placeholder = document.getElementById('edit_photoPlaceholder');
+        if (preview) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function editdisplayFileName(input) {
+    const fileName = input.files[0]?.name || '';
+    const fileNameLabel = document.getElementById('edit_photoFileName');
+    if (fileNameLabel) {
+      fileNameLabel.textContent = fileName;
+    }
+  }
+
+  // Make functions globally available
+  window.editpreviewManagerPhoto = editpreviewManagerPhoto;
+  window.editdisplayFileName = editdisplayFileName;
 
   window.editManagerFromObject = () => {
     if (window.lastViewedManager) {

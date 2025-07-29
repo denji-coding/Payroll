@@ -32,7 +32,7 @@ if ($method === 'GET') {
             $stmt = $conn->prepare("
                 SELECT 
                     e.*, 
-                    m.m_full_name AS manager_name,
+                    CONCAT_WS(' ', m.m_first_name, m.m_middle_name, m.m_last_name) AS manager_name,
                     m.m_branch AS branch_name
                 FROM employees e
                 LEFT JOIN managers m ON e.branch_manager = m.id
@@ -51,7 +51,7 @@ if ($method === 'GET') {
             $stmt = $conn->prepare("
                 SELECT 
                     e.*, 
-                    m.m_full_name AS manager_name,
+                    CONCAT_WS(' ', m.m_first_name, m.m_middle_name, m.m_last_name) AS manager_name,
                     m.m_branch AS branch_name
                 FROM employees e
                 LEFT JOIN managers m ON e.branch_manager = m.id
@@ -97,7 +97,9 @@ if ($method === 'POST') {
                 $stmt = $conn->prepare("
                     SELECT 
                         e.*, 
-                        m.m_full_name AS manager_name,
+                        m.m_first_name AS manager_first_name,
+                        m.m_middle_name AS manager_middle_name,
+                        m.m_last_name AS manager_last_name,
                         m.m_branch AS branch_name
                     FROM employees e
                     LEFT JOIN managers m ON e.branch_manager = m.id

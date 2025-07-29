@@ -29,6 +29,26 @@ function toTitleCase(str) {
   return str ? str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase()) : 'N/A';
 }
 
+function formatManagerName(first, middle, last) {
+  const capitalizeWords = str =>
+    str
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+  const f = first ? capitalizeWords(first) : '';
+  const m = middle
+    ? middle
+        .split(' ')
+        .map(name => name.charAt(0).toUpperCase() + '.')
+        .join(' ')
+    : '';
+  const l = last ? capitalizeWords(last) : '';
+
+  return [f, m, l].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+
 // === Main View Function ===
 function viewEmployee(employeeId) {
   fetch(`index.php?payroll=api/employees&id=${employeeId}`)
@@ -46,6 +66,11 @@ function viewEmployee(employeeId) {
             if (el) el.textContent = text || 'N/A';
           };
 
+          const nameParts = emp.manager_name.trim().split(' ');
+          const first = nameParts.slice(0, -2).join(' '); // e.g., "Ken Jazver"
+          const middle = nameParts.slice(-2, -1)[0];      // e.g., "Delos"
+          const last = nameParts.slice(-1)[0];            // e.g., "Cruz"
+          
           document.getElementById('view_employee_id').value = emp.employee_no || '';
 
           setText('employeeIdView', emp.employee_no);
@@ -65,9 +90,14 @@ function viewEmployee(employeeId) {
           setText('employeeSSS', formatSSS(emp.sss_number));
           setText('employeePagibig', formatPagibig(emp.pagibig_number));
           setText('employeePhilhealth', formatPhilhealth(emp.philhealth_number));
-          setText('employeeBranch', (emp.manager_name && emp.branch_name) 
-    ? emp.manager_name + ' - ' + emp.branch_name 
-    : 'Not assigned');
+          
+
+          setText('employeeBranch', 
+            (emp.manager_name && emp.branch_name)
+              ? `${formatManagerName(first, middle, last)} - ${emp.branch_name}`
+              : 'Not assigned'
+          );
+
 
 
           // Birthday formatting
