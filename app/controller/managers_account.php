@@ -14,8 +14,8 @@ try {
 } catch (PDOException $e) {
     // Fallback if deleted_at column doesn't exist
     $stmt = $conn->prepare("SELECT * FROM managers ORDER BY id DESC");
-    $stmt->execute();
-    $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute();
+$managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 require views_path("auth/managers_account");

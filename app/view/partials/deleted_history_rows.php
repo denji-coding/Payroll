@@ -19,13 +19,13 @@
                 <?php else: ?>
                     <?php if (!empty($record['m_photo_path'])): ?>
                         <img src="../public/<?= htmlspecialchars($record['m_photo_path']) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover">
-                    <?php else: ?>
-                        <?php
+                <?php else: ?>
+                    <?php
                             $defaultImage = ($record['m_sex'] === 'Female')
-                                ? '../public/assets/image/default_women.png'
-                                : '../public/assets/image/default_men.png';
-                        ?>
-                        <img src="<?= $defaultImage ?>" alt="Default Photo" class="h-10 w-10 rounded-full object-cover">
+                            ? '../public/assets/image/default_women.png'
+                            : '../public/assets/image/default_men.png';
+                    ?>
+                    <img src="<?= $defaultImage ?>" alt="Default Photo" class="h-10 w-10 rounded-full object-cover">
                     <?php endif; ?>
                 <?php endif; ?>
             </td>
@@ -37,7 +37,7 @@
                         ucwords(strtolower($record['last_name']))
                     ) ?>
                 <?php else: ?>
-                    <?= htmlspecialchars(
+                <?= htmlspecialchars(
                         ucwords(strtolower($record['m_first_name'])) . ' ' .
                         (!empty($record['m_middle_name']) ? strtoupper(substr($record['m_middle_name'], 0, 1)) . '. ' : '') .
                         ucwords(strtolower($record['m_last_name']))

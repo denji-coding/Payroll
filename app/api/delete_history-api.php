@@ -13,23 +13,23 @@ switch ($method) {
             $recordType = $_GET['type'] ?? 'employee';
             
             if ($recordType === 'employee') {
-                $stmt = $pdo->prepare("
-                    SELECT 
-                        e.id, e.employee_no, e.first_name, e.middle_name, e.last_name,
-                        e.blood_type, e.civil_status, e.dob, e.sex, e.citizenship,
-                        e.rfid_number, e.position, e.email, e.contact_number,
-                        e.place_of_birth, e.branch_manager, e.address, e.base_salary,
-                        e.sss_number, e.pagibig_number, e.philhealth_number, e.photo_path,
-                        CONCAT(
-                                UPPER(LEFT(m.m_first_name, 1)), LOWER(SUBSTRING(m.m_first_name, 2)), ' ',
-                                UPPER(LEFT(m.m_middle_name, 1)), '. ',
-                                UPPER(LEFT(m.m_last_name, 1)), LOWER(SUBSTRING(m.m_last_name, 2))
-                                ) AS manager_name, m.m_branch AS manager_address
-                    FROM employees e
-                    LEFT JOIN managers m ON e.branch_manager = m.id
-                    WHERE e.id = :id AND e.deleted_at IS NOT NULL
-                    LIMIT 1
-                ");
+            $stmt = $pdo->prepare("
+                SELECT 
+                    e.id, e.employee_no, e.first_name, e.middle_name, e.last_name,
+                    e.blood_type, e.civil_status, e.dob, e.sex, e.citizenship,
+                    e.rfid_number, e.position, e.email, e.contact_number,
+                    e.place_of_birth, e.branch_manager, e.address, e.base_salary,
+                    e.sss_number, e.pagibig_number, e.philhealth_number, e.photo_path,
+                    CONCAT(
+                            UPPER(LEFT(m.m_first_name, 1)), LOWER(SUBSTRING(m.m_first_name, 2)), ' ',
+                            UPPER(LEFT(m.m_middle_name, 1)), '. ',
+                            UPPER(LEFT(m.m_last_name, 1)), LOWER(SUBSTRING(m.m_last_name, 2))
+                            ) AS manager_name, m.m_branch AS manager_address
+                FROM employees e
+                LEFT JOIN managers m ON e.branch_manager = m.id
+                WHERE e.id = :id AND e.deleted_at IS NOT NULL
+                LIMIT 1
+            ");
             } else {
                 $stmt = $pdo->prepare("
                     SELECT 
@@ -83,7 +83,7 @@ switch ($method) {
             $recordType = $input['record_type'] ?? 'employee';
             
             if ($recordType === 'employee') {
-                $stmt = $pdo->prepare("UPDATE employees SET deleted_at = NULL WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE employees SET deleted_at = NULL WHERE id = ?");
             } else {
                 $stmt = $pdo->prepare("UPDATE managers SET deleted_at = NULL WHERE id = ?");
             }
@@ -111,7 +111,7 @@ switch ($method) {
             $recordType = $input['record_type'] ?? 'employee';
             
             if ($recordType === 'employee') {
-                $stmt = $pdo->prepare("DELETE FROM employees WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM employees WHERE id = ?");
             } else {
                 $stmt = $pdo->prepare("DELETE FROM managers WHERE id = ?");
             }

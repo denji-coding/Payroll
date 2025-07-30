@@ -262,8 +262,7 @@ require_once views_path("partials/nav");
                                                         name="employeeId"                                                        
                                                         placeholder="Click Generate ID"
                                                         class="p-2 pl-8 border rounded text-sm w-full focus:outline-none"
-
-                                                        readonly
+                                                        required
                                                     >
                                                     <i class="validation-icon absolute right-24 top-1/2 transform -translate-y-1/2"></i>
                                                         <button
@@ -283,7 +282,7 @@ require_once views_path("partials/nav");
                                                                             
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BRANCH</label>
-                                        <select name="branchManager"  class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                        <select name="branchManager"  class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                             <option value="" disabled selected>Select a branch</option>
                                             <option value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</option>
                                             <option value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</option>
@@ -294,7 +293,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
                                         <div class="relative">
                                             <select name="position"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option disabled selected value="">Select a position</option>
                                                 <option value="Manager">Manager</option>
                                                 <!-- <option value="Human Resources">Human Resources</option>
@@ -314,6 +313,7 @@ require_once views_path("partials/nav");
                                                 placeholder="e.g., 0983222913"
                                                 class="p-2 pl-8 border rounded text-sm w-full focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249]"
                                                 oninput="validateRfidNumber(this)"
+                                                required
                                                 >
                                                 <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
@@ -325,6 +325,7 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="firstName" placeholder="e.g., Juan"
                                                 class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
                                                 >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
@@ -334,7 +335,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">MIDDLE NAME</label>
                                         <div class="relative">
                                             <input type="text" name="middleName" placeholder="e.g., Santos"
-                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -343,7 +346,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">LAST NAME</label>
                                         <div class="relative">
                                             <input type="text" name="lastName" placeholder="e.g., Dela Cruz"
-                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -355,7 +360,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">BIRTHDAY</label>
                                         <div class="relative">
                                             <input type="date" name="dob"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -363,7 +370,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">PLACE OF BIRTH</label>
                                         <div class="relative">
                                             <input type="text" name="placeOfBirth" placeholder="e.g., Davao City"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -372,7 +381,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">SEX</label>
                                         <div class="relative">
                                             <select name="sex"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option value="">Select</option>
                                                 <option value="Male">Male</option>
                                                 <option value="Female">Female</option>
@@ -384,7 +393,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">CIVIL STATUS</label>
                                         <div class="relative">
                                             <select name="civilStatus"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option value="">Select</option>
                                                 <option value="Single">Single</option>
                                                 <option value="Married">Married</option>
@@ -400,7 +409,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="contactNumber" placeholder="e.g., 09171234567"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                maxlength="11" oninput="validateContactNumber(this)">
+                                                maxlength="11" oninput="validateContactNumber(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -409,7 +420,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">EMAIL</label>
                                         <div class="relative">
                                             <input type="email" name="email" placeholder="e.g., john.doe@example.com"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -418,7 +431,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">CITIZENSHIP</label>
                                         <div class="relative">
                                             <input type="text" name="citizenship" placeholder="e.g., Filipino"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -427,7 +442,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">BLOOD TYPE</label>
                                         <div class="relative">
                                             <select name="bloodType"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option value="">Select</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -446,7 +461,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">COMPLETE ADDRESS</label>
                                         <div class="relative">
                                             <input type="text" name="address" placeholder="e.g., 1234 Mabini St., Barangay Malinis, Quezon City"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -464,7 +481,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="baseSalary" placeholder="e.g., 600"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -474,7 +493,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="sssNumber" maxlength="12" placeholder="e.g., 012345678912"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -484,7 +505,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="pagibigNumber" maxlength="12" placeholder="e.g., 012345678901"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -495,7 +518,9 @@ require_once views_path("partials/nav");
                                             <input type="text" name="philhealthNumber" maxlength="12"
                                                 placeholder="e.g., 123456789012"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -586,7 +611,7 @@ require_once views_path("partials/nav");
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BRANCH</label>
                                         <select id="m_edit_branchManager" name="branchManager" 
-                                            class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                            class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                             <option value="" disabled>Select a branch</option>
                                             <option value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</option>
                                             <option value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</option>
@@ -598,7 +623,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
                                         <div class="relative">
                                             <select name="position" id="m_edit_position"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option disabled value="">Select</option>
                                                 <option value="Manager">Manager</option>
                                             </select>
@@ -611,7 +636,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="rfidNumber" id="m_edit_rfidNumber" placeholder="e.g., 0083222913"
                                                 class="p-2 pl-8 border rounded  text-sm w-full focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249]"
-                                                oninput="validateRfidNumber(this)">
+                                                oninput="validateRfidNumber(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -622,6 +649,7 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="firstName" id="m_edit_first_name" placeholder="e.g., Juan"
                                                 class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
                                                 >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
@@ -632,7 +660,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">MIDDLE NAME</label>
                                         <div class="relative">
                                             <input type="text" name="middleName" id="m_edit_middle_name" placeholder="e.g., Santos"
-                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -642,7 +672,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">LAST NAME</label>
                                         <div class="relative">
                                             <input type="text" name="lastName" id="m_edit_last_name" placeholder="e.g., Dela Cruz"
-                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded  text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -655,7 +687,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">BIRTHDAY</label>
                                         <div class="relative">
                                             <input type="date" name="dob" id="m_edit_dob"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -664,7 +698,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">PLACE OF BIRTH</label>
                                         <div class="relative">
                                             <input type="text" name="placeOfBirth" id="m_edit_placeOfBirth" placeholder="e.g., Davao City"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -674,7 +710,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">SEX</label>
                                         <div class="relative">
                                             <select name="sex" id="m_edit_sex"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option disabled value="">Select</option>
                                                 <option value="Male">Male</option>
                                                 <option value="Female">Female</option>
@@ -687,7 +723,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">CIVIL STATUS</label>
                                         <div class="relative">
                                             <select name="civilStatus" id="m_edit_civilStatus"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option disabled value="">Select</option>
                                                 <option value="Single">Single</option>
                                                 <option value="Married">Married</option>
@@ -704,7 +740,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="contactNumber" id="m_edit_contactNumber" placeholder="e.g., 09171234567"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                maxlength="11" oninput="validateContactNumber(this)">
+                                                maxlength="11" oninput="validateContactNumber(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -714,7 +752,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">EMAIL</label>
                                         <div class="relative">
                                             <input type="email" name="email" id="m_edit_email" placeholder="e.g., john.doe@example.com"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -724,7 +764,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">CITIZENSHIP</label>
                                         <div class="relative">
                                             <input type="text" name="citizenship" id="m_edit_citizenship" placeholder="e.g., Filipino"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -734,7 +776,7 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">BLOOD TYPE</label>
                                         <div class="relative">
                                             <select name="bloodType" id="m_edit_bloodType"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                                 <option disabled value="">Select</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -753,7 +795,9 @@ require_once views_path("partials/nav");
                                         <label class="block text-xs font-medium mb-1 ml-2">COMPLETE ADDRESS</label>
                                         <div class="relative">
                                             <input type="text" name="address" id="m_edit_address" placeholder="e.g., 1234 Mabini St., Barangay Malinis, Quezon City"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -771,7 +815,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="baseSalary" id="m_edit_baseSalary" placeholder="e.g., 600"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -781,7 +827,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="sssNumber" id="m_edit_sssNumber" maxlength="12" placeholder="e.g., 012345678912"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -791,7 +839,9 @@ require_once views_path("partials/nav");
                                         <div class="relative">
                                             <input type="text" name="pagibigNumber" id="m_edit_pagibigNumber" maxlength="12" placeholder="e.g., 012345678901"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -802,7 +852,9 @@ require_once views_path("partials/nav");
                                             <input type="text" name="philhealthNumber" id="m_edit_philhealthNumber" maxlength="12"
                                                 placeholder="e.g., 123456789012"
                                                 class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                onchange="validateInput(this)">
+                                                onchange="validateInput(this)"
+                                                required
+                                                >
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -1689,4 +1741,55 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial binding of event listeners
   bindManagerEventListeners();
 });
+
+// --- JS validation for required fields ---
+function validateManagerForm(form) {
+  let valid = true;
+  let firstInvalid = null;
+  // All fields except image
+  const requiredFields = [
+    'employeeId', 'branchManager', 'position', 'rfidNumber', 'firstName', 'middleName', 'lastName', 'dob',
+    'placeOfBirth', 'sex', 'civilStatus', 'contactNumber', 'email', 'citizenship', 'bloodType',
+    'address', 'baseSalary', 'sssNumber', 'pagibigNumber', 'philhealthNumber'
+  ];
+  requiredFields.forEach(name => {
+    const input = form.querySelector(`[name="${name}"]`);
+    if (input && input.value.trim() === '') {
+      valid = false;
+      input.classList.add('border-red-500');
+      if (!firstInvalid) firstInvalid = input;
+      // Show validation message if available
+      const msg = input.closest('.flex')?.querySelector('.validation-message') || input.parentElement.querySelector('.validation-message');
+      if (msg) msg.textContent = 'This field is required.';
+    } else if (input) {
+      input.classList.remove('border-red-500');
+      const msg = input.closest('.flex')?.querySelector('.validation-message') || input.parentElement.querySelector('.validation-message');
+      if (msg) msg.textContent = '';
+    }
+  });
+  if (firstInvalid) firstInvalid.focus();
+  return valid;
+}
+
+// Add validation to Add Manager
+if (saveBtn && form) {
+  saveBtn.addEventListener("click", e => {
+    e.preventDefault();
+    if (!validateManagerForm(form)) return;
+    // ... existing code ...
+  });
+}
+
+// Add validation to Update Manager
+const updateForm = document.getElementById('updateManagerForm');
+if (updateForm) {
+  updateForm.addEventListener('submit', function(e) {
+    if (!validateManagerForm(updateForm)) {
+      e.preventDefault();
+      return false;
+    }
+  });
+}
+
+// ... existing code ...
 </script>
