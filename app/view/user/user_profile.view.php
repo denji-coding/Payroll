@@ -5,14 +5,18 @@ require_once "../app/core/database.php";
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
-$employeeNo = $_SESSION['employee_no'] ?? null;
+// Add Bootstrap Icons CSS
+echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">';
+
+// Fix session variable handling
+$employeeNo = $_SESSION['employee_no'] ?? $_SESSION['employee_id'] ?? null;
 if (!$employeeNo) {
     echo "Unauthorized access.";
     exit;
 }
 
 $db = new Database();
-$result = $db->query("SELECT * FROM employees WHERE employee_no = ?", [$employeeNo]);
+$result = $db->query("SELECT * FROM employees WHERE employee_no = ? OR id = ?", [$employeeNo, $employeeNo]);
 $user = $result[0] ?? null;
 if (!$user) {
     echo "Employee not found.";

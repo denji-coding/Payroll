@@ -7,6 +7,17 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../core/database.php';
 
+// Function to properly format names with Title Case
+function formatName($name) {
+    if (empty($name)) return '';
+    
+    // Convert to lowercase first, then capitalize each word
+    // This handles multiple words separated by spaces, hyphens, or apostrophes
+    return preg_replace_callback('/\b\w+/u', function($matches) {
+        return ucfirst(strtolower($matches[0]));
+    }, $name);
+}
+
 $db = new Database();
 $pdo = $db->getConnection();
 
@@ -23,6 +34,7 @@ try {
         SELECT 
             pr.id AS payroll_id,
             pr.employee_id,
+            e.employee_no,
             pr.pay_period_start,
             pr.pay_period_end,
             pr.payroll_frequency,
@@ -44,14 +56,9 @@ try {
             ps.date_generated,
             e.position,
             e.base_salary,
-            CONCAT_WS(' ',
-              CONCAT(UCASE(LEFT(e.first_name, 1)), LCASE(SUBSTRING(e.first_name, 2))),
-              IF(e.middle_name IS NOT NULL AND e.middle_name != '',
-                 CONCAT(UCASE(LEFT(e.middle_name, 1)), '.'),
-                 ''
-              ),
-              CONCAT(UCASE(LEFT(e.last_name, 1)), LCASE(SUBSTRING(e.last_name, 2)))
-            ) AS full_name
+            e.first_name,
+            e.middle_name,
+            e.last_name
         FROM payroll pr
         LEFT JOIN payslips ps ON pr.id = ps.payroll_id
         LEFT JOIN employees e ON pr.employee_id = e.id
@@ -62,6 +69,15 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Format names properly for each record
+    foreach ($data as &$record) {
+        $firstName = formatName($record['first_name'] ?? '');
+        $middleInitial = !empty($record['middle_name']) ? formatName(substr($record['middle_name'], 0, 1)) . '.' : '';
+        $lastName = formatName($record['last_name'] ?? '');
+        
+        $record['full_name'] = trim($firstName . ' ' . $middleInitial . ' ' . $lastName);
+    }
 
     echo json_encode(['status' => 'success', 'data' => $data]);
     exit;

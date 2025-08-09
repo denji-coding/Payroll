@@ -2,12 +2,13 @@
 <?php
 require_once '../app/core/database.php';
 
-if (!isset($_SESSION['employee_id'])) {
+// Fix session variable handling
+if (!isset($_SESSION['employee_id']) && !isset($_SESSION['employee_no'])) {
     header('Location: index.php?payroll=unauthorized');
     exit;
 }
 
-$employee_id = $_SESSION['employee_id'];
+$employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
 
 $db = new Database();
 $conn = $db->getConnection();

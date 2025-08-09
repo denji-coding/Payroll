@@ -43,7 +43,7 @@ try {
             ps.ps_pdf_file_path,
             ps.date_generated,
             CONCAT_WS(' ',
-              CONCAT(UCASE(LEFT(e.first_name, 1)), LCASE(SUBSTRING(e.first_name, 2))),
+              CONCAT(UCASE(LEFT(e.first_name, 1)), UCASE(SUBSTRING(e.first_name, 2))),
               IF(e.middle_name IS NOT NULL AND e.middle_name != '',
                  CONCAT(UCASE(LEFT(e.middle_name, 1)), '.'),
                  ''

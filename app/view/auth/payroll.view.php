@@ -3,6 +3,9 @@ $title = "Payroll";
 require_once views_path("partials/header");
 require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
+
+// Add SweetAlert2 for better user experience
+echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 ?>
 
 <style>
@@ -127,7 +130,6 @@ require_once views_path("partials/nav");
   <div class="pt-2">
     <button
       id="processPayrollBtn"
-      onclick="processPayroll()"
       class="w-full px-4 py-2 btn btn-success font-semibold rounded-lg shadow-sm transition "
       disabled
       >
@@ -186,44 +188,7 @@ require_once views_path("partials/nav");
   </thead>
 
   <tbody class="[&_tr:last-child]:border-0" id="payrollTable">
-    <?php
-$employees = [
-  [ "id" => 1, "name" => "John Doe", "basic" => 600, "total_hours" => 176, "present" => 22, "late" => 90, "absent" => 0 ],
-  [ "id" => 2, "name" => "Jane Smith", "basic" => 600, "total_hours" => 160, "present" => 20, "late" => 30, "absent" => 2 ],
-  [ "id" => 3, "name" => "Mike Johnson", "basic" => 600, "total_hours" => 240, "present" => 30, "late" => 60, "absent" => 3 ],
-];
-
-foreach ($employees as $emp):
-  $daily = $emp['basic'];
-  $hourly = $daily / 8;
-  $totalDays = $emp['total_hours'] / 8;
-  $gross = $daily * $totalDays;
-
-  $lateHrs = $emp['late'] / 60;
-  $lateDeduction = $lateHrs * $hourly;
-  $absentDeduction = $emp['absent'] * $daily;
-  $benefitDeduction = $gross * 0.15;
-
-  $totalDeduction = $lateDeduction + $absentDeduction + $benefitDeduction;
-  $netPay = $gross - $totalDeduction;
-?>
-<tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-  <td class="p-3 align-middle font-medium">
-    <input type="checkbox" class="employeeCheckbox h-5 w-5 rounded-md appearance-none border-2 border-gray-500 checked:bg-[#478547] checked:border-[#478547] checked:text-white focus:ring-2 focus:ring-[#478547] flex items-center justify-center">
-  </td>
-  <td class="p-3 align-middle font-medium">EMP<?= $emp['id'] ?></td>
-  <td class="p-3 align-middle font-medium"><?= htmlspecialchars($emp['name']) ?></td>
-  <td class="p-3 align-middle text-left font-medium"><?= number_format($emp['basic'], 2) ?></td>
-  <td class="p-3 align-middle text-left font-medium"><?= $emp['total_hours'] ?></td>
-  <td class="h-12 px-3 align-middle font-medium"><?= $emp['present'] ?></td>
-  <td class="h-12 px-3 align-middle font-medium"><?= $emp['late'] ?></td>
-  <td class="h-12 px-3 align-middle font-medium"><?= $emp['absent'] ?></td>
-  <td class="p-3 align-middle text-left font-medium deductionCell">0.00</td>
-  <td class="p-3 align-middle text-left font-medium grossCell">0.00</td>
-  <td class="p-3 align-middle text-left font-semibold netPayCell">0.00</td>
-</tr>
-<?php endforeach; ?>
-
+    <!-- Employee data will be loaded via JavaScript -->
   </tbody>
 </table>
 
@@ -277,7 +242,70 @@ foreach ($employees as $emp):
 </main>
 
 <script>
+// Function to format employee names with proper Title Case
+function formatEmployeeName(firstName, middleName, lastName) {
+  const formatName = (name) => {
+    if (!name) return '';
+    return name.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+  
+  const formattedFirst = formatName(firstName);
+  const middleInitial = middleName ? formatName(middleName.charAt(0)) + '.' : '';
+  const formattedLast = formatName(lastName);
+  
+  return [formattedFirst, middleInitial, formattedLast].filter(Boolean).join(' ');
+}
+
+// Load employee data from API
+function loadEmployeeData() {
+  const tbody = document.getElementById('payrollTable');
+  tbody.innerHTML = '<tr><td colspan="11" class="text-center p-4">Loading employees...</td></tr>';
+
+  fetch('../app/api/employees-api.php')
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success' && data.data.length > 0) {
+        tbody.innerHTML = '';
+        data.data.forEach((emp, index) => {
+          const row = `
+            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+              <td class="p-3 align-middle font-medium">
+                <input type="checkbox" class="employeeCheckbox h-5 w-5 rounded-md appearance-none border-2 border-gray-500 checked:bg-[#478547] checked:border-[#478547] checked:text-white focus:ring-2 focus:ring-[#478547] flex items-center justify-center">
+              </td>
+              <td class="p-3 align-middle font-medium">${emp.employee_no || 'N/A'}</td>
+              <td class="p-3 align-middle font-medium">${formatEmployeeName(emp.first_name, emp.middle_name, emp.last_name)}</td>
+              <td class="p-3 align-middle text-left font-medium">${parseFloat(emp.base_salary || 0).toFixed(2)}</td>
+              <td class="p-3 align-middle text-left font-medium">0</td>
+              <td class="h-12 px-3 align-middle font-medium">0</td>
+              <td class="h-12 px-3 align-middle font-medium">0</td>
+              <td class="h-12 px-3 align-middle font-medium">0</td>
+              <td class="p-3 align-middle text-left font-medium deductionCell">0.00</td>
+              <td class="p-3 align-middle text-left font-medium grossCell">0.00</td>
+              <td class="p-3 align-middle text-left font-semibold netPayCell">0.00</td>
+            </tr>
+          `;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+
+        // Re-attach event listeners after loading data
+        document.querySelectorAll(".employeeCheckbox").forEach(checkbox => {
+          checkbox.addEventListener("change", updatePayrollSummary);
+        });
+
+        updatePayrollSummary();
+      } else {
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center p-4 text-gray-500">No employees found.</td></tr>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading employees:', error);
+      tbody.innerHTML = '<tr><td colspan="11" class="text-center p-4 text-red-500">Error loading employees.</td></tr>';
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Load employee data first
+  loadEmployeeData();
   const startDate = document.getElementById('start_date');
   const endDate = document.getElementById('end_date');
   const durationDisplay = document.getElementById('durationDisplay');
@@ -329,9 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const lateDeduction = (lateMinutes / 60) * hourlyRate;
           const absenceDeduction = absentDays * basic;
-          const benefitsDeduction = grossPay * 0.15;
+          
+          // Calculate individual benefit deductions (5% each for SSS, PhilHealth, Pag-IBIG)
+          const sssDeduction = grossPay * 0.05;
+          const philhealthDeduction = grossPay * 0.05;
+          const pagibigDeduction = grossPay * 0.05;
 
-          const totalDeduction = benefitsDeduction + absenceDeduction + lateDeduction;
+          const totalDeduction = sssDeduction + philhealthDeduction + pagibigDeduction + absenceDeduction + lateDeduction;
           const netPay = grossPay - totalDeduction;
 
           estimatedGross += grossPay;
@@ -355,8 +387,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Process payroll for selected employees
   function processPayroll() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const payrollType = document.getElementById('payroll_type').value;
+
+    if (!startDate || !endDate || !payrollType) {
+      Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill in start date, end date, and payroll frequency.',
+        icon: 'warning'
+      });
+      return;
+    }
+
     const checkboxes = document.querySelectorAll(".employeeCheckbox");
-    const processedEmployees = [];
+    const payrollData = [];
 
     checkboxes.forEach(cb => {
       if (cb !== selectAll) {
@@ -372,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const empName = row.children[2].innerText.trim();
           const basic = parseFloat(row.children[3].innerText.replace(/,/g, '')) || 0;
           const totalHours = parseFloat(row.children[4].innerText) || 0;
+          const presentDays = parseInt(row.children[5].innerText) || 0;
           const lateMinutes = parseInt(row.children[6].innerText) || 0;
           const absentDays = parseInt(row.children[7].innerText) || 0;
 
@@ -381,17 +427,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const lateDeduction = (lateMinutes / 60) * hourlyRate;
           const absenceDeduction = absentDays * basic;
-          const benefitsDeduction = 0.15 * grossPay;
 
-          const totalDeduction = benefitsDeduction + absenceDeduction + lateDeduction;
+          // Calculate individual benefit deductions (5% each for SSS, PhilHealth, Pag-IBIG)
+          const sssDeduction = grossPay * 0.05;
+          const philhealthDeduction = grossPay * 0.05;
+          const pagibigDeduction = grossPay * 0.05;
+
+          const totalDeduction = sssDeduction + philhealthDeduction + pagibigDeduction + absenceDeduction + lateDeduction;
           const netPay = grossPay - totalDeduction;
 
-          // Update table
+
+
+          // Update table display
           if (deductionCell) deductionCell.textContent = totalDeduction.toLocaleString(undefined, { minimumFractionDigits: 2 });
           if (grossCell) grossCell.textContent = grossPay.toLocaleString(undefined, { minimumFractionDigits: 2 });
           if (netPayCell) netPayCell.textContent = netPay.toLocaleString(undefined, { minimumFractionDigits: 2 });
 
-          processedEmployees.push(`${empId} - ${empName}: <b>₱${netPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}</b>`);
+          // Add to payroll data for API
+          const payrollItem = {
+            employee_no: empId,
+            total_hours: totalHours,
+            present_days: presentDays,
+            absent_days: absentDays,
+            leave_days: 0, // You may want to add leave calculation
+            sss_deduction: sssDeduction,
+            pagibig_deduction: pagibigDeduction,
+            philhealth_deduction: philhealthDeduction,
+            total_deductions: totalDeduction,
+            gross: grossPay,
+            net: netPay
+          };
+
+          payrollData.push(payrollItem);
         } else {
           if (deductionCell) deductionCell.textContent = "0.00";
           if (grossCell) grossCell.textContent = "0.00";
@@ -400,15 +467,88 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Show success message
+    if (payrollData.length === 0) {
+      Swal.fire({
+        title: 'No Employees Selected',
+        text: 'Please select at least one employee to process payroll.',
+        icon: 'warning'
+      });
+      return;
+    }
+
+    // Show processing indicator
     Swal.fire({
-      title: 'Payroll Processed',
-      html: processedEmployees.length > 0 ? 
-        processedEmployees.join("<br>") : 
-        'No employees selected.',
-      icon: processedEmployees.length > 0 ? 'success' : 'warning',
-      confirmButtonText: 'OK',
-      customClass: { popup: 'text-left' }
+      title: 'Processing Payroll...',
+      text: 'Please wait while we save the payroll data.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // Send data to API
+    const requestData = {
+      start_date: startDate,
+      end_date: endDate,
+      payroll_type: payrollType,
+      payrolls: payrollData
+    };
+
+    console.log('Sending to API:', requestData);
+
+    fetch('../app/api/process_payroll-api.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      Swal.close();
+      
+      if (data.status === 'success') {
+        const processedEmployees = payrollData.map(p => 
+          `${p.employee_no}: <b>₱${p.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}</b>`
+        );
+
+        Swal.fire({
+          title: 'Payroll Processed Successfully!',
+          html: processedEmployees.join("<br>"),
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
+
+        // Disable processed checkboxes
+        payrollData.forEach(p => {
+          const rows = document.querySelectorAll("#payrollTable tr");
+          rows.forEach(row => {
+            if (row.children[1]?.innerText.trim() === p.employee_no) {
+              const checkbox = row.querySelector(".employeeCheckbox");
+              if (checkbox) {
+                checkbox.disabled = true;
+                checkbox.style.opacity = '0.5';
+              }
+            }
+          });
+        });
+
+      } else {
+        Swal.fire({
+          title: 'Error Processing Payroll',
+          text: data.message || 'An error occurred while processing payroll.',
+          icon: 'error'
+        });
+      }
+    })
+    .catch(error => {
+      Swal.close();
+      console.error('Error:', error);
+      Swal.fire({
+        title: 'Network Error',
+        text: 'Failed to connect to the server. Please try again.',
+        icon: 'error'
+      });
     });
 
     updatePayrollSummary();
@@ -426,7 +566,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (selectAll) {
     selectAll.addEventListener("change", function () {
-      document.querySelectorAll(".employeeCheckbox").forEach(cb => cb.checked = this.checked);
+      document.querySelectorAll(".employeeCheckbox").forEach(cb => {
+        if (!cb.disabled) {
+          cb.checked = this.checked;
+        }
+      });
       updatePayrollSummary();
     });
   }
@@ -434,6 +578,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (processPayrollBtn) {
     processPayrollBtn.addEventListener("click", processPayroll);
   }
+
+  // Make processPayroll available globally
+  window.processPayroll = processPayroll;
 
   // Initial setup
   updateDuration();

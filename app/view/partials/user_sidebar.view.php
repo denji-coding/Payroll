@@ -2,7 +2,8 @@
 $currentPage = $_GET['payroll'] ?? basename($_SERVER['PHP_SELF']);
 require_once views_path("partials/header");
 
-$username = $_SESSION['name'] ?? 'Unknown Employee';
+// Fix session variable inconsistencies
+$username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Unknown Employee';
 $email = $_SESSION['email'] ?? 'no-email@example.com';
 
 $imagePath = (!empty($_SESSION['photo_path']))
@@ -49,6 +50,7 @@ a {
 @media (max-width: 767px) {
     #sidebar {
         transform: translateX(-100%) !important;
+        transition: transform 0.3s ease;
     }
 
     #sidebar.open {
@@ -58,6 +60,11 @@ a {
     #sidebarToggle,
     #portalLabel {
         display: none !important;
+    }
+    
+    main#mainContent {
+        margin-left: 0 !important;
+        padding-top: var(--mobile-navbar-height);
     }
 }
 
@@ -248,8 +255,9 @@ const toggleBtn = document.getElementById('sidebarToggle');
 const toggleIcon = toggleBtn?.querySelector('i');
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const menuIcon = document.getElementById('menuIcon');
-const mainContent = document.getElementById('mainContent'); // << add this
+const mainContent = document.getElementById('mainContent');
 
+// Mobile menu functionality
 mobileMenuBtn?.addEventListener('click', () => {
     const isOpen = sidebar.classList.contains('open');
     sidebar.classList.toggle('open');
@@ -264,6 +272,7 @@ mobileMenuBtn?.addEventListener('click', () => {
     }
 });
 
+// Desktop sidebar toggle
 toggleBtn?.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
     const collapsed = sidebar.classList.contains('collapsed');
@@ -281,6 +290,7 @@ toggleBtn?.addEventListener('click', () => {
     }
 });
 
+// Initialize sidebar state
 window.addEventListener('DOMContentLoaded', () => {
     const isDesktop = window.innerWidth >= 768;
     const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -298,6 +308,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Handle window resize
 window.addEventListener('resize', () => {
     const isDesktop = window.innerWidth >= 768;
     if (!isDesktop) {

@@ -9,10 +9,45 @@ use Dompdf\Options;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Function to properly format names with Title Case
+function formatName($name) {
+    if (empty($name)) return '';
+    
+    // Convert to lowercase first, then capitalize each word
+    // This handles multiple words separated by spaces, hyphens, or apostrophes
+    return preg_replace_callback('/\b\w+/u', function($matches) {
+        return ucfirst(strtolower($matches[0]));
+    }, $name);
+}
+
+// Check for either admin or manager authentication
 $managerId = $_SESSION['manager_id'] ?? null;
-if (!$managerId) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+$adminId = $_SESSION['SESSION_USER_ID'] ?? null;
+
+if (!$managerId && !$adminId) {
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized - Please login as admin or manager']);
     exit;
+}
+
+// For database constraints, we need a manager ID. If admin is processing, 
+// we'll use a default manager or handle this differently
+if ($managerId) {
+    $userId = $managerId;
+} else {
+    // Admin is processing - we need to handle this case
+    // Option 1: Use the first available manager as a placeholder
+    // Option 2: Create a special admin-manager record
+    // For now, let's use the first manager in the system
+    $pdo = (new Database())->getConnection();
+    $managerStmt = $pdo->query("SELECT id FROM managers LIMIT 1");
+    $managerRow = $managerStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$managerRow) {
+        echo json_encode(['status' => 'error', 'message' => 'No managers found in system. Please create a manager first.']);
+        exit;
+    }
+    
+    $userId = $managerRow['id'];
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -21,7 +56,10 @@ if (!$input || !isset($input['payrolls'], $input['start_date'], $input['end_date
     exit;
 }
 
-$pdo = (new Database())->getConnection();
+// Use existing PDO connection if it was created above, otherwise create new one
+if (!isset($pdo)) {
+    $pdo = (new Database())->getConnection();
+}
 
 try {
     $pdo->beginTransaction();
@@ -56,8 +94,9 @@ try {
 
     $processedEmployees = [];
 
+    $empStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, employee_no, position, base_salary, email FROM employees WHERE employee_no = ?");
+
     foreach ($input['payrolls'] as $p) {
-        $empStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, employee_no, position, base_salary, email FROM employees WHERE employee_no = ?");
         $empStmt->execute([$p['employee_no']]);
         $empRow = $empStmt->fetch(PDO::FETCH_ASSOC);
         if (!$empRow) continue;
@@ -71,24 +110,35 @@ try {
         ]);
         if ($checkStmt->fetchColumn() > 0) continue;
 
-        $insertStmt->execute([
+        // BACKUP CALCULATION: If total_deductions is 0 or missing, calculate it manually
+        $calculatedTotal = floatval($p['sss_deduction'] ?? 0) + floatval($p['pagibig_deduction'] ?? 0) + floatval($p['philhealth_deduction'] ?? 0);
+        $receivedTotal = floatval($p['total_deductions'] ?? 0);
+        
+        // Use calculated total if received total is 0
+        $finalTotal = ($receivedTotal > 0) ? $receivedTotal : $calculatedTotal;
+        
+        $executeData = [
             ':employee_id' => $employee_id,
             ':start' => $input['start_date'],
             ':end' => $input['end_date'],
             ':type' => $input['payroll_type'],
             ':duration' => $p['present_days'] + $p['absent_days'] + $p['leave_days'],
             ':hours' => $p['total_hours'],
-            ':sss' => $p['sss_deduction'] ?? 0,
-            ':pagibig' => $p['pagibig_deduction'] ?? 0,
-            ':philhealth' => $p['philhealth_deduction'] ?? 0,
+            ':sss' => floatval($p['sss_deduction'] ?? 0),
+            ':pagibig' => floatval($p['pagibig_deduction'] ?? 0),
+            ':philhealth' => floatval($p['philhealth_deduction'] ?? 0),
             ':present' => $p['present_days'],
             ':absent' => $p['absent_days'],
             ':leave' => $p['leave_days'],
-            ':total_deductions' => $p['total_deductions'] ?? 0,
-            ':gross' => $p['gross'],
-            ':net' => $p['net'],
-            ':manager_id' => $managerId
-        ]);
+            ':total_deductions' => $finalTotal,
+            ':gross' => floatval($p['gross']),
+            ':net' => floatval($p['net']),
+            ':manager_id' => $userId
+        ];
+        
+
+        
+        $insertStmt->execute($executeData);
 
         $payrollId = $pdo->lastInsertId();
 
@@ -135,9 +185,9 @@ try {
                 <td style="width: 50%; vertical-align: top;">
                     
                     <ul style="list-style: none; padding: 0; margin: 0;">
-                        <li><strong>Name:</strong> ' . ucwords(strtolower($empRow['first_name'])) . ' ' . 
-                        ($empRow['middle_name'] ? strtoupper(substr($empRow['middle_name'], 0, 1)) . '. ' : '') . 
-                        ucwords(strtolower($empRow['last_name'])) . '</li>
+                        <li><strong>Name:</strong> ' . formatName($empRow['first_name']) . ' ' . 
+                        ($empRow['middle_name'] ? formatName(substr($empRow['middle_name'], 0, 1)) . '. ' : '') . 
+                        formatName($empRow['last_name']) . '</li>
 
                         <li><strong>ID:</strong> ' . $empRow['employee_no'] . '</li>
                         <li><strong>Position:</strong> ' . $empRow['position'] . '</li>
@@ -214,49 +264,49 @@ try {
         $payslipInsertStmt->execute([
             ':payroll_id' => $payrollId,
             ':employee_id' => $employee_id,
-            ':generated_by' => $managerId,
+            ':generated_by' => $userId,
             ':file_path' => 'payslips/' . $filename
         ]);
 
         // Send Email with Attachment
-        $mail = new PHPMailer(true);
-        try {
-            $firstName = ucfirst(strtolower($empRow['first_name']));
+        // $mail = new PHPMailer(true);
+        // try {
+        //     $firstName = ucfirst(strtolower($empRow['first_name']));
 
-            $mail->isSMTP();
-            $mail->SMTPAuth   = true;
-            $mail->Host       = 'mail.smtp2go.com';
-            $mail->Username   = 'nabesis.roy@dnsc.edu.ph';
-            $mail->Password   = 'pGdu8SqFpeLnVp2Y';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port       = 587;
+        //     $mail->isSMTP();
+        //     $mail->SMTPAuth   = true;
+        //     $mail->Host       = 'mail.smtp2go.com';
+        //     $mail->Username   = 'nabesis.roy@dnsc.edu.ph';
+        //     $mail->Password   = 'pGdu8SqFpeLnVp2Y';
+        //     $mail->SMTPSecure = 'tls';
+        //     $mail->Port       = 587;
 
-            $mail->setFrom('noreply@migrantsventurecorp.ip-ddns.com', 'Migrants Venture Corporation');
-            $mail->addReplyTo('support@migrantsventurecorp.ip-ddns.com', 'Support Team');
+        //     $mail->setFrom('noreply@migrantsventurecorp.ip-ddns.com', 'Migrants Venture Corporation');
+        //     $mail->addReplyTo('support@migrantsventurecorp.ip-ddns.com', 'Support Team');
 
-            $mail->addAddress($empRow['email'], $empRow['first_name'] . ' ' . $empRow['last_name']);
-            $mail->Subject = 'Your Payslip [' . $input['start_date'] . ' - ' . $input['end_date'] . ']';
+        //     $mail->addAddress($empRow['email'], $empRow['first_name'] . ' ' . $empRow['last_name']);
+        //     $mail->Subject = 'Your Payslip [' . $input['start_date'] . ' - ' . $input['end_date'] . ']';
 
-            $mail->Body = <<<EOD
-                Dear {$firstName},
+        //     $mail->Body = <<<EOD
+        //         Dear {$firstName},
 
-                    Attached is your payslip for the period covering {$input['start_date']} to {$input['end_date']}.
+        //             Attached is your payslip for the period covering {$input['start_date']} to {$input['end_date']}.
 
-                    You may also view this payslip anytime by logging into the employee portal. If you have any questions or notice any discrepancies, feel free to reach out.
+        //             You may also view this payslip anytime by logging into the employee portal. If you have any questions or notice any discrepancies, feel free to reach out.
 
-                    Best regards,  
-                    Migrants Venture Corporation  
-                    HR Department  
-                    support@migrantsventurecorp.ip-ddns.com
-                EOD;
+        //             Best regards,  
+        //             Migrants Venture Corporation  
+        //             HR Department  
+        //             support@migrantsventurecorp.ip-ddns.com
+        //         EOD;
 
-            $mail->addAttachment($pdfPath, $filename);
-            $mail->send();
-        } catch (Exception $e) {
-            error_log("Email send failed for {$empRow['email']}: " . $mail->ErrorInfo);
-        }
+        //     $mail->addAttachment($pdfPath, $filename);
+        //     $mail->send();
+        // } catch (Exception $e) {
+        //     error_log("Email send failed for {$empRow['email']}: " . $mail->ErrorInfo);
+        // }
 
-        $processedEmployees[] = $empRow['employee_no'];
+                 $processedEmployees[] = $empRow['employee_no'];
     }
 
     $pdo->commit();

@@ -52,13 +52,6 @@ require_once views_path("partials/nav");
                 </tr>
             </thead>
             <tbody id="payslipTableBody" class="[&_tr:last-child]:border-0">
-              
-    
-    
-</tbody>
-
-
-
 
           </table>
         </div>
@@ -99,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   data-bs-toggle="modal"
                   data-bs-target="#payslipModal"
                   data-employee="${employeeName}"
-                  data-id="${record.employee_id}"
+                  data-id="${record.employee_no || record.employee_id || 'N/A'}"
                   data-position="${record.position}" 
                   data-salary="${record.base_salary}" 
                   data-period="${payPeriod}"
@@ -111,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   data-sss="${record.sss_deduction}"
                   data-philhealth="${record.philhealth_deduction}"
                   data-pagibig="${record.pagibig_deduction}"
+                  data-total-deductions="${record.total_deductions}"
                   data-link="/mvcPayroll/public/${record.ps_pdf_file_path}"
                   title="View Payslip"
                 >
@@ -138,97 +132,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Modal -->
 <div class="modal fade" id="payslipModal" tabindex="-1" aria-labelledby="payslipModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content p-6 border shadow-lg rounded-lg overflow-auto" style="max-height: 90vh;">
-
-      <!-- Header -->
-      <div class="modal-header border-bottom-0">
-        <h5 class="modal-title text-lg font-semibold" id="payslipModalLabel">Payslip Details</h5>
+  <div class="modal-dialog modal-dialog-scrollable"> <!-- Removed modal-xl -->
+    <div class="modal-content bg-[#f8fbf8] border">
+      <div class="modal-header border-b">
+        <h5 class="modal-title text-lg font-semibold" id="payslip-title">Payslip Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-
-      <!-- Body -->
-      <div class="modal-body space-y-6" id="payslip-content">
-        <!-- Header Info -->
-        <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <h2 class="text-2xl fw-bold" id="company-name">Migrants Venture Corporation</h2>
-            <p class="text-[#478547]" id="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</p>
-          </div>
-          <!-- <div class="text-end">
-            <h3 class="fw-bold">PAYSLIP</h3>
-            <p class="text-sm" id="payslip-period">—</p>
-          </div> -->
-        </div>
-
-        <hr class="my-3" />
-
-        <!-- Employee & Payroll Details -->
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <h5 class="fw-semibold mb-2">Employee Information</h5>
-            <ul class="list-unstyled small">
-              <li><strong>Name:</strong> <span id="emp-name">—</span></li>
-              <li><strong>ID:</strong> <span id="emp-id">—</span></li>
-              <li><strong>Position:</strong> <span id="emp-position">—</span></li>
-              <li><strong>Basic Salary:</strong> ₱<span id="basic-pay">—</span> <span>/ day</span></li>
-            </ul>
-          </div>
-          <div class="col-md-6 mb-3">
-            <h5 class="fw-semibold mb-2">Payroll Details</h5>
-            <ul class="list-unstyled small">
-              <li><strong>Pay Period:</strong> <span id="emp-period">—</span></li>
-              <li><strong>Total Hours:</strong> <span id="emp-hours">—</span></li>
-              <li><strong>Absent:</strong> <span id="emp-absent">—</span></li>
-              <li><strong>Leave:</strong> <span id="emp-leave">—</span></li>
-            </ul>
-          </div>
-        </div>
-
-        <hr class="my-3" />
-
-        <!-- Earnings & Deductions -->
-        <h5 class="fw-semibold">Earnings & Deductions</h5>
-        <div class="row">
-          <div class="col-md-6">
-            <table class="table table-sm">
-              <thead><tr><th>Earnings</th><th class="text-end"></th></tr></thead>
-              <tbody>
-                <tr><td>Basic Pay</td><td class="text-end">₱<span id="earn-basic-pay">0.00</span></td></tr>
-                <tr class="fw-bold">
-                  <td class="text-success">Total Earnings</td>
-                  <td class="text-end text-success">₱<span id="total-earnings">0.00</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="col-md-6">
-            <table class="table table-sm">
-              <thead><tr><th>Deductions</th><th class="text-end"></th></tr></thead>
-              <tbody>
-                <tr><td>SSS</td><td class="text-end">₱<span id="deduct-sss">0.00</span></td></tr>
-                <tr><td>PhilHealth</td><td class="text-end">₱<span id="deduct-philhealth">0.00</span></td></tr>
-                <tr><td>Pag-IBIG</td><td class="text-end">₱<span id="deduct-pagibig">0.00</span></td></tr>
-                <tr class="fw-bold">
-                  <td class="text-success">Total Deductions</td>
-                  <td class="text-end text-success">₱<span id="total-deductions">0.00</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <hr class="my-3" />
-
-        <!-- Net Pay Summary -->
-        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
-          <div>
-            <h6 class="fw-semibold mb-1">Net Pay</h6>
-            <p class="mb-0 text-muted small">Total earnings minus total deductions</p>
-          </div>
-          <div class="text-end">
-            <h4 class="text-success fw-bold mb-0">₱<span id="net-pay">0.00</span></h4>
-          </div>
+      <div class="modal-body p-6">
+        <div id="payslip-content">
+          <!-- Real data will be injected here -->
+          <p>Loading payslip data...</p>
         </div>
       </div>
 
@@ -241,11 +154,23 @@ document.addEventListener('DOMContentLoaded', () => {
           <i class="bi bi-printer me-1"></i> Print
         </button>
       </div>
-
+    </div>
     </div>
   </div>
 </div>
 
+<style>
+  /* Your modal custom size */
+  #payslipModal .modal-dialog {
+    max-width: 600px; /* narrow width */
+    max-height: 90vh; /* tall but limited height */
+  }
+  #payslipModal .modal-content {
+    max-height: 90vh;
+    overflow-y: auto; /* scroll if content overflows */
+  }
+  
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -253,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   payslipModalEl.addEventListener('show.bs.modal', function (event) {
     const button = event.relatedTarget;
+    const payslipContent = document.getElementById('payslip-content');
 
     // Get data attributes
     const name = button.getAttribute('data-employee') || '—';
@@ -270,27 +196,102 @@ document.addEventListener('DOMContentLoaded', () => {
     const pagibig = parseFloat(button.getAttribute('data-pagibig') || 0).toFixed(2);
     const link = button.getAttribute('data-link') || '#';
 
-    const totalDeductions = (parseFloat(sss) + parseFloat(philhealth) + parseFloat(pagibig)).toFixed(2);
+    
+    const totalDeductions = (parseFloat(button.getAttribute('data-total-deductions') || 0).toFixed(2));
 
-    // Fill modal content
-    document.getElementById('emp-name').textContent = name;
-    document.getElementById('emp-id').textContent = empId;
-    document.getElementById('emp-position').textContent = position;
-    document.getElementById('basic-pay').textContent = basicSalary;
-    document.getElementById('emp-period').textContent = payPeriod;
-    // document.getElementById('payslip-period').textContent = payPeriod;
-    document.getElementById('emp-hours').textContent = totalHours;
-    document.getElementById('emp-absent').textContent = absentDays;
-    document.getElementById('emp-leave').textContent = leaveDays;
+    // Create the new modal content with the same design as user_mypayslip.view.php
+    payslipContent.innerHTML = `
+      <div class="space-y-6">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <span class="text-2xl font-bold">Migrants Venture Corporation</span>
+            <p class="text-[#478547]">Lapu-Lapu St. Tagum City, Davao Del Norte</p>
+          </div>
+          <div class="text-end">
+            <span class="font-bold">PAYSLIP</span>
+          </div>
+        </div>
 
-    document.getElementById('earn-basic-pay').textContent = grossPay;
-    document.getElementById('deduct-sss').textContent = sss;
-    document.getElementById('deduct-philhealth').textContent = philhealth;
-    document.getElementById('deduct-pagibig').textContent = pagibig;
-    document.getElementById('total-deductions').textContent = totalDeductions;
+        <hr class="my-3 bg-border" style="height:1px;">
 
-    document.getElementById('total-earnings').textContent = grossPay;
-    document.getElementById('net-pay').textContent = netPay;
+        <div class="row">
+          <div class="col-md-6">
+            <span class="font-semibold mb-2">Employee Information</span>
+            <div class="mb-2 text-sm"> 
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>ID:</strong> ${empId}</p>
+              <p><strong>Position:</strong> ${position}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <span class="font-semibold mb-2">Payment Details</span>
+            <div class="mb-2 text-sm">
+              <p><strong>Basic Salary:</strong> ₱${basicSalary} / day</p>
+              <p><strong>Pay Period:</strong> ${payPeriod}</p>
+              <p><strong>Total Hours:</strong> ${totalHours}</p>
+              <p><strong>Absent Days:</strong> ${absentDays}</p>
+              <p><strong>Leave Days:</strong> ${leaveDays}</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3 bg-border" style="height:1px;">
+
+        <div class="mb-4">
+          <span class="font-semibold">Earnings & Deductions</span>
+          <div class="row">
+            <div class="col-md-6">
+              <span class="text-sm font-medium mb-2">Earnings</span>
+              <table class="table table-sm text-sm mb-0">
+                <tbody>
+                  <tr class="border-bottom">
+                    <td>Gross Pay</td>
+                    <td class="text-end">₱${parseFloat(grossPay).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="font-bold">
+                    <td class="text-success">Total Earnings</td>
+                    <td class="text-end text-success">₱${parseFloat(grossPay).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <span class="text-sm font-medium mb-2">Deductions</span>
+              <table class="table table-sm text-sm mb-0">
+                <tbody class="bg-[#f8fbf8]">
+                  <tr class="border-bottom text-danger">
+                    <td>SSS</td>                        
+                    <td class="text-end">₱${parseFloat(sss).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="border-bottom text-danger">
+                    <td>PhilHealth</td>                        
+                    <td class="text-end">₱${parseFloat(philhealth).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="border-bottom text-danger">
+                    <td>Pag-Ibig</td>                        
+                    <td class="text-end">₱${parseFloat(pagibig).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="border-bottom font-bold ">
+                    <td class="text-danger">Total Deductions</td>                        
+                    <td class="text-end text-danger">₱${parseFloat(totalDeductions).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <hr class="bg-success my-3" style="height:1px;">
+
+          <div class="bg-[#f2f8f2] rounded-lg p-4 d-flex justify-content-between align-items-center">
+            <div>
+              <span class="fw-semibold">Net Pay</span>
+              <p class="text-success small mb-0">Total earnings minus total deductions</p>
+            </div>
+            <div class="text-end fw-bold fs-4">₱${parseFloat(netPay).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          </div>
+        </div>
+      </div>
+    `;
 
     window.downloadPayslip = () => window.open(link, '_blank');
     window.printPayslip = () => {
@@ -298,6 +299,26 @@ document.addEventListener('DOMContentLoaded', () => {
       printWindow.document.write(`<iframe src="${link}" frameborder="0" style="width:100%;height:100vh;"></iframe>`);
     };
   });
+
+  // Helper functions for formatting
+  function capitalizeFirstLetter(str) {
+    if (!str) return '';
+    // Handle multiple words - capitalize first letter of each word
+    return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+      return ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[m];
+    });
+  }
 });
 </script>
 
@@ -351,14 +372,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Print function
   function printPayslip() {
-    var printContent = document.getElementById('payslip-content');
-    var printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Payslip</title>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(printContent.innerHTML);
-    printWindow.document.write('</body></html>');
+    const content = document.getElementById("payslip-content").innerHTML;
+
+    const printWindow = window.open('', '_blank');
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Payslip</title>
+          <!-- Add Bootstrap CSS if you use it -->
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              color: #333;
+            }
+            .text-success { color: #28a745; }
+            .text-danger { color: #dc3545; }
+            .border-bottom { border-bottom: 1px solid #ccc; }
+            .table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .table td { padding: 8px; border-bottom: 1px solid #ddd; }
+            .text-end { text-align: right; }
+            .fw-bold { font-weight: bold; }
+            .fw-semibold { font-weight: 600; }
+            .rounded-lg { border-radius: 0.5rem; }
+            .p-4 { padding: 1.5rem; }
+            .bg-light-green { background-color: #f2f8f2; }
+            .text-sm { font-size: 0.875rem; }
+            .text-lg { font-size: 1.125rem; }
+            .fs-4 { font-size: 1.5rem; }
+          </style>
+        </head>
+        <body>
+          ${content}
+        </body>
+      </html>
+    `);
+
     printWindow.document.close();
+
+    // Wait until content is loaded, then print and close
+    printWindow.onload = function() {
+      printWindow.focus(); 
     printWindow.print();
+      printWindow.close();
+    };
   }
 
   function downloadPayslip(employeeId) {

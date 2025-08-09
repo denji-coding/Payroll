@@ -489,54 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2000);
   };
 
-  const fetchLogStatusAndSubmit = (empId, typeGroup) => {
-    const today = new Date().toISOString().split('T')[0];
-    fetch(`../app/api/attendance-api.php?date=${today}`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.status !== 'success' || !Array.isArray(res.data)) {
-          showSimpleAlert('error', 'Error', 'Could not fetch log status.');
-          return;
-        }
-
-        const record = res.data.find(r => r.employee_no === empId);
-        if (!record) {
-          if (typeGroup === 'in') {
-            submitAttendance({ employee_id: empId, manual_type: 'morning-in' });
-          } else {
-            showSimpleAlert('info', 'Not allowed', 'You need to Time In first.');
-          }
-          return;
-        }
-
-        const { morning_in, morning_out, afternoon_in, afternoon_out } = record;
-
-        if (typeGroup === 'in') {
-          if (!morning_in) {
-            submitAttendance({ employee_id: empId, manual_type: 'morning-in' });
-          } else if (!afternoon_in) {
-            submitAttendance({ employee_id: empId, manual_type: 'afternoon-in' });
-          } else {
-            showSimpleAlert('info', 'Already logged', 'Both Time Ins already done.');
-          }
-        } else if (typeGroup === 'out') {
-          if (!morning_in) {
-            showSimpleAlert('info', 'Not allowed', 'You must log Morning In first.');
-          } else if (!morning_out) {
-            submitAttendance({ employee_id: empId, manual_type: 'morning-out' });
-          } else if (!afternoon_in) {
-            showSimpleAlert('info', 'Not allowed', 'You must log Afternoon In first.');
-          } else if (!afternoon_out) {
-            submitAttendance({ employee_id: empId, manual_type: 'afternoon-out' });
-          } else {
-            showSimpleAlert('info', 'Complete', 'You already logged all today.');
-          }
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        showSimpleAlert('error', 'Fetch Error', 'Unable to fetch attendance log.');
-      });
+  const fetchLogStatusAndSubmit = (empId) => {
+    // Let the API handle schedule validation and determine the appropriate action
+    // The API will check if the employee has a schedule and if current time is within schedule
+    submitAttendance({ employee_id: empId });
   };
 
   const submitAttendance = (dataObj) => {
@@ -596,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     timeInBtn.addEventListener('click', () => {
       const empId = employeeIdInput?.value.trim();
       if (!empId) return showSimpleAlert('warning', 'Missing Input', 'Enter your Employee ID.');
-      fetchLogStatusAndSubmit(empId, 'in');
+      fetchLogStatusAndSubmit(empId);
     });
   }
 
@@ -604,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     timeOutBtn.addEventListener('click', () => {
       const empId = employeeIdInput?.value.trim();
       if (!empId) return showSimpleAlert('warning', 'Missing Input', 'Enter your Employee ID.');
-      fetchLogStatusAndSubmit(empId, 'out');
+      fetchLogStatusAndSubmit(empId);
     });
   }
 

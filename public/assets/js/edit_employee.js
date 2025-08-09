@@ -154,13 +154,39 @@ function refreshEmployeeList() {
     });
 }
 
-
-
+// Helper to clear all custom dropdowns in the Edit modal
+function clearEditDropdowns() {
+  const dropdowns = [
+    'editManagerDropdownSelected',
+    'editPositionDropdownSelected',
+    'editSexDropdownSelected',
+    'editCivilStatusDropdownSelected',
+    'editBloodTypeDropdownSelected',
+    'editCitizenshipDropdownSelected',
+  ];
+  const hiddenInputs = [
+    'edit_branchManager',
+    'edit_position',
+    'edit_sex',
+    'edit_civilStatus',
+    'edit_bloodType',
+    'edit_citizenship',
+  ];
+  dropdowns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'Select';
+  });
+  hiddenInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
 
 // EDIT BUTTON LOGIC
 const editBtn = document.querySelector('.editBtn');
 if (editBtn) {
   editBtn.addEventListener('click', () => {
+    clearEditDropdowns(); // Clear dropdowns before loading new data
     const employeeIdInput = document.querySelector('#view_employee_id');
     const employeeId = employeeIdInput?.value;
 
@@ -198,17 +224,127 @@ if (editBtn) {
             edit_baseSalary: formatSalary(emp.base_salary),
             edit_sssNumber: emp.sss_number,
             edit_pagibigNumber: emp.pagibig_number,
+            edit_branchManager: emp.branch_manager,
           };
 
           Object.entries(fields).forEach(([id, val]) => {
             const el = document.getElementById(id);
             if (el) el.value = val || '';
+            // If this is the birthday field, also set the date in flatpickr
+            if (id === 'edit_dob' && window.flatpickr) {
+              const fp = el._flatpickr;
+              if (fp && val) {
+                fp.setDate(val, true);
+              }
+            }
           });
 
-          const branchManagerSelect = document.getElementById('edit_branchManager');
-          if (branchManagerSelect) {
-            branchManagerSelect.value = emp.branch_manager || '';
-          }
+          // After a short delay, re-initialize and update all custom dropdowns
+          setTimeout(() => {
+            // Manager
+            const managerSpan = document.getElementById('editManagerDropdownSelected');
+            const managerList = document.getElementById('editManagerDropdownList');
+            const managerInput = document.getElementById('edit_branchManager');
+            if (managerSpan && managerList && managerInput) {
+              // Clear all previous selections
+              managerList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              let found = false;
+              managerList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === managerInput.value) {
+                  managerSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                  found = true;
+                }
+              });
+              if (!found) managerSpan.textContent = 'Select a Manager';
+            }
+            
+            // Position
+            const positionSpan = document.getElementById('editPositionDropdownSelected');
+            const positionList = document.getElementById('editPositionDropdownList');
+            const positionInput = document.getElementById('edit_position');
+            if (positionSpan && positionList && positionInput) {
+              // Clear all previous selections
+              positionList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              positionList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === positionInput.value) {
+                  positionSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!positionInput.value) positionSpan.textContent = 'Select';
+            }
+            
+            // Sex
+            const sexSpan = document.getElementById('editSexDropdownSelected');
+            const sexList = document.getElementById('editSexDropdownList');
+            const sexInput = document.getElementById('edit_sex');
+            if (sexSpan && sexList && sexInput) {
+              // Clear all previous selections
+              sexList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              sexList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === sexInput.value) {
+                  sexSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!sexInput.value) sexSpan.textContent = 'Select';
+            }
+            
+            // Civil Status
+            const civilStatusSpan = document.getElementById('editCivilStatusDropdownSelected');
+            const civilStatusList = document.getElementById('editCivilStatusDropdownList');
+            const civilStatusInput = document.getElementById('edit_civilStatus');
+            if (civilStatusSpan && civilStatusList && civilStatusInput) {
+              // Clear all previous selections
+              civilStatusList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              civilStatusList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === civilStatusInput.value) {
+                  civilStatusSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!civilStatusInput.value) civilStatusSpan.textContent = 'Select';
+            }
+            
+            // Blood Type
+            const bloodTypeSpan = document.getElementById('editBloodTypeDropdownSelected');
+            const bloodTypeList = document.getElementById('editBloodTypeDropdownList');
+            const bloodTypeInput = document.getElementById('edit_bloodType');
+            if (bloodTypeSpan && bloodTypeList && bloodTypeInput) {
+              // Clear all previous selections
+              bloodTypeList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              bloodTypeList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === bloodTypeInput.value) {
+                  bloodTypeSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!bloodTypeInput.value) bloodTypeSpan.textContent = 'Select blood type';
+            }
+            
+            // Citizenship (this one uses API, so we'll just update the span)
+            const citizenshipSpan = document.getElementById('editCitizenshipDropdownSelected');
+            const citizenshipInput = document.getElementById('edit_citizenship');
+            if (citizenshipSpan && citizenshipInput) {
+              citizenshipSpan.textContent = citizenshipInput.value || 'Select citizenship';
+            }
+          }, 100);
 
           const preview = document.getElementById('edit_employeePhotoPreview');
           const placeholder = document.getElementById('edit_photoPlaceholder');

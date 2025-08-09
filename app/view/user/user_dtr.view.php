@@ -3,8 +3,11 @@ $title = "Daily Time Record";
 require_once views_path("partials/header");
 require_once "../app/core/database.php";
 
+// Add Bootstrap Icons CSS
+echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">';
 
-$employee_id = $_SESSION['employee_id'] ?? null;
+// Fix session variable handling
+$employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
 
 if (!$employee_id) {
     // If API request (e.g. ?id=...), return JSON error

@@ -4,6 +4,13 @@ require_once views_path("partials/header");
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
+// Add Bootstrap Icons CSS
+echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">';
+
+// Add Flatpickr CSS and JS
+echo '<link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">';
+echo '<script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>';
+
 require_once '../app/core/database.php'; // adjust path if needed
 $db = new Database();
 $conn = $db->getConnection();

@@ -2,14 +2,17 @@
 $title = "User Dashboard";
 require_once views_path("partials/header");
 
+// Add Bootstrap Icons CSS
+echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">';
+
 // Scripts
 echo '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
-// $username = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Guest';
+// Fix session variable handling
 $loginSuccess = $_SESSION['login_success'] ?? false;
-$username = $_SESSION['username'] ?? '';
+$username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'John';
 
 if ($loginSuccess) {
     unset($_SESSION['login_success']); // So it only shows once
@@ -25,7 +28,7 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
         <?php require_once views_path("partials/user_sidebar"); ?>
 
         <!-- Page Title -->
-        <h1 class="text-3xl font-bold text-gray-800 mt-6 mb-6">Welcome Back, John!</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mt-6 mb-6">Welcome Back, <?php echo htmlspecialchars($username); ?>!</h1>
 
         <!-- Dashboard Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

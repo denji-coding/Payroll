@@ -2,7 +2,8 @@
 $title = "My Payslips";
 require_once views_path("partials/header");
 
-
+// Add Bootstrap Icons CSS
+echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">';
 
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
@@ -83,7 +84,7 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
   data-pay-period-start="<?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_start']))) ?>"
   data-pay-period-end="<?= htmlspecialchars(date("M d, Y", strtotime($payslip['pay_period_end']))) ?>"
   data-gross-pay="<?= number_format($payslip['gross_pay'], 2) ?>"
-  data-deductions="<?= number_format($payslip['deductions'], 2) ?>"
+            data-deductions="<?= number_format($payslip['total_deductions'], 2) ?>"
   data-net-pay="<?= number_format($payslip['net_pay'], 2) ?>"
 >
   <i class="bi bi-eye text-lg"></i>
@@ -210,11 +211,10 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <span class="text-2xl font-bold">Migrants Venture Corporation</span>
-                <p class="text-[#478547]">123 Business Ave., Metro Manila</p>
+                <p class="text-[#478547]">Lapu-Lapu St. Tagum City, Davao Del Norte</p>
               </div>
               <div class="text-end">
                 <span class="font-bold">PAYSLIP</span>
-                <p class="text-sm">${escapeHtml(formatDate(p.pay_period_start))} - ${escapeHtml(formatDate(p.pay_period_end))}</p>
               </div>
             </div>
 
@@ -239,7 +239,7 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
                 <div class="mb-2 text-sm">
                   <p><strong>Basic Salary:</strong> ₱${parseFloat(p.base_salary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / day</p>
                   <p><strong>Pay Period:</strong> ${escapeHtml(formatDate(p.pay_period_start))} - ${escapeHtml(formatDate(p.pay_period_end))}</p>
-                  <p><strong>Payment Date:</strong> ${escapeHtml(formatDate(p.generated_at))}</p>
+                  
                 </div>
               </div>
             </div>
@@ -268,9 +268,21 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
                   <span class="text-sm font-medium mb-2">Deductions</span>
                   <table class="table table-sm text-sm mb-0">
                     <tbody>
+                      <tr class="border-bottom  text-danger">
+                        <td>SSS</td>                        
+                        <td class="text-end">₱${parseFloat(p.sss_deduction).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      </tr>
+                      <tr class="border-bottom  text-danger">
+                        <td>PhilHealth</td>                        
+                        <td class="text-end">₱${parseFloat(p.philhealth_deduction).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      </tr>
+                      <tr class="border-bottom  text-danger">
+                        <td>Pag-Ibig</td>                        
+                        <td class="text-end">₱${parseFloat(p.pagibig_deduction).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      </tr>
                       <tr class="border-bottom font-bold text-danger">
-                        <td>Total Deductions</td>
-                        <td class="text-end">₱${parseFloat(p.deductions).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>Total Deductions</td>                        
+                        <td class="text-end">₱${parseFloat(p.total_deductions).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -350,7 +362,8 @@ function printPayslip() {
 
   function capitalizeFirstLetter(str) {
     if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    // Handle multiple words - capitalize first letter of each word
+    return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
   function escapeHtml(text) {
@@ -426,7 +439,7 @@ function printPayslip() {
                 <div style="width: 48%;">
                   <h4 style="margin-bottom: 4px; font-size: 14px;">Employee Information</h4>
                   <p><strong>Name:</strong> ${capitalizeFirstLetter(escapeHtml(p.first_name))} ${p.middle_name ? capitalizeFirstLetter(escapeHtml(p.middle_name.charAt(0))) + '.' : ''} ${capitalizeFirstLetter(escapeHtml(p.last_name))}</p>
-                  <p><strong>ID:</strong> ${escapeHtml(p.employee_no)}</p>
+                  <p><strong>Employee No:</strong> ${escapeHtml(p.employee_no)}</p>
                   <p><strong>Position:</strong> ${escapeHtml(p.position)}</p>
                 </div>
                 <div style="width: 48%;">
@@ -463,7 +476,7 @@ function printPayslip() {
                       <tbody>
                         <tr style="font-weight:bold; color:red;">
                           <td>Total Deductions</td>
-                          <td style="text-align:right;">₱${parseFloat(p.deductions).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td style="text-align:right;">₱${parseFloat(p.total_deductions).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                         </tr>
                       </tbody>
                     </table>

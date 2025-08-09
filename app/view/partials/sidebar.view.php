@@ -81,7 +81,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 
     <!-- Section: Dashboard -->
     <div>
-        <span class="text-xs uppercase tracking-wide text-gray-300 px-4 mb-1 block">Main</span>
+        <span class="text-xs uppercase tracking-wide font-semibold px-4 mb-1 block">Main</span>
         <a href="index.php?payroll=dashboard1"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'dashboard1') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-house-door"></i> Dashboard
@@ -185,6 +185,18 @@ function toggleEmployeeDropdown() {
     }
 }
 
+function scrollDropdownIntoView(dropdownId) {
+    const sidebar = document.getElementById('adminSidebar');
+    const dropdown = document.getElementById(dropdownId);
+    if (sidebar && dropdown && dropdown.classList.contains('open')) {
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const dropdownRect = dropdown.getBoundingClientRect();
+        if (dropdownRect.bottom > sidebarRect.bottom || dropdownRect.top < sidebarRect.top) {
+            dropdown.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+}
+
 function toggleSectionDropdown(sectionId, arrowId, buttonId) {
     const section = document.getElementById(sectionId);
     const arrow = document.getElementById(arrowId);
@@ -193,6 +205,7 @@ function toggleSectionDropdown(sectionId, arrowId, buttonId) {
     arrow.classList.toggle('open', section.classList.contains('open'));
     if (section.classList.contains('open')) {
         button.classList.add('bg-[#206037]', 'border-l-4', 'border-white');
+        scrollDropdownIntoView(sectionId);
     } else {
         button.classList.remove('bg-[#206037]', 'border-l-4', 'border-white');
     }

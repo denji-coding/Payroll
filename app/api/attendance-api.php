@@ -90,11 +90,11 @@ if ($method === 'GET') {
         if ($rfid) {
             $stmt = $pdo->prepare("SELECT * FROM employees WHERE rfid_number = ?");
             $stmt->execute([$rfid]);
-        } elseif ($employee_id_manual && $manual_type) {
+        } elseif ($employee_id_manual) {
             $stmt = $pdo->prepare("SELECT * FROM employees WHERE employee_no = ?");
             $stmt->execute([$employee_id_manual]);
         } else {
-            echo json_encode(["status" => "error", "message" => "RFID or Employee ID with manual type is required."]);
+            echo json_encode(["status" => "error", "message" => "RFID or Employee ID is required."]);
             exit;
         }
 
@@ -110,6 +110,71 @@ if ($method === 'GET') {
         $image_path = $employee['photo_path'] ?? 'assets/image/default_user_image.svg';
         $today = date('Y-m-d');
         $now = date('H:i:s');
+
+        // Check if employee has a schedule
+        $stmt = $pdo->prepare("
+            SELECT s.* 
+            FROM schedules s 
+            INNER JOIN employee_schedules es ON s.id = es.schedule_id 
+            WHERE es.employee_id = ?
+        ");
+        $stmt->execute([$employee_id]);
+        $schedule = $stmt->fetch();
+
+        if (!$schedule) {
+            echo json_encode(["status" => "error", "message" => "No schedule assigned to this employee. Please contact your administrator."]);
+            exit;
+        }
+
+        // Function to check if current time is within schedule window
+        function isWithinScheduleWindow($currentTime, $startTime, $endTime, $gracePeriod = 0) {
+            $current = strtotime($currentTime);
+            $start = strtotime($startTime);
+            $end = strtotime($endTime);
+            
+            // Add grace period to start time
+            $startWithGrace = $start + ($gracePeriod * 60);
+            
+            return ($current >= $startWithGrace && $current <= $end);
+        }
+
+        // Function to determine which time slot the current time falls into
+        function getCurrentTimeSlot($currentTime, $schedule) {
+            $current = strtotime($currentTime);
+            $morningStart = strtotime($schedule['sched_morning_in']);
+            $morningEnd = strtotime($schedule['sched_morning_out']);
+            $afternoonStart = strtotime($schedule['sched_afternoon_in']);
+            $afternoonEnd = strtotime($schedule['sched_afternoon_out']);
+            
+            // Add grace period
+            $graceMinutes = $schedule['grace_period'];
+            $morningStartWithGrace = $morningStart + ($graceMinutes * 60);
+            $afternoonStartWithGrace = $afternoonStart + ($graceMinutes * 60);
+            
+            if ($current >= $morningStartWithGrace && $current <= $morningEnd) {
+                return 'morning';
+            } elseif ($current >= $afternoonStartWithGrace && $current <= $afternoonEnd) {
+                return 'afternoon';
+            }
+            
+            return null;
+        }
+
+        // Check if current time is within any schedule window
+        $currentTimeSlot = getCurrentTimeSlot($now, $schedule);
+        
+        if (!$currentTimeSlot) {
+            $morningStart = date('h:i A', strtotime($schedule['sched_morning_in']));
+            $morningEnd = date('h:i A', strtotime($schedule['sched_morning_out']));
+            $afternoonStart = date('h:i A', strtotime($schedule['sched_afternoon_in']));
+            $afternoonEnd = date('h:i A', strtotime($schedule['sched_afternoon_out']));
+            
+            echo json_encode([
+                "status" => "error", 
+                "message" => "You are not within your scheduled time. Your schedule: Morning ($morningStart - $morningEnd), Afternoon ($afternoonStart - $afternoonEnd). Current time: " . date('h:i A', strtotime($now))
+            ]);
+            exit;
+        }
 
         // Check or create today's attendance
         $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employee_id = ? AND date = ?");
@@ -142,11 +207,28 @@ if ($method === 'GET') {
                 exit;
             }
         } else {
-            foreach (['morning_in', 'morning_out', 'afternoon_in', 'afternoon_out'] as $f) {
-                if (!$attendance[$f]) {
-                    $field = $f;
-                    $type = str_replace('_', '-', $f);
-                    break;
+            // Determine which field to update based on current time slot
+            if ($currentTimeSlot === 'morning') {
+                if (!$attendance['morning_in']) {
+                    $field = 'morning_in';
+                    $type = 'morning-in';
+                } elseif (!$attendance['morning_out']) {
+                    $field = 'morning_out';
+                    $type = 'morning-out';
+                } else {
+                    echo json_encode(["status" => "info", "message" => "Morning attendance already complete."]);
+                    exit;
+                }
+            } elseif ($currentTimeSlot === 'afternoon') {
+                if (!$attendance['afternoon_in']) {
+                    $field = 'afternoon_in';
+                    $type = 'afternoon-in';
+                } elseif (!$attendance['afternoon_out']) {
+                    $field = 'afternoon_out';
+                    $type = 'afternoon-out';
+                } else {
+                    echo json_encode(["status" => "info", "message" => "Afternoon attendance already complete."]);
+                    exit;
                 }
             }
 
@@ -169,7 +251,7 @@ if ($method === 'GET') {
             "status" => "success",
             "message" => "Successfully logged $type.",
             "employee_id" => $employee_id,
-            "image_url" => 'http://localhost/mvcPayroll/public/' . $image_path,
+            "image_url" => $image_path,
             "name" => $name,
             "timestamp" => $now,
             "type" => $type,

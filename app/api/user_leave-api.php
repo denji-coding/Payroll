@@ -6,7 +6,8 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 session_start();
 require_once __DIR__ . '/../core/database.php';
 $db = new Database();
-$employee_id = $_SESSION['employee_id'] ?? null;
+// Fix session variable handling
+$employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
 
 if (!$employee_id) {
     http_response_code(403);
