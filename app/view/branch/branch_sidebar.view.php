@@ -21,7 +21,7 @@ if (isset($_SESSION['manager_id'])) {
     $db = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare("SELECT m_first_name, m_middle_name, m_last_name FROM managers WHERE id = :id");
+    $stmt = $conn->prepare("SELECT m_first_name, m_middle_name, m_last_name, m_photo_path, m_sex FROM managers WHERE id = :id");
     $stmt->execute([':id' => $_SESSION['manager_id']]);
     $manager = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -29,7 +29,13 @@ if (isset($_SESSION['manager_id'])) {
         $first = $manager['m_first_name'] ?? '';
         $middle = $manager['m_middle_name'] ?? '';
         $last = $manager['m_last_name'] ?? '';
-        $username = $first . ' ' . ($middle ? $middle[0] . '. ' : '') . $last;
+        // Format the name with proper capitalization
+        $firstName = ucwords(strtolower(trim($first)));
+        $middleName = $middle ? ucwords(strtolower(trim($middle))) : '';
+        $lastName = ucwords(strtolower(trim($last)));
+        $username = $firstName . ' ' . ($middleName ? $middleName[0] . '. ' : '') . $lastName;
+        $managerPhoto = $manager['m_photo_path'] ?? '';
+        $managerSex = $manager['m_sex'] ?? '';
     }
 }
 ?>
@@ -367,16 +373,16 @@ main#mainContent {
     <!-- Bottom: Logout -->
     <div class="flex items-center justify-between text-white px-3 py-2 border-t">
         <div class="flex items-center gap-3 min-w-0 sidebar-user mt-2">
-            <img 
-                src="../public/assets/image/man (1).png"
-                title="Profile Picture" 
-                alt="Profile Picture" 
-                class="w-10 h-10 rounded-full object-cover bg-white border border-gray-300 flex-shrink-0" 
-                onerror="this.onerror=null;this.src='public/uploads/employees/default.png';"
-            />
+                    <img 
+            src="<?= !empty($managerPhoto) ? '../public/upload/' . (strpos($managerPhoto, 'upload/') === 0 ? substr($managerPhoto, 7) : $managerPhoto) : ($managerSex == 'F' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png') ?>"
+            title="Profile Picture" 
+            alt="Profile Picture" 
+            class="w-10 h-10 rounded-full object-cover bg-white border border-gray-300 flex-shrink-0" 
+            onerror="this.onerror=null;this.src='<?= $managerSex == 'F' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png' ?>';"
+        />
             <div class="max-w-[150px] overflow-hidden truncate transition-all duration-300 sidebar-expanded:block sidebar-collapsed:hidden">
-    <div class="text-sm font-medium text-gray-100 whitespace-normal">
-        <?= htmlspecialchars(ucwords(strtolower($username))) ?>
+    <div class="text-sm font-medium text-gray-100 whitespace-normal sidebar-manager-name">
+        <?= htmlspecialchars($username) ?>
     </div>
 </div>
 

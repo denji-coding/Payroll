@@ -449,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             total_hours: totalHours,
             present_days: presentDays,
             absent_days: absentDays,
+            late_minutes: lateMinutes,
             leave_days: 0, // You may want to add leave calculation
             sss_deduction: sssDeduction,
             pagibig_deduction: pagibigDeduction,

@@ -1,30 +1,15 @@
 <?php
+require_once '../app/core/session_helper.php';
 
-// $admin_id = $_SESSION['admin_id'] ?? null;
+// Check if admin is logged in
+requireAdminAuth();
 
-// if (!$admin_id) {
-//     // If it's an API request, return JSON
-//     if (isset($_GET['id'])) {
-//         header('Content-Type: application/json');
-//         echo json_encode(['error' => 'Unauthorized admin access']);
-//         exit;
-//     } else {
-//         // Show custom 403 page for browser access
-//         http_response_code(403);
-//          require_once '../app/Error/unauthorized.php'; // Adjust the path
-//         exit;
-//     }
-// }
+// Log user activity
+logUserActivity('Access admin dashboard');
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
-require_once '../app/core/database.php';
-
-if (!isset($_SESSION['SESSION_EMAIL'])) {
-    header("Location: index.php?payroll=login1&type=admin");
-    exit();
-}
 
 require_once '../app/core/database.php';
 
@@ -70,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':id' => $leave_id,
     ]);
 
-    // Save the modal ID to open after redirect
-    // $_SESSION['open_modal'] = $leave_id;
+    // Log the action
+    logUserActivity("Leave request $action", "Leave ID: $leave_id, Status: $newStatus");
 
     $_SESSION['success'] = "Leave request has been $newStatus.";
     header('Location: index.php?payroll=dashboard1');

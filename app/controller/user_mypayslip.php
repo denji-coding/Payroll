@@ -1,5 +1,12 @@
 <?php
-// session_start();
+require_once '../app/core/session_helper.php';
+
+// Check if employee is logged in
+requireEmployeeAuth();
+
+// Log user activity
+logUserActivity('Access employee payslips page');
+
 ini_set('display_errors', 0); // Disable error display for API
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
@@ -11,6 +18,14 @@ require_once "../app/core/database.php"; // Your Database class
 
 // Fix session variable handling
 $employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
+
+// For testing purposes, if no session, use a default employee
+if (!$employee_id) {
+    // Check if this is a test request
+    if (isset($_GET['test']) && $_GET['test'] === 'true') {
+        $employee_id = 115; // Use existing employee ID from database
+    }
+}
 
 // Ensure employee_id is an integer if it exists
 if ($employee_id) {
@@ -93,9 +108,11 @@ if (isset($_GET['id'])) {
                 e.middle_name,
                 e.last_name,
                 e.position,
-                e.base_salary
+                e.base_salary,
+                ps.ps_pdf_file_path
             FROM payroll p
             JOIN employees e ON p.employee_id = e.id
+            LEFT JOIN payslips ps ON p.id = ps.payroll_id
             WHERE p.id = :payroll_id AND p.employee_id = :employee_id
             LIMIT 1
         ";
@@ -107,6 +124,11 @@ if (isset($_GET['id'])) {
         // Debug: Log the query parameters
         error_log("Query params - payroll_id: $payroll_id, employee_id: $employee_id");
         error_log("Query result: " . ($payroll ? 'found' : 'not found'));
+        if ($payroll) {
+            error_log("Payroll data: " . print_r($payroll, true));
+        } else {
+            error_log("No payroll data found for payroll_id: $payroll_id and employee_id: $actual_employee_id");
+        }
 
         header('Content-Type: application/json');
         if ($payroll) {

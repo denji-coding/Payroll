@@ -117,6 +117,9 @@ try {
         // Use calculated total if received total is 0
         $finalTotal = ($receivedTotal > 0) ? $receivedTotal : $calculatedTotal;
         
+        // Debug: Log the final total being used in PDF
+        error_log("PDF Generation - Employee: {$empRow['employee_no']}, Final Total Deductions: {$finalTotal}");
+        
         $executeData = [
             ':employee_id' => $employee_id,
             ':start' => $input['start_date'],
@@ -173,7 +176,7 @@ try {
         </div>
         <div style="text-align: right;">
             <div class="payslip-label">PAY PERIOD</div>
-            <div>' . htmlspecialchars($input['start_date']) . ' - ' . htmlspecialchars($input['end_date']) . '</div>
+            <div>' . date('M j, Y', strtotime($input['start_date'])) . ' - ' . date('M j, Y', strtotime($input['end_date'])) . '</div>
         </div>
     </div>
 
@@ -183,7 +186,7 @@ try {
             <tr>
                 <!-- Left Column: Employee Info -->
                 <td style="width: 50%; vertical-align: top;">
-                    
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">Employee Information</div>
                     <ul style="list-style: none; padding: 0; margin: 0;">
                         <li><strong>Name:</strong> ' . formatName($empRow['first_name']) . ' ' . 
                         ($empRow['middle_name'] ? formatName(substr($empRow['middle_name'], 0, 1)) . '. ' : '') . 
@@ -191,17 +194,17 @@ try {
 
                         <li><strong>ID:</strong> ' . $empRow['employee_no'] . '</li>
                         <li><strong>Position:</strong> ' . $empRow['position'] . '</li>
-                        <li><strong>Basic Salary:</strong> ₱' . $empRow['base_salary'] . ' / day</li>
                     </ul>
                 </td>
 
-                <!-- Right Column: Payroll Info -->
+                <!-- Right Column: Payment Details -->
                 <td style="width: 50%; vertical-align: top;">
-                    
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">Payment Details</div>
                     <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li><strong>Basic Salary:</strong> ₱' . $empRow['base_salary'] . ' / day</li>
                         <li><strong>Total Hours:</strong> ' . $p['total_hours'] . '</li>
                         <li><strong>Present Days:</strong> ' . $p['present_days'] . '</li>
-                        <li><strong>Absent:</strong> ' . $p['absent_days'] . '</li>
+                        <li><strong>Absent:</strong> ' . max(0, ($p['absent_days'] ?? 0) - ($p['leave_days'] ?? 0)) . '</li>
                         <li><strong>Leave:</strong> ' . $p['leave_days'] . '</li>
                     </ul>
                 </td>
@@ -220,8 +223,8 @@ try {
                 <td style="width: 50%; vertical-align: top;">
                     <table style="width: 100%;">
                         <tr><td colspan="2"><strong>Earnings</strong></td></tr>
-                        <tr class="border-b"><td>Basic Pay</td><td class="text-right">₱' . number_format($p['gross'], 2) . '</td></tr>
-                        <tr class="border-b"><td class="payslip-label">Total Earnings</td><td class="text-right">₱' . number_format($p['gross'], 2) . '</td></tr>
+                        <tr class="border-b"><td>Gross Pay</td><td class="text-right">₱' . number_format($p['gross'], 2) . '</td></tr>
+                        <tr class="border-b"><td class="payslip-label" style="color: #198754; font-weight: bold;">Total Earnings</td><td class="text-right" style="color: #198754; font-weight: bold;">₱' . number_format($p['gross'], 2) . '</td></tr>
                     </table>
                 </td>
                 <td style="width: 50%; vertical-align: top;">
@@ -230,8 +233,9 @@ try {
                         <tr class="border-b"><td>SSS</td><td class="text-right">₱' . number_format($p['sss_deduction'], 2) . '</td></tr>
                         <tr class="border-b"><td>PhilHealth</td><td class="text-right">₱' . number_format($p['philhealth_deduction'], 2) . '</td></tr>
                         <tr class="border-b"><td>Pag-IBIG</td><td class="text-right">₱' . number_format($p['pagibig_deduction'], 2) . '</td></tr>
-                        <tr class="border-b"><td>Leave Deduction</td><td class="text-right">₱' . number_format($p['leave_deduction'] ?? 0, 2) . '</td></tr>
-                        <tr class="border-b"><td class="payslip-label">Total Deductions</td><td class="text-right">₱' . number_format($p['total_deductions'], 2) . '</td></tr>
+                        <tr class="border-b"><td>Late Deduction</td><td class="text-right">₱' . number_format(($p['late_minutes'] ?? 0) / 60 * ($empRow['base_salary'] / 8), 2) . '</td></tr>
+                        <tr class="border-b"><td>Leave Deduction</td><td class="text-right">₱' . number_format(($p['leave_days'] ?? 0) * $empRow['base_salary'], 2) . '</td></tr>
+                        <tr class="border-b"><td class="payslip-label" style="color: #dc3545; font-weight: bold;">Total Deductions</td><td class="text-right" style="color: #dc3545; font-weight: bold;">₱' . number_format($finalTotal, 2) . '</td></tr>
                     </table>
                 </td>
             </tr>

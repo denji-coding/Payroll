@@ -1,19 +1,17 @@
 <?php
 // Load required files
 require_once '../app/core/database.php';
+require_once '../app/core/session_helper.php';
+
+// Check if admin/HR is logged in
+requireAdminAuth();
+
+// Log user activity
+logUserActivity('Access employees page');
 
 // Create database connection
 $db = new Database();
 $conn = $db->getConnection();
-
-// Check if admin is logged in
-// You can enable this later if you want to block unauthorized access
-// session_start();
-// if (!isset($_SESSION['admin_id'])) {
-//     http_response_code(403);
-//     require_once '../app/Error/unauthorized.php';
-//     exit;
-// }
 
 // Fetch all active (not deleted) employees
 $sql = "SELECT * FROM employees WHERE deleted_at IS NULL AND approved_by_manager = 1 ORDER BY id DESC";

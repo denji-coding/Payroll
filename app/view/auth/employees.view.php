@@ -313,9 +313,9 @@ require_once views_path("partials/nav");
                                     </div>
                                                                             
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER</label>
+                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER <span class="text-red-500">*</span></label>
                                         <div class="relative" id="manager-dropdown-container">
-                                            <input type="hidden" name="branchManager" id="branchManager" />
+                                            <input type="hidden" name="branchManager" id="branchManager" required />
                                             <button type="button" id="managerDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
                                                 <span id="managerDropdownSelected" class="dropdown-button-text">Select a Manager</span>
                                                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -337,15 +337,15 @@ require_once views_path("partials/nav");
                                     </div>
 
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
+                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
                                         <div class="relative" id="position-dropdown-container">
-                                            <input type="hidden" name="position" id="position" />
+                                            <input type="hidden" name="position" id="position" required />
                                             <button type="button" id="positionDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
                                                 <span id="positionDropdownSelected" class="dropdown-button-text">Select</span>
                                                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                                             </button>
                                             <div id="positionDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
-                                                <div class="custom-dropdown-option" data-value="Manager">Manager</div>
+                                                <!-- <div class="custom-dropdown-option" data-value="Manager">Manager</div> -->
                                                 <div class="custom-dropdown-option" data-value="Human Resources">Human Resources</div>
                                                 <div class="custom-dropdown-option" data-value="Staff">Staff</div>
                                                 <div class="custom-dropdown-option" data-value="Driver">Driver</div>
@@ -734,7 +734,7 @@ require_once views_path("partials/nav");
                                         </div>
                                     </div>                                                                                                      
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER</label>
+                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER <span class="text-red-500">*</span></label>
                                         <div class="relative" id="edit-manager-dropdown-container">
                                             <input type="hidden" name="branchManager" id="edit_branchManager" />
                                             <button type="button" id="editManagerDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
@@ -758,9 +758,9 @@ require_once views_path("partials/nav");
                                     </div>
 
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
+                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
                                         <div class="relative" id="edit-position-dropdown-container">
-                                            <input type="hidden" name="position" id="edit_position" />
+                                            <input type="hidden" name="position" id="edit_position" required />
                                             <button type="button" id="editPositionDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
                                                 <span id="editPositionDropdownSelected" class="dropdown-button-text">Select</span>
                                                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -1251,6 +1251,13 @@ if (addModal) {
             'civilStatusDropdownSelected',
             'civilStatus'
         );
+        
+        // Add debugging for dropdown values
+        console.log('Dropdowns initialized');
+        console.log('Manager dropdown value:', document.getElementById('branchManager')?.value);
+        console.log('Position dropdown value:', document.getElementById('position')?.value);
+        console.log('Sex dropdown value:', document.getElementById('sex')?.value);
+        console.log('Civil status dropdown value:', document.getElementById('civilStatus')?.value);
     });
 
     // Reset form when modal is hidden
@@ -1409,6 +1416,14 @@ function setupStaticDropdown(dropdownBtnId, dropdownListId, selectedSpanId, hidd
             selectedValue = option.dataset.value;
             selectedSpan.textContent = option.textContent; // Use the display text, not the value
             hiddenInput.value = option.dataset.value;
+            
+            // Debug: Log the selection
+            console.log(`Dropdown ${hiddenInputId} selected:`, {
+                value: option.dataset.value,
+                text: option.textContent,
+                hiddenInputValue: hiddenInput.value
+            });
+            
             list.classList.add('hidden');
             btn.classList.remove('active');
             renderOptions();

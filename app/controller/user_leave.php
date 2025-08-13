@@ -1,12 +1,14 @@
 
 <?php
-require_once '../app/core/database.php';
+require_once '../app/core/session_helper.php';
 
-// Fix session variable handling
-if (!isset($_SESSION['employee_id']) && !isset($_SESSION['employee_no'])) {
-    header('Location: index.php?payroll=unauthorized');
-    exit;
-}
+// Check if employee is logged in
+requireEmployeeAuth();
+
+// Log user activity
+logUserActivity('Access employee leave page');
+
+require_once '../app/core/database.php';
 
 $employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
 

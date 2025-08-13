@@ -1,4 +1,12 @@
 <?php
+require_once '../app/core/session_helper.php';
+
+// Check if manager is logged in
+requireManagerAuth();
+
+// Log user activity
+logUserActivity('Access branch approvals page');
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -8,7 +16,6 @@ require '../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
 
 $db = new Database();
 $pdo = $db->getConnection();

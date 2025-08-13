@@ -303,7 +303,7 @@ $username = isset($_SESSION['manager_name']) ? $_SESSION['manager_name'] : 'Gues
 
 
     // Default show payslip analytics on load
-    document.addEventListener('DOMContentLoaded', () => {
-        showAnalytics('payslip');
-    });
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     showAnalytics('payslip');
+    // });
 </script>

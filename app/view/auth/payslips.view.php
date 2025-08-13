@@ -16,7 +16,7 @@ require_once views_path("partials/nav");
     <!-- Card -->
     <div class="rounded-lg border-2 border-green-200 bg-card text-card-foreground shadow-sm bg-white"
     data-aos="fade-in" 
-                    data-aos-delay="<?= $index * 1 ?>"
+                    data-aos-delay="0"
                     data-aos-duration="500">
       <!-- Card Header -->
       <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
@@ -62,6 +62,186 @@ require_once views_path("partials/nav");
 
 
 <script>
+// Global functions for payslip operations
+// Global variable to store current payslip link
+let currentPayslipLink = '';
+
+window.downloadPayslip = () => {
+  console.log('Download function called with payroll ID:', currentPayslipLink);
+  console.log('Current location origin:', window.location.origin);
+  
+  if (!currentPayslipLink) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Download Failed',
+      text: 'Could not find payslip file.',
+    });
+    return;
+  }
+
+  // Show loading message
+  Swal.fire({
+    title: 'Preparing Download...',
+    text: 'Please wait while we prepare your download.',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  // Use the new admin-specific API endpoint
+  const downloadUrl = `${window.location.origin}/mvcPayroll/public/index.php?payroll=download_payslip_admin&payroll_id=${currentPayslipLink}&download=download&token=${Date.now()}`;
+  
+  // Open in new window/tab to avoid session issues
+  const downloadWindow = window.open(downloadUrl, '_blank');
+  
+  if (downloadWindow) {
+    // Close loading message
+    Swal.close();
+    console.log('Download window opened successfully');
+  } else {
+    // If popup blocked, show error
+    Swal.fire({
+      icon: 'error',
+      title: 'Download Failed',
+      text: 'Popup blocked. Please allow popups for this site and try again.',
+    });
+  }
+};
+
+function printPayslip(payrollId) {
+    // Show loading message
+    Swal.fire({
+        title: 'Preparing for Print...',
+        text: 'Please wait while we load the payslip PDF.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // First, check if the PDF exists by calling the payslips API
+    fetch(`../app/api/payslips-api.php`)
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+    })
+    .then(result => {
+        if (result.status !== 'success' || !result.data) {
+            throw new Error('Failed to load payslips data');
+        }
+
+        // Find the specific payslip by payroll ID
+        const payslip = result.data.find(item => item.payroll_id == payrollId);
+        
+        if (!payslip) {
+            console.log('Available payslips:', result.data);
+            console.log('Looking for payroll ID:', payrollId);
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Print Failed',
+                text: `Payslip not found for ID: ${payrollId}`
+            });
+            return;
+        }
+
+        // Check if PDF file path exists
+        if (!payslip.ps_pdf_file_path) {
+            Swal.close();
+            Swal.fire({
+                icon: 'warning',
+                title: 'PDF Not Available',
+                text: 'This payslip PDF has not been generated yet. Please contact your administrator.'
+            });
+            return;
+        }
+
+        console.log('Found payslip:', payslip);
+        console.log('PDF path:', payslip.ps_pdf_file_path);
+
+        // Close loading dialog
+        Swal.close();
+
+        // Direct print using hidden iframe - no visible window
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = `../public/index.php?payroll=download_payslip_admin&payroll_id=${payrollId}&download=view`;
+        document.body.appendChild(iframe);
+        
+        // Wait for iframe to load, then print immediately
+        iframe.onload = function() {
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    
+                    // Keep iframe permanently - don't remove it
+                    // This ensures the print dialog stays open
+                } catch (error) {
+                    console.error('Direct print error:', error);
+                    // Fallback: try to open in new window but keep it open
+                    fallbackDirectPrint();
+                }
+            }, 1000); // Reduced delay for faster print
+        };
+        
+        // Fallback method for direct printing
+        function fallbackDirectPrint() {
+            if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+            }
+            
+            const printWindow = window.open(`../public/index.php?payroll=download_payslip_admin&payroll_id=${payrollId}&download=view`, '_blank');
+            if (printWindow) {
+                printWindow.onload = function() {
+                    setTimeout(() => {
+                        try {
+                            printWindow.focus();
+                            printWindow.print();
+                            
+                            // DON'T close the window - let user control it
+                            // The window will stay open until user manually closes it
+                        } catch (error) {
+                            console.error('Fallback print error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Print Failed',
+                                text: 'Unable to open print dialog directly.'
+                            });
+                        }
+                    }, 2000);
+                };
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Print Failed',
+                    text: 'Unable to open PDF for printing. Please check your popup blocker settings.'
+                });
+            }
+        }
+        
+        // Show success message
+        Swal.fire({
+            icon: 'info',
+            title: 'Preparing Print...',
+            text: 'Opening print dialog directly...',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+    })
+    .catch(err => {
+        console.error('Error loading payslip data for print:', err);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Print Failed',
+            text: 'Failed to load payslip data for printing. Please try again.'
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const tbody = document.getElementById('payslipTableBody');
 
@@ -101,10 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   data-leave="${record.leave_days}"
                   data-gross="${record.gross_pay}"
                   data-net="${record.net_pay}"
-                  data-sss="${record.sss_deduction}"
-                  data-philhealth="${record.philhealth_deduction}"
-                  data-pagibig="${record.pagibig_deduction}"
-                  data-total-deductions="${record.total_deductions}"
+                                     data-sss="${record.sss_deduction}"
+                   data-philhealth="${record.philhealth_deduction}"
+                   data-pagibig="${record.pagibig_deduction}"
+                   data-late-deduction="0"
+                   data-leave-deduction="0"
+                   data-total-deductions="${record.total_deductions}"
+                  data-payroll-id="${record.payroll_id}"
                   data-link="/mvcPayroll/public/${record.ps_pdf_file_path}"
                   title="View Payslip"
                 >
@@ -150,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="btn btn-outline-success" id="download-btn" onclick="downloadPayslip()">
           <i class="bi bi-download me-1"></i> Download
         </button>
-        <button type="button" class="btn btn-success" id="print-btn" onclick="printPayslip()">
+        <button type="button" class="btn btn-success" id="print-btn" onclick="printPayslip(currentPayslipLink)">
           <i class="bi bi-printer me-1"></i> Print
         </button>
       </div>
@@ -180,24 +363,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const button = event.relatedTarget;
     const payslipContent = document.getElementById('payslip-content');
 
-    // Get data attributes
+    // Get data attributes and store the payroll ID globally
     const name = button.getAttribute('data-employee') || '—';
+    currentPayslipLink = button.getAttribute('data-payroll-id') || '';
+    console.log('Modal opened with payroll ID:', currentPayslipLink);
+    console.log('Button data attributes:', button.attributes);
+    console.log('data-payroll-id value:', button.getAttribute('data-payroll-id'));
     const empId = button.getAttribute('data-id') || '—';
     const position = button.getAttribute('data-position') || '—';
     const basicSalary = parseFloat(button.getAttribute('data-salary') || 0).toFixed(2);
     const payPeriod = button.getAttribute('data-period') || '—';
     const totalHours = button.getAttribute('data-totalhours') || '0';
-    const absentDays = button.getAttribute('data-absent') || '0';
-    const leaveDays = button.getAttribute('data-leave') || '0';
+    const absentDays = parseInt(button.getAttribute('data-absent') || '0');
+    const leaveDays = parseInt(button.getAttribute('data-leave') || '0');
     const grossPay = parseFloat(button.getAttribute('data-gross') || 0).toFixed(2);
     const netPay = parseFloat(button.getAttribute('data-net') || 0).toFixed(2);
     const sss = parseFloat(button.getAttribute('data-sss') || 0).toFixed(2);
     const philhealth = parseFloat(button.getAttribute('data-philhealth') || 0).toFixed(2);
     const pagibig = parseFloat(button.getAttribute('data-pagibig') || 0).toFixed(2);
+    const lateDeduction = parseFloat(button.getAttribute('data-late-deduction') || 0).toFixed(2);
+    const leaveDeduction = parseFloat(button.getAttribute('data-leave-deduction') || 0).toFixed(2);
     const link = button.getAttribute('data-link') || '#';
+    const totalDeductions = parseFloat(button.getAttribute('data-total-deductions') || 0).toFixed(2);
 
-    
-    const totalDeductions = (parseFloat(button.getAttribute('data-total-deductions') || 0).toFixed(2));
+    // Calculate effective absent days (absent days minus leave days)
+    const effectiveAbsentDays = Math.max(0, Math.floor(absentDays - leaveDays));
 
     // Create the new modal content with the same design as user_mypayslip.view.php
     payslipContent.innerHTML = `
@@ -229,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <p><strong>Basic Salary:</strong> ₱${basicSalary} / day</p>
               <p><strong>Pay Period:</strong> ${payPeriod}</p>
               <p><strong>Total Hours:</strong> ${totalHours}</p>
-              <p><strong>Absent Days:</strong> ${absentDays}</p>
+              <p><strong>Absent Days:</strong> ${effectiveAbsentDays}</p>
               <p><strong>Leave Days:</strong> ${leaveDays}</p>
             </div>
           </div>
@@ -271,6 +461,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>Pag-Ibig</td>                        
                     <td class="text-end">₱${parseFloat(pagibig).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   </tr>
+                                     <tr class="border-bottom text-danger">
+                     <td>Late Deduction</td>                        
+                     <td class="text-end">₱${parseFloat(lateDeduction).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                   </tr>
+                   <tr class="border-bottom text-danger">
+                     <td>Leave Deduction</td>                        
+                     <td class="text-end">₱${parseFloat(leaveDeduction).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                   </tr>
                   <tr class="border-bottom font-bold ">
                     <td class="text-danger">Total Deductions</td>                        
                     <td class="text-end text-danger">₱${parseFloat(totalDeductions).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
@@ -293,32 +491,26 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    window.downloadPayslip = () => window.open(link, '_blank');
-    window.printPayslip = () => {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`<iframe src="${link}" frameborder="0" style="width:100%;height:100vh;"></iframe>`);
-    };
+    // Helper functions for formatting
+    function capitalizeFirstLetter(str) {
+      if (!str) return '';
+      // Handle multiple words - capitalize first letter of each word
+      return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/[&<>"']/g, function(m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
+    }
   });
-
-  // Helper functions for formatting
-  function capitalizeFirstLetter(str) {
-    if (!str) return '';
-    // Handle multiple words - capitalize first letter of each word
-    return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
-  function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/[&<>"']/g, function(m) {
-      return ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[m];
-    });
-  }
 });
 </script>
 
@@ -328,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Function to adjust table height based on fullscreen mode
   function adjustTableHeight() {
@@ -370,81 +562,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Print function
-  function printPayslip() {
-    const content = document.getElementById("payslip-content").innerHTML;
-
-    const printWindow = window.open('', '_blank');
-
-    printWindow.document.open();
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Payslip</title>
-          <!-- Add Bootstrap CSS if you use it -->
-          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 40px;
-              color: #333;
-            }
-            .text-success { color: #28a745; }
-            .text-danger { color: #dc3545; }
-            .border-bottom { border-bottom: 1px solid #ccc; }
-            .table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            .table td { padding: 8px; border-bottom: 1px solid #ddd; }
-            .text-end { text-align: right; }
-            .fw-bold { font-weight: bold; }
-            .fw-semibold { font-weight: 600; }
-            .rounded-lg { border-radius: 0.5rem; }
-            .p-4 { padding: 1.5rem; }
-            .bg-light-green { background-color: #f2f8f2; }
-            .text-sm { font-size: 0.875rem; }
-            .text-lg { font-size: 1.125rem; }
-            .fs-4 { font-size: 1.5rem; }
-          </style>
-        </head>
-        <body>
-          ${content}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-
-    // Wait until content is loaded, then print and close
-    printWindow.onload = function() {
-      printWindow.focus(); 
-    printWindow.print();
-      printWindow.close();
-    };
-  }
-
-  function downloadPayslip(employeeId) {
-  fetch(`../app/api/get_payslip-file.php?employee_id=${employeeId}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.file) {
-        const downloadUrl = `../app/api/download_payslip.php?file=${encodeURIComponent(data.file)}`;
-
-        // Force download using a temporary <a> with download attribute
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.setAttribute('download', '');
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        alert('Payslip not found.');
-      }
-    })
-    .catch(error => {
-      console.error('Download error:', error);
-      alert('Error downloading payslip.');
-    });
-  }
 
 </script>
 
@@ -457,110 +574,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-<!-- Script to download in excel -->
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script> Include the xlsx library -->
 
-<!-- /*<script>
-    // Function to clear the input field
-    function clearInput() {
-        const inputField = document.getElementById('searchInput');
-        inputField.value = '';  // Clear the input field
-        toggleClearButton();  // Hide the clear button
-    }
-
-    // Function to toggle the visibility of the clear button based on input content
-    function toggleClearButton() {
-        const inputField = document.getElementById('searchInput');
-        const clearButton = document.getElementById('clearButton');
-        if (inputField.value.length > 0) {
-            clearButton.classList.remove('hidden');  // Show the clear button
-        } else {
-            clearButton.classList.add('hidden');  // Hide the clear button
-        }
-    }
-
-    // Open modal
-    function openPayslip() {
-        const overlay = document.getElementById("payslip-overlay");
-        const dialog = document.getElementById("payslip-dialog");
-        
-        overlay.classList.remove("hidden");
-        
-        // Smooth transition for overlay
-        overlay.classList.remove("opacity-0");
-        overlay.classList.add("opacity-100");
-        
-        // Smooth transition for dialog (scale-up effect)
-        dialog.classList.remove("scale-75");
-        dialog.classList.add("scale-100");
-    }
-
-    // Close modal
-    function closePayslip() {
-        const overlay = document.getElementById("payslip-overlay");
-        const dialog = document.getElementById("payslip-dialog");
-        
-        // Smooth transition for overlay
-        overlay.classList.remove("opacity-100");
-        overlay.classList.add("opacity-0");
-        
-        // Smooth transition for dialog (scale-down effect)
-        dialog.classList.remove("scale-100");
-        dialog.classList.add("scale-75");
-        
-        setTimeout(() => {
-            overlay.classList.add("hidden");
-        }, 200); // Delay to match animation duration
-    }
-
-    // Print function
-    function printPayslip() {
-        var printContent = document.getElementById('payslip-content');
-        var printWindow = window.open('', '', 'height=600,width=800');
-        printWindow.document.write('<html><head><title>Payslip</title>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(printContent.innerHTML);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.print();
-    }
-
-    // Download as Excel
-    function downloadPayslip() {
-        // Show loading toast
-        Swal.fire({
-            title: 'Downloading Payslip...',
-            text: 'Please wait...',
-            icon: 'info',
-            showConfirmButton: false,
-            allowOutsideClick: false,
-            willOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Hide the buttons temporarily
-        document.getElementById('payslip-buttons').style.display = 'none';
-
-        // Grab the payslip content
-        var element = document.getElementById('payslip-content');
-
-        // Convert the content to a worksheet
-        var ws = XLSX.utils.table_to_sheet(element);
-
-        // Create a new workbook and append the worksheet
-        var wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payslip");
-
-        // Download the workbook as an Excel file
-        XLSX.writeFile(wb, "payslip.xlsx").then(() => {
-            // Close the loading toast after the file is downloaded
-            Swal.close();
-
-            // After download, show the buttons back and close the modal
-            document.getElementById('payslip-buttons').style.display = 'flex';
-            closePayslip();
-            Swal.close();  // Close the loading toast
-        });
-    }
-</script>*/ -->

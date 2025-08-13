@@ -1,4 +1,12 @@
 <?php
+require_once '../app/core/session_helper.php';
+
+// Check if admin is logged in
+requireAdminAuth();
+
+// Log user activity
+logUserActivity('Access attendance page');
+
 require_once '../app/core/database.php';
 date_default_timezone_set('Asia/Manila');
 

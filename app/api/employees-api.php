@@ -5,6 +5,15 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
+// === Session Validation ===
+require_once __DIR__ . '/../core/session_helper.php';
+
+// Check if any user is authenticated (admin, manager, or employee)
+requireAnyAuth();
+
+// Log API access
+logUserActivity('API access', 'employees-api.php');
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -18,6 +27,26 @@ header('Content-Type: application/json');
 // === Initialize DB ===
 $db = new Database();
 $conn = $db->getConnection();
+
+// Test database connection
+if (!$conn) {
+    error_log("Employee API - Database connection failed");
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+    exit;
+}
+
+// Test if employees table exists and has the required columns
+try {
+    $testStmt = $conn->query("DESCRIBE employees");
+    $columns = $testStmt->fetchAll(PDO::FETCH_COLUMN);
+    error_log("Employee API - Available columns: " . implode(', ', $columns));
+} catch (PDOException $e) {
+    error_log("Employee API - Table structure error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Database table error: ' . $e->getMessage()]);
+    exit;
+}
 
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents("php://input"), true);
@@ -72,6 +101,10 @@ if ($method === 'GET') {
 
 // === POST: Create / Update / Soft Delete ===
 if ($method === 'POST') {
+
+    // Debug: Log the received data
+    error_log("Employee API - Received data: " . print_r($data, true));
+    error_log("Employee API - Files: " . print_r($_FILES, true));
 
     // === Soft Delete Action ===
     if (isset($data['action']) && $data['action'] === 'delete') {
@@ -152,12 +185,28 @@ if ($method === 'POST') {
         'sssNumber', 'pagibigNumber', 'philhealthNumber', 'branchManager'
     ];
 
+    // Check which required fields are missing
+    $missingFields = [];
     foreach ($required as $field) {
         if (empty($data[$field])) {
-            echo json_encode(['status' => 'error', 'message' => "$field is required"]);
-            exit;
+            $missingFields[] = $field;
         }
     }
+
+    if (!empty($missingFields)) {
+        error_log("Employee API - Missing required fields: " . implode(', ', $missingFields));
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Missing required fields: ' . implode(', ', $missingFields),
+            'missing' => $missingFields
+        ]);
+        exit;
+    }
+
+    // Debug: Log the data being processed
+    error_log("Employee API - Processing data for employee: " . $data['employeeId']);
+    error_log("Employee API - Position: " . $data['position']);
+    error_log("Employee API - Branch Manager: " . $data['branchManager']);
 
     if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid email address']);
@@ -244,6 +293,7 @@ if ($method === 'POST') {
 
         $stmt = $conn->prepare($sql);
 
+        // Bind all parameters including middleName
         $placeholders = [
             'employeeId', 'rfidNumber', 'firstName', 'middleName', 'lastName',
             'dob', 'placeOfBirth', 'sex', 'civilStatus', 'contactNumber', 'email',
@@ -266,9 +316,14 @@ if ($method === 'POST') {
             'message' => $existing ? 'Employee updated' : 'Employee added'
         ]);
     } catch (PDOException $e) {
-        error_log($e->getMessage(), 3, __DIR__ . '/../logs/error.log');
+        error_log("Employee API Error: " . $e->getMessage());
+        error_log("SQL State: " . $e->getCode());
         http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Server error']);
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Database error: ' . $e->getMessage(),
+            'details' => 'Check server logs for more information'
+        ]);
     }
     exit;
 }

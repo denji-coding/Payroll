@@ -1,4 +1,12 @@
 <?php
+require_once '../app/core/session_helper.php';
+
+// Check if admin is logged in
+requireAdminAuth();
+
+// Log user activity
+logUserActivity('Access schedules page');
+
 // schedules.php (Controller)
 
 require_once '../app/core/database.php';
@@ -7,13 +15,6 @@ require_once '../app/Model/Employees.php';
 $db = new Database();
 $conn = $db->getConnection();
 $employeeModel = new Employees($conn);
-
-// Optional session check
-// if (!isset($_SESSION['admin_id'])) {
-//     http_response_code(403);
-//     require_once '../app/Error/unauthorized.php';
-//     exit;
-// }
 
 // Get all employees
 $allEmployees = $employeeModel->getAllEmployees();

@@ -190,7 +190,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
+      
+      // Validate required fields before submission
+      if (!validateForm()) {
+        return;
+      }
+      
       const formData = new FormData(form);
+
+      // Debug: Log the form data being sent
+      console.log('Form data being sent:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key + ': ' + value);
+      }
 
       try {
         const response = await fetch(form.action, {
@@ -199,6 +211,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const text = await response.text();
+        console.log('Raw response:', text);
+        
         let data;
 
         try {
@@ -213,6 +227,8 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
+        console.log('Parsed response:', data);
+
         if (data.status === 'success') {
           await Swal.fire({
             icon: data.icon || 'success',
@@ -226,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (modal) modal.hide();
           refreshEmployeeTable();
         } else {
+          console.error('API Error:', data);
           await Swal.fire({
             icon: data.icon || 'error',
             title: data.title || 'Error',
@@ -330,6 +347,60 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ========== Validation ==========
+function validateForm() {
+  const requiredFields = [
+    'employeeId',
+    'rfidNumber', 
+    'firstName',
+    'lastName',
+    'dob',
+    'placeOfBirth',
+    'sex',
+    'civilStatus',
+    'contactNumber',
+    'email',
+    'citizenship',
+    'position',
+    'address',
+    'baseSalary',
+    'sssNumber',
+    'pagibigNumber',
+    'philhealthNumber',
+    'branchManager'
+  ];
+
+  let isValid = true;
+  const missingFields = [];
+
+  requiredFields.forEach(fieldName => {
+    const field = document.querySelector(`[name="${fieldName}"]`);
+    if (!field || !field.value.trim()) {
+      missingFields.push(fieldName);
+      isValid = false;
+      
+      // Highlight missing field
+      if (field) {
+        field.classList.add('border-red-500');
+        const messageDiv = field.closest('div.flex')?.querySelector('.validation-message');
+        if (messageDiv) {
+          messageDiv.textContent = 'This field is required.';
+        }
+      }
+    }
+  });
+
+  if (!isValid) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Missing Required Fields',
+      text: `Please fill in the following required fields: ${missingFields.join(', ')}`,
+      confirmButtonColor: '#d33'
+    });
+  }
+
+  return isValid;
+}
+
 function validateRfidNumber(input) {
   input.value = input.value.replace(/\D/g, '');
   const messageDiv = input.closest('div.flex')?.querySelector('.validation-message');

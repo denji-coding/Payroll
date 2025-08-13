@@ -1,4 +1,12 @@
 <?php
+require_once '../app/core/session_helper.php';
+
+// Check if manager is logged in
+requireManagerAuth();
+
+// Log user activity
+logUserActivity('Access branch profile page');
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -6,13 +14,7 @@ error_reporting(E_ALL);
 // Controller or main PHP file
 $managerId = $_SESSION['manager_id'] ?? null;
 
-if (!$managerId) {
-    die("Manager not logged in.");
-}
-
 require_once "../app/core/database.php";
-
-
 
 $db = new Database();
 $result = $db->query("SELECT * FROM managers WHERE id = ?", [$managerId]);
