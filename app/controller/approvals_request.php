@@ -1,4 +1,12 @@
 <?php
+require_once '../app/core/session_helper.php';
+
+// Check if admin is logged in
+requireAdminAuth();
+
+// Log user activity
+logUserActivity('Access approvals request page');
+
 // controller/approval_request.php
 
 ini_set('display_errors', 1);

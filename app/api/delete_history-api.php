@@ -56,6 +56,13 @@ switch ($method) {
             exit;
         }
 
+        // Add deleted_at column to managers table if it doesn't exist
+        try {
+            $pdo->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
+        } catch (Exception $e) {
+            // Column might already exist, continue
+        }
+        
         // Fetch all soft-deleted records
         $employees = $pdo->query("SELECT *, 'employee' as record_type FROM employees WHERE deleted_at IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
         $managers = $pdo->query("SELECT *, 'manager' as record_type FROM managers WHERE deleted_at IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
@@ -90,6 +97,13 @@ switch ($method) {
             
             $stmt->execute([$restoreId]);
 
+            // Add deleted_at column to managers table if it doesn't exist
+            try {
+                $pdo->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
+            } catch (Exception $e) {
+                // Column might already exist, continue
+            }
+            
             // Return updated HTML table
             ob_start();
             $employees = $pdo->query("SELECT *, 'employee' as record_type FROM employees WHERE deleted_at IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);
@@ -117,6 +131,13 @@ switch ($method) {
             }
             
             $stmt->execute([$deleteId]);
+
+            // Add deleted_at column to managers table if it doesn't exist
+            try {
+                $pdo->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
+            } catch (Exception $e) {
+                // Column might already exist, continue
+            }
 
             ob_start();
             $employees = $pdo->query("SELECT *, 'employee' as record_type FROM employees WHERE deleted_at IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC);

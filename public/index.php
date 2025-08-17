@@ -1,16 +1,20 @@
 <?php
+// Include security configuration first
+require_once "../app/core/SecurityConfig.php";
 
 // Configure session cookie path BEFORE starting the session
-$cookiePath = '/mvcPayroll/';
-session_set_cookie_params([
-    'path' => $cookiePath,
-    'secure' => false, // Set to true in production with HTTPS
-    'httponly' => true,
-    'samesite' => 'Lax'
-]);
+if (session_status() === PHP_SESSION_NONE) {
+    $cookiePath = '/mvcPayroll/';
+    session_set_cookie_params([
+        'path' => $cookiePath,
+        'secure' => false, // Set to true in production with HTTPS
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
 
-// Start session after configuring cookie parameters
-session_start();
+// Start secure session
+require_once "../app/core/secure_session.php";
 
 // Define the root path constant for the app
 define("ABSPATH", true);
@@ -93,8 +97,9 @@ if (strpos($url, 'api/') === 0) {
         }
     }
 
-    // Regular API endpoints get JSON content type
-    header('Content-Type: application/json');
+    // Apply API middleware for regular endpoints
+    require_once "../app/core/SecureAPIMiddleware.php";
+    applyAPIMiddleware($apiFile);
 
     if (file_exists($apiPath)) {
         require $apiPath;
@@ -122,6 +127,10 @@ $controller = strtolower($url); // Ensure lowercase
 $controllerPath = "../app/controller/" . $controller . ".php";
 
 if (file_exists($controllerPath)) {
+    // Apply authentication middleware
+    require_once "../app/core/AuthMiddleware.php";
+    applyAuthMiddleware($controller);
+    
     require $controllerPath;
 } else {
     http_response_code(404);

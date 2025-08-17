@@ -233,13 +233,13 @@ function printPayslip(payrollId) {
     })
     .catch(err => {
         console.error('Error loading payslip data for print:', err);
-        Swal.close();
-        Swal.fire({
-            icon: 'error',
-            title: 'Print Failed',
+    Swal.close();
+    Swal.fire({
+      icon: 'error',
+      title: 'Print Failed',
             text: 'Failed to load payslip data for printing. Please try again.'
-        });
     });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

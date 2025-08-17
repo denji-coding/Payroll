@@ -4,12 +4,10 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once "../app/core/SecureAuth.php";
+require_once "../app/core/secure_session.php";
 
-require_once "../app/core/database.php"; // Make sure this path is correct
+$auth = new SecureAuth();
 require_once views_path("branch/login_manager");
 
 // Check if form is submitted and login_type is manager
@@ -21,83 +19,41 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['login_type']) && $_PO
         $password = $_POST['m_password'];
 
         try {
-            $db = new Database();
-
-            // Query for manager by email
-            $query = "SELECT * FROM managers WHERE m_email = :email LIMIT 1";
-            $result = $db->query($query, ['email' => $email]);
-
-            if ($result && count($result) > 0) {
-                $manager = $result[0];
-
-                // Debug: Check if password field exists and is not empty
-                if (empty($manager['m_password'])) {
-                    echo "
+            $result = $auth->authenticateManager($email, $password);
+            
+            if ($result['success']) {
+                // Success alert and redirect
+                echo "
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
                         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                    </head>
+                    <body>
                         <script>
                             Swal.fire({
-                                icon: 'error',
-                                title: 'Account Setup Issue',
-                                text: 'Manager account is not properly set up. Please contact administrator.'
+                                icon: 'success',
+                                title: 'Login successful',
+                                text: 'Redirecting...',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = '" . $result['redirect'] . "';
                             });
                         </script>
-                    ";
-                    exit;
-                }
-
-                // Check if password is hashed or plain (for debugging)
-                // If passwords are not hashed in DB, use: $password === $manager['m_password']
-                if (password_verify($password, $manager['m_password'])) {
-                    // Store session data
-                    $_SESSION['manager_id'] = $manager['id'];
-                    $_SESSION['manager_name'] = !empty($manager['m_full_name']) ? $manager['m_full_name'] : 
-                        trim($manager['m_first_name'] . ' ' . $manager['m_middle_name'] . ' ' . $manager['m_last_name']);
-
-                    // Success alert and redirect
-                    echo "
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-                        </head>
-                        <body>
-                            <script>
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Login successful',
-                                    text: 'Redirecting...',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.href = 'index.php?payroll=manager_dashboard';
-                                });
-                            </script>
-                        </body>
-                        </html>
-                    ";
-                    exit;
-                } else {
-                    // Password incorrect - provide helpful message
-                    echo "
-                        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-                        <script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Invalid Credentials',
-                                text: 'Incorrect password. Default password is your Employee ID: " . $manager['m_employee_id'] . "'
-                            });
-                        </script>
-                    ";
-                }
+                    </body>
+                    </html>
+                ";
+                exit;
             } else {
-                // Email not found
+                // Authentication failed
                 echo "
                     <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
                     <script>
                         Swal.fire({
                             icon: 'error',
-                            title: 'Account not found',
-                            text: 'No manager registered with that email.'
+                            title: 'Authentication Failed',
+                            text: '" . addslashes($result['message']) . "'
                         });
                     </script>
                 ";

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Litepicker Example with Month & Year</title>
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+  <div class="bg-white shadow-lg rounded-xl p-6 w-80">
+    <label for="datepicker" class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+    <input 
+      type="text" 
+      id="datepicker" 
+      class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
+      placeholder="Choose a date"
+    >
+  </div>
+
+  <script>
+    const picker = new Litepicker({ 
+      element: document.getElementById('datepicker'),
+      format: 'YYYY-MM-DD',
+      dropdowns: {
+        minYear: 2000,
+        maxYear: 2035,
+        months: true,
+        years: true
+      },
+      buttonText: {
+        previousMonth: `<`,
+        nextMonth: `>`
+      },
+      setup: (picker) => {
+        picker.on('selected', (date1) => {
+          console.log('Selected date:', date1.format('YYYY-MM-DD'));
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

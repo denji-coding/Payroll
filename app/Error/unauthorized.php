@@ -49,26 +49,9 @@
   </div>
 
   <script>
-    // Auto-detect user type and redirect if possible
+    // No automatic redirect - let user choose manually
     document.addEventListener('DOMContentLoaded', function() {
-      // Check if there are any session remnants
-      const sessionCheck = fetch('index.php?payroll=test_session')
-        .then(response => response.json())
-        .then(data => {
-          if (data.session_status === 'active' && data.session_data) {
-            // Try to determine user type from session data
-            if (data.session_data.SESSION_EMAIL) {
-              goToAdminLogin();
-            } else if (data.session_data.manager_id) {
-              goToManagerLogin();
-            } else if (data.session_data.employee_id || data.session_data.employee_no) {
-              goToEmployeeLogin();
-            }
-          }
-        })
-        .catch(error => {
-          console.log('No active session detected');
-        });
+      console.log('Unauthorized page loaded - user must choose login type manually');
     });
 
     function goToAdminLogin() {
@@ -83,13 +66,15 @@
       window.location.href = 'index.php?payroll=login1&type=employee';
     }
 
-    // Show a helpful message
+    // Show a helpful message without auto-redirect
     Swal.fire({
       title: 'Session Expired',
-      text: 'Your session has expired. Please log in again to continue.',
+      text: 'Your session has expired. Please select your login type below.',
       icon: 'warning',
       confirmButtonText: 'OK',
-      confirmButtonColor: '#3085d6'
+      confirmButtonColor: '#3085d6',
+      allowOutsideClick: true,
+      allowEscapeKey: true
     });
   </script>
 

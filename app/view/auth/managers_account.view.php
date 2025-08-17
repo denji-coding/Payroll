@@ -4,7 +4,6 @@ require_once views_path("partials/header");
 require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
 ?>
-
 <style>
 @keyframes fadeInSlide {
   from {
@@ -33,14 +32,47 @@ require_once views_path("partials/nav");
 .fade-out {
   animation: fadeOut 0.3s ease-in;
 }
+
+/* Dropdown styles */
+.custom-dropdown-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.custom-dropdown-option:hover {
+    background-color: #f3f4f6;
+}
+
+.custom-dropdown-option.selected {
+    background-color: #16a249;
+    color: white;
+}
+
+.custom-dropdown-option.selected:hover {
+    background-color: #15803d;
+}
+
+/* Add ellipsis for long text in dropdown buttons */
+.dropdown-button-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    text-align: left;
+}
+
+/* Default dropdown styling */
+
+
 </style>
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
     <div class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                        <span class="text-2xl font-bold tracking-tight text-[#133913]">Employees</span>
-                        <p class="text-[#478547]">Manage employee information and access</p>
+                        <span class="text-2xl font-bold tracking-tight text-[#133913]">Managers</span>
+                        <p class="text-[#478547]">Manage managers information and access</p>
                 </div>
                 
                 <div>
@@ -58,7 +90,7 @@ require_once views_path("partials/nav");
         <div class="rounded-lg border-2 border-green-200 bg-white text-[#133913] shadow-sm" 
                     >
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
-                <span class="text-2xl font-semibold leading-none tracking-tight text-[#133913]">Employee Directory</span>
+                <span class="text-2xl font-semibold leading-none tracking-tight text-[#133913]">Managers Directory</span>
                 <div class="relative w-64">
                     <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -130,6 +162,17 @@ require_once views_path("partials/nav");
                                                 <!-- RFID -->
                                                 <td class="p-3 align-middle"><?= htmlspecialchars($manager['m_rfid_number']) ?></td>
 
+                                                <!-- Birthday -->
+                                                <!-- <td class="p-3 align-middle">
+                                                    <?php 
+                                                        if (!empty($manager['m_dob'])) {
+                                                            echo date('M d, Y', strtotime($manager['m_dob']));
+                                                        } else {
+                                                            echo 'N/A';
+                                                        }
+                                                    ?>
+                                                </td> -->
+
                                                 <!-- Position -->
                                                 <?php
                                                     $position = $manager['m_position'] ?? '';
@@ -197,7 +240,7 @@ require_once views_path("partials/nav");
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="7" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
+                                            <td colspan="8" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
                                                 <i class="bi bi-person-x me-2"></i> No managers found.
                                             </td>
                                         </tr>
@@ -224,7 +267,7 @@ require_once views_path("partials/nav");
             </div>
             <div class="modal-body">
                 <div class="container-fluid p-2">
-                    <form method="post" id="addManagerForm" action="../app/api/managers-api.php"
+                    <form method="post" id="addManagerForm" action="../app/api/managers_account-api.php"
                         enctype="multipart/form-data">
                         <div class="border rounded-lg mb-4">
                             <div class="bg-yellow-100 px-4 py-2 rounded-t-lg border-b border-b-gray-200">
@@ -261,8 +304,9 @@ require_once views_path("partials/nav");
                                                         id="employeeId"
                                                         name="employeeId"                                                        
                                                         placeholder="Click Generate ID"
-                                                        class="p-2 pl-8 border rounded text-sm w-full focus:outline-none"
+                                                        class="p-2 pl-8 border rounded text-sm w-full focus:outline-none bg-gray-100"
                                                         required
+                                                        readonly
                                                     >
                                                     <i class="validation-icon absolute right-24 top-1/2 transform -translate-y-1/2"></i>
                                                         <button
@@ -281,25 +325,37 @@ require_once views_path("partials/nav");
                                     </div>
                                                                             
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">BRANCH</label>
-                                        <select name="branchManager"  class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                            <option value="" disabled selected>Select a branch</option>
-                                            <option value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</option>
-                                            <option value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</option>
-                                            <option value="Branch-Tagum-2">Branch-Tagum-2</option>
-                                        </select>
+                                        <label class="block text-xs font-medium mb-1 ml-2">BRANCH <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="branch-dropdown-container">
+                                            <input type="hidden" name="branchManager" id="branchManager" required />
+                                            <button type="button" id="branchDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="branchDropdownSelected" class="dropdown-button-text">Select a branch</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="branchDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</div>
+                                                <div class="custom-dropdown-option" data-value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</div>
+                                                <div class="custom-dropdown-option" data-value="Branch-Tagum-2">Branch-Tagum-2</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
+                                        </div>
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>   
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
-                                        <div class="relative">
-                                            <select name="position"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option disabled selected value="">Select a position</option>
-                                                <option value="Manager">Manager</option>
-                                                <!-- <option value="Human Resources">Human Resources</option>
-                                                <option value="Staff">Staff</option>
-                                                <option value="Driver">Driver</option> -->
-                                            </select>
+                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="position-dropdown-container">
+                                            <input type="hidden" name="position" id="position" required />
+                                            <button type="button" id="positionDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="positionDropdownSelected" class="dropdown-button-text">Select a position</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="positionDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Manager">Manager</div>
+                                                <!-- <div class="custom-dropdown-option" data-value="Human Resources">Human Resources</div>
+                                                <div class="custom-dropdown-option" data-value="Staff">Staff</div>
+                                                <div class="custom-dropdown-option" data-value="Driver">Driver</div> -->
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -359,10 +415,7 @@ require_once views_path("partials/nav");
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BIRTHDAY</label>
                                         <div class="relative">
-                                            <input type="date" name="dob"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                required
-                                                >
+                                            <input type="date" name="dob" id="dob" class="p-2 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -379,28 +432,36 @@ require_once views_path("partials/nav");
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">SEX</label>
-                                        <div class="relative">
-                                            <select name="sex"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option value="">Select</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
+                                        <div class="relative" id="sex-dropdown-container">
+                                            <input type="hidden" name="sex" id="sex" required />
+                                            <button type="button" id="sexDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="sexDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="sexDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Male">Male</div>
+                                                <div class="custom-dropdown-option" data-value="Female">Female</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CIVIL STATUS</label>
-                                        <div class="relative">
-                                            <select name="civilStatus"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option value="">Select</option>
-                                                <option value="Single">Single</option>
-                                                <option value="Married">Married</option>
-                                                <option value="Separated">Separated</option>
-                                                <option value="Divorced">Divorced</option>
-                                                <option value="Widowed">Widowed</option>
-                                            </select>
+                                        <div class="relative" id="civilStatus-dropdown-container">
+                                            <input type="hidden" name="civilStatus" id="civilStatus" required />
+                                            <button type="button" id="civilStatusDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="civilStatusDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="civilStatusDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Single">Single</div>
+                                                <div class="custom-dropdown-option" data-value="Married">Married</div>
+                                                <div class="custom-dropdown-option" data-value="Separated">Separated</div>
+                                                <div class="custom-dropdown-option" data-value="Divorced">Divorced</div>
+                                                <div class="custom-dropdown-option" data-value="Widowed">Widowed</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -429,30 +490,36 @@ require_once views_path("partials/nav");
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CITIZENSHIP</label>
-                                        <div class="relative">
-                                            <input type="text" name="citizenship" placeholder="e.g., Filipino"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                required
-                                                >
+                                        <div class="relative" id="citizenship-dropdown-container">
+                                            <input type="hidden" name="citizenship" id="citizenship" />
+                                            <button type="button" id="citizenshipDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="citizenshipDropdownSelected" class="dropdown-button-text">Select citizenship</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="citizenshipDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden"></div>
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BLOOD TYPE</label>
-                                        <div class="relative">
-                                            <select name="bloodType"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option value="">Select</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                            </select>
+                                        <div class="relative" id="bloodType-dropdown-container">
+                                            <input type="hidden" name="bloodType" id="bloodType" />
+                                            <button type="button" id="bloodTypeDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="bloodTypeDropdownSelected" class="dropdown-button-text">Select blood type</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="bloodTypeDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="A+">A+</div>
+                                                <div class="custom-dropdown-option" data-value="A-">A-</div>
+                                                <div class="custom-dropdown-option" data-value="B+">B+</div>
+                                                <div class="custom-dropdown-option" data-value="B-">B-</div>
+                                                <div class="custom-dropdown-option" data-value="O+">O+</div>
+                                                <div class="custom-dropdown-option" data-value="O-">O-</div>
+                                                <div class="custom-dropdown-option" data-value="AB+">AB+</div>
+                                                <div class="custom-dropdown-option" data-value="AB-">AB-</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -609,24 +676,38 @@ require_once views_path("partials/nav");
                                         </div>
                                     </div>                                                                                                      
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">BRANCH</label>
-                                        <select id="m_edit_branchManager" name="branchManager" 
-                                            class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                            <option value="" disabled>Select a branch</option>
-                                            <option value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</option>
-                                            <option value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</option>
-                                            <option value="Branch-Tagum-2">Branch-Tagum-2</option>
-                                        </select>
+                                        <label class="block text-xs font-medium mb-1 ml-2">BRANCH <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="edit-branch-dropdown-container">
+                                            <input type="hidden" name="branchManager" id="m_edit_branchManager" required />
+                                            <button type="button" id="editBranchDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editBranchDropdownSelected" class="dropdown-button-text">Select a branch</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editBranchDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</div>
+                                                <div class="custom-dropdown-option" data-value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</div>
+                                                <div class="custom-dropdown-option" data-value="Branch-Tagum-2">Branch-Tagum-2</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
+                                        </div>
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
 
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
-                                        <div class="relative">
-                                            <select name="position" id="m_edit_position"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option disabled value="">Select</option>
-                                                <option value="Manager">Manager</option>
-                                            </select>
+                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="edit-position-dropdown-container">
+                                            <input type="hidden" name="position" id="m_edit_position" required />
+                                            <button type="button" id="editPositionDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editPositionDropdownSelected" class="dropdown-button-text">Select a position</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editPositionDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Manager">Manager</div>
+                                                <!-- <div class="custom-dropdown-option" data-value="Human Resources">Human Resources</div>
+                                                <div class="custom-dropdown-option" data-value="Staff">Staff</div>
+                                                <div class="custom-dropdown-option" data-value="Driver">Driver</div> -->
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -686,10 +767,7 @@ require_once views_path("partials/nav");
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BIRTHDAY</label>
                                         <div class="relative">
-                                            <input type="date" name="dob" id="m_edit_dob"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                required
-                                                >
+                                            <input type="date" name="dob" id="m_edit_dob" class="p-2 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -708,29 +786,37 @@ require_once views_path("partials/nav");
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">SEX</label>
-                                        <div class="relative">
-                                            <select name="sex" id="m_edit_sex"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option disabled value="">Select</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
+                                        <div class="relative" id="edit-sex-dropdown-container">
+                                            <input type="hidden" name="sex" id="m_edit_sex" required />
+                                            <button type="button" id="editSexDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editSexDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editSexDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Male">Male</div>
+                                                <div class="custom-dropdown-option" data-value="Female">Female</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CIVIL STATUS</label>
-                                        <div class="relative">
-                                            <select name="civilStatus" id="m_edit_civilStatus"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option disabled value="">Select</option>
-                                                <option value="Single">Single</option>
-                                                <option value="Married">Married</option>
-                                                <option value="Separated">Separated</option>
-                                                <option value="Divorced">Divorced</option>
-                                                <option value="Widowed">Widowed</option>
-                                            </select>
+                                        <div class="relative" id="edit-civilStatus-dropdown-container">
+                                            <input type="hidden" name="civilStatus" id="m_edit_civilStatus" required />
+                                            <button type="button" id="editCivilStatusDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editCivilStatusDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editCivilStatusDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Single">Single</div>
+                                                <div class="custom-dropdown-option" data-value="Married">Married</div>
+                                                <div class="custom-dropdown-option" data-value="Separated">Separated</div>
+                                                <div class="custom-dropdown-option" data-value="Divorced">Divorced</div>
+                                                <div class="custom-dropdown-option" data-value="Widowed">Widowed</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -762,11 +848,13 @@ require_once views_path("partials/nav");
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CITIZENSHIP</label>
-                                        <div class="relative">
-                                            <input type="text" name="citizenship" id="m_edit_citizenship" placeholder="e.g., Filipino"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full"
-                                                required
-                                                >
+                                        <div class="relative" id="edit-citizenship-dropdown-container">
+                                            <input type="hidden" name="citizenship" id="m_edit_citizenship" />
+                                            <button type="button" id="editCitizenshipDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editCitizenshipDropdownSelected" class="dropdown-button-text">Select citizenship</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editCitizenshipDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden"></div>
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -774,19 +862,23 @@ require_once views_path("partials/nav");
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BLOOD TYPE</label>
-                                        <div class="relative">
-                                            <select name="bloodType" id="m_edit_bloodType"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full" required>
-                                                <option disabled value="">Select</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                            </select>
+                                        <div class="relative" id="edit-bloodType-dropdown-container">
+                                            <input type="hidden" name="bloodType" id="m_edit_bloodType" />
+                                            <button type="button" id="editBloodTypeDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editBloodTypeDropdownSelected" class="dropdown-button-text">Select blood type</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editBloodTypeDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="A+">A+</div>
+                                                <div class="custom-dropdown-option" data-value="A-">A-</div>
+                                                <div class="custom-dropdown-option" data-value="B+">B+</div>
+                                                <div class="custom-dropdown-option" data-value="B-">B-</div>
+                                                <div class="custom-dropdown-option" data-value="O+">O+</div>
+                                                <div class="custom-dropdown-option" data-value="O-">O-</div>
+                                                <div class="custom-dropdown-option" data-value="AB+">AB+</div>
+                                                <div class="custom-dropdown-option" data-value="AB-">AB-</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -970,7 +1062,7 @@ require_once views_path("partials/nav");
                 class="btn btn-outline-success me-2 w-[90px] editManagerBtn"
                 data-bs-toggle="modal"
                 data-bs-target="#updateManagerAccountModal"
-                onclick='editManagerFromObject(<?= json_encode($manager, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>)'
+                onclick='editManagerFromObject(window.lastViewedManager)'
                 >
                 <i class="bi bi-pencil me-2"></i>Edit
            </button>
@@ -1064,7 +1156,11 @@ document.addEventListener("DOMContentLoaded", () => {
     ph && ph.length === 12 ? `${ph.slice(0, 2)}-${ph.slice(2, 10)}-${ph.slice(10)}` : ph || 'N/A';
 
   function populateEditModal(manager) {
+    
     if (!manager || Object.keys(manager).length === 0) return;
+
+    // Reset the edit modal first
+    resetEditManagerForm();
 
     const setValue = (id, value) => {
       const el = document.getElementById(id);
@@ -1098,21 +1194,100 @@ document.addEventListener("DOMContentLoaded", () => {
       setValue(fieldId, manager[key]);
     }
 
-    // Branch select
-    const branchSelect = document.getElementById("m_edit_branchManager");
+    // Set the date of birth input value
+    const editDobInput = document.getElementById("m_edit_dob");
+    if (editDobInput) {
+        editDobInput.value = manager.m_dob || '';
+    }
+
+    // Branch select - update dropdown display
+    const branchSpan = document.getElementById("editBranchDropdownSelected");
     const branchValue = manager.m_branch || manager.branch_id || '';
-    if (branchSelect) {
-      const found = [...branchSelect.options].some(opt => opt.value === branchValue);
-      if (found) {
-        branchSelect.value = branchValue;
-      } else {
-        const retrySet = setInterval(() => {
-          const foundNow = [...branchSelect.options].some(opt => opt.value === branchValue);
-          if (foundNow) {
-            branchSelect.value = branchValue;
-            clearInterval(retrySet);
-          }
-        }, 100);
+    if (branchSpan && branchValue) {
+      // Find the option text for this value
+      const branchList = document.getElementById("editBranchDropdownList");
+      if (branchList) {
+        const option = branchList.querySelector(`[data-value="${branchValue}"]`);
+        if (option) {
+          branchSpan.textContent = option.textContent;
+          // Also update the hidden input
+          const hiddenInput = document.getElementById("m_edit_branchManager");
+          if (hiddenInput) hiddenInput.value = branchValue;
+        }
+      }
+    }
+
+    // Position select - update dropdown display
+    const positionSpan = document.getElementById("editPositionDropdownSelected");
+    const positionValue = manager.m_position || '';
+    if (positionSpan && positionValue) {
+      // Find the option text for this value
+      const positionList = document.getElementById("editPositionDropdownList");
+      if (positionList) {
+        const option = positionList.querySelector(`[data-value="${positionValue}"]`);
+        if (option) {
+          positionSpan.textContent = option.textContent;
+          // Also update the hidden input
+          const hiddenInput = document.getElementById("m_edit_position");
+          if (hiddenInput) hiddenInput.value = positionValue;
+        }
+      }
+    }
+
+    // Citizenship select - update dropdown display
+    const citizenshipSpan = document.getElementById("editCitizenshipDropdownSelected");
+    const citizenshipValue = manager.m_citizenship || '';
+    if (citizenshipSpan && citizenshipValue) {
+      citizenshipSpan.textContent = citizenshipValue;
+      // Also update the hidden input
+      const hiddenInput = document.getElementById("m_edit_citizenship");
+      if (hiddenInput) hiddenInput.value = citizenshipValue;
+    }
+
+    // Blood type select - update dropdown display
+    const bloodTypeSpan = document.getElementById("editBloodTypeDropdownSelected");
+    const bloodTypeValue = manager.m_blood_type || '';
+    if (bloodTypeSpan && bloodTypeValue) {
+      // Find the option text for this value
+      const bloodTypeList = document.getElementById("editBloodTypeDropdownList");
+      if (bloodTypeList) {
+        const option = bloodTypeList.querySelector(`[data-value="${bloodTypeValue}"]`);
+        if (option) {
+          bloodTypeSpan.textContent = option.textContent;
+          // Also update the hidden input
+          const hiddenInput = document.getElementById("m_edit_bloodType");
+          if (hiddenInput) hiddenInput.value = bloodTypeValue;
+        }
+      }
+    }
+
+    // Sex select - update dropdown display
+    const sexSpan = document.getElementById("editSexDropdownSelected");
+    const sexValue = manager.m_sex || '';
+    if (sexSpan && sexValue) {
+      const sexList = document.getElementById("editSexDropdownList");
+      if (sexList) {
+        const option = sexList.querySelector(`[data-value="${sexValue}"]`);
+        if (option) {
+          sexSpan.textContent = option.textContent;
+          const hiddenInput = document.getElementById("m_edit_sex");
+          if (hiddenInput) hiddenInput.value = sexValue;
+        }
+      }
+    }
+
+    // Civil status select - update dropdown display
+    const csSpan = document.getElementById("editCivilStatusDropdownSelected");
+    const csValue = manager.m_civil_status || '';
+    if (csSpan && csValue) {
+      const csList = document.getElementById("editCivilStatusDropdownList");
+      if (csList) {
+        const option = csList.querySelector(`[data-value="${csValue}"]`);
+        if (option) {
+          csSpan.textContent = option.textContent;
+          const hiddenInput = document.getElementById("m_edit_civilStatus");
+          if (hiddenInput) hiddenInput.value = csValue;
+        }
       }
     }
 
@@ -1151,61 +1326,70 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".viewManagerBtn").forEach(button => {
     button.addEventListener("click", () => {
       try {
-        const data = JSON.parse(button.dataset.manager || '{}');
-        console.log("Manager data received:", data); // Debug log
-        console.log("Raw dataset.manager:", button.dataset.manager); // Debug log
+        const managerId = button.getAttribute('data-manager-id');
         
-        const defaultImg = data.m_sex?.toLowerCase() === 'female'
+        if (!managerId) {
+          console.error("❌ No manager ID found");
+          return;
+        }
+        
+                            // Always fetch fresh data from server to ensure we have the latest information
+        fetch(`../app/api/managers_account-api.php?action=get_manager&id=${managerId}`)
+          .then(response => response.json())
+          .then(data => {
+            
+            if (data.status === 'success') {
+              const manager = data.manager;
+              
+              const defaultImg = manager.m_sex?.toLowerCase() === 'female'
           ? '../public/assets/image/default_women.png'
           : '../public/assets/image/default_men.png';
 
         const img = document.getElementById("view_managerPhoto");
-        if (img) img.src = data.m_photo_path ? "../public/" + data.m_photo_path : defaultImg;
+              if (img) img.src = manager.m_photo_path ? "../public/" + manager.m_photo_path : defaultImg;
 
-        const fullName = `${capitalize(data.m_last_name)}, ${capitalize(data.m_first_name)} ${data.m_middle_name ? data.m_middle_name.charAt(0).toUpperCase() + '.' : ''}`;
+              const fullName = `${capitalize(manager.m_last_name)}, ${capitalize(manager.m_first_name)} ${manager.m_middle_name ? manager.m_middle_name.charAt(0).toUpperCase() + '.' : ''}`;
         document.getElementById("managerName").textContent = fullName.trim();
-        document.getElementById("managerIdView").textContent = data.m_employee_id || 'N/A';
-        document.getElementById("managerBloodType").textContent = data.m_blood_type || 'N/A';
-        document.getElementById("managerCivilStatus").textContent = data.m_civil_status || 'N/A';
-        document.getElementById("managerBirthday").textContent = data.m_dob || 'N/A';
-        document.getElementById("managerSex").textContent = data.m_sex || 'N/A';
-        document.getElementById("managerCitizen").textContent = capitalize(data.m_citizenship) || 'N/A';
-        document.getElementById("managerRFID").textContent = data.m_rfid_number || 'N/A';
-        document.getElementById("managerPosition").textContent = data.m_position || 'N/A';
-        document.getElementById("managerEmail").textContent = data.m_email || 'N/A';
-        document.getElementById("managerPhone").textContent = data.m_contact_number || 'N/A';
-        document.getElementById("managerPlaceOfBirth").textContent = capitalize(data.m_place_of_birth) || 'N/A';
-        document.getElementById("managerBranch").textContent = data.branch_name
-          ? `${data.branch_name} - ${data.branch_address}` : data.m_branch || 'N/A';
-        document.getElementById("managerSalary").textContent = parseFloat(data.m_base_salary || 0).toFixed(2);
-        document.getElementById("managerSSS").textContent = formatSSS(data.m_sss_number);
-        document.getElementById("managerPagibig").textContent = formatPagibig(data.m_pagibig_number);
-        document.getElementById("managerPhilhealth").textContent = formatPhilhealth(data.m_philhealth_number);
-        document.getElementById("managerAddress").textContent = capitalize(data.m_address) || 'N/A';
+              document.getElementById("managerIdView").textContent = manager.m_employee_id || 'N/A';
+              document.getElementById("managerBloodType").textContent = manager.m_blood_type || 'N/A';
+              document.getElementById("managerCivilStatus").textContent = manager.m_civil_status || 'N/A';
+              document.getElementById("managerBirthday").textContent = manager.m_dob || 'N/A';
+              document.getElementById("managerSex").textContent = manager.m_sex || 'N/A';
+              document.getElementById("managerCitizen").textContent = capitalize(manager.m_citizenship) || 'N/A';
+              document.getElementById("managerRFID").textContent = manager.m_rfid_number || 'N/A';
+              document.getElementById("managerPosition").textContent = manager.m_position || 'N/A';
+              document.getElementById("managerEmail").textContent = manager.m_email || 'N/A';
+              document.getElementById("managerPhone").textContent = manager.m_contact_number || 'N/A';
+              document.getElementById("managerPlaceOfBirth").textContent = capitalize(manager.m_place_of_birth) || 'N/A';
+              document.getElementById("managerBranch").textContent = manager.branch_name
+                ? `${manager.branch_name} - ${manager.branch_address}` : manager.m_branch || 'N/A';
+              document.getElementById("managerSalary").textContent = parseFloat(manager.m_base_salary || 0).toFixed(2);
+              document.getElementById("managerSSS").textContent = formatSSS(manager.m_sss_number);
+              document.getElementById("managerPagibig").textContent = formatPagibig(manager.m_pagibig_number);
+              document.getElementById("managerPhilhealth").textContent = formatPhilhealth(manager.m_philhealth_number);
+              document.getElementById("managerAddress").textContent = capitalize(manager.m_address) || 'N/A';
 
-        window.lastViewedManager = data;
+              window.lastViewedManager = manager;
         
         // Set hidden input values with error handling
         const managerIdInput = document.getElementById("manager_id");
         const employeeIdInput = document.getElementById("view_manager_employee_id");
         
-        if (managerIdInput) managerIdInput.value = data.id || '';
-        if (employeeIdInput) employeeIdInput.value = data.m_employee_id || '';
+              if (managerIdInput) managerIdInput.value = manager.id || '';
+              if (employeeIdInput) employeeIdInput.value = manager.m_employee_id || '';
         
         // Set the delete button data-id with better error handling
         const deleteBtn = document.getElementById("modalDeleteManagerBtn");
         if (deleteBtn) {
-          const managerId = data.id || data.m_id || button.getAttribute('data-manager-id') || '';
-          console.log("data.id value:", data.id); // Debug log
-          console.log("data.m_id value:", data.m_id); // Debug log
-          console.log("data-manager-id attribute:", button.getAttribute('data-manager-id')); // Debug log
-          console.log("Final managerId:", managerId); // Debug log
-          deleteBtn.setAttribute("data-id", managerId);
-          console.log("Set delete button data-id to:", managerId); // Debug log
-          console.log("Available data fields:", Object.keys(data)); // Debug log
+                deleteBtn.setAttribute("data-id", manager.id);
+              }
         } else {
-          console.error("Delete button not found!"); // Debug log
+              console.error("❌ Error fetching manager data:", data.message);
         }
+          })
+          .catch(err => {
+            console.error("❌ Error during fetch:", err);
+          });
       } catch (e) {
         console.error("❌ Error displaying view modal:", e);
       }
@@ -1215,7 +1399,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Add delete functionality for the view modal delete button
   document.getElementById("modalDeleteManagerBtn").addEventListener("click", function() {
     const managerId = this.getAttribute("data-id");
-    console.log("Delete button clicked, managerId:", managerId); // Debug log
     
     if (!managerId || managerId === '') {
       Swal.fire({ 
@@ -1228,7 +1411,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Close the modal immediately when delete button is clicked
     const modalElement = document.getElementById("viewManagerModal");
-    console.log('🔒 Closing modal immediately...', modalElement);
     
     // Close modal using multiple methods to ensure it works
     if (modalElement) {
@@ -1236,10 +1418,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const modal = bootstrap.Modal.getInstance(modalElement);
         if (modal) {
           modal.hide();
-          console.log('✅ Modal closed using Bootstrap API');
         }
       } catch (error) {
-        console.log('⚠️ Bootstrap modal close failed, using fallback...');
+        // Fallback method
       }
       
       // Fallback: direct DOM manipulation
@@ -1248,7 +1429,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.remove('modal-open');
       const backdrop = document.querySelector('.modal-backdrop');
       if (backdrop) backdrop.remove();
-      console.log('✅ Modal closed using fallback method');
     }
 
     // Show confirmation SweetAlert after modal is closed
@@ -1266,12 +1446,17 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.append("id", managerId);
         formData.append("action", "soft_delete");
 
+
+
         fetch("../app/api/managers_account-api.php", {
           method: "POST",
           body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+          return response.json();
+        })
         .then(data => {
+          
           if (data.status === "success") {
             // Show success message
             Swal.fire({
@@ -1287,6 +1472,7 @@ document.addEventListener("DOMContentLoaded", () => {
               }, 200);
             });
           } else {
+            console.error("❌ Delete failed:", data.message);
             Swal.fire({ icon: "error", title: "Delete failed", text: data.message });
           }
         })
@@ -1334,12 +1520,54 @@ document.addEventListener("DOMContentLoaded", () => {
   window.editpreviewManagerPhoto = editpreviewManagerPhoto;
   window.editdisplayFileName = editdisplayFileName;
 
-  window.editManagerFromObject = () => {
-    if (window.lastViewedManager) {
-      populateEditModal(window.lastViewedManager);
+     window.editManagerFromObject = (managerData) => {
+     
+     // Always get fresh data from server to ensure we have the latest information
+     const managerId = managerData?.id || window.lastViewedManager?.id;
+     
+     if (!managerId) {
+       console.error("❌ No manager ID available for editing");
+       Swal.fire({
+         icon: 'error',
+         title: 'Error',
+         text: 'No manager data available. Please try viewing the manager again.'
+       });
+       return;
+     }
+     
+
+     
+     // Fetch fresh data from server
+     fetch(`../app/api/managers_account-api.php?action=get_manager&id=${managerId}`)
+       .then(response => response.json())
+       .then(data => {
+         if (data.status === 'success') {
+           const freshManager = data.manager;
+           
+           // Update window.lastViewedManager with fresh data
+           window.lastViewedManager = freshManager;
+           
+           // Populate the edit modal with fresh data
+           setTimeout(() => {
+             populateEditModal(freshManager);
+           }, 100);
     } else {
-      console.warn("⚠️ No manager object to edit.");
-    }
+           console.error("❌ Error fetching fresh manager data:", data.message);
+           Swal.fire({
+             icon: 'error',
+             title: 'Error',
+             text: 'Failed to fetch manager data. Please try again.'
+           });
+         }
+       })
+       .catch(err => {
+         console.error("❌ Error during fetch:", err);
+         Swal.fire({
+           icon: 'error',
+           title: 'Error',
+           text: 'Failed to fetch manager data. Please try again.'
+         });
+       });
   };
 
   if (saveBtn && form) {
@@ -1395,28 +1623,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Reset the form
           if (form) {
-            form.reset();
-            // Clear photo preview
-            const photoPreview = document.getElementById('employeePhotoPreview');
-            const placeholder = document.getElementById('photoPlaceholder');
-            const fileName = document.getElementById('photoFileName');
-            if (photoPreview) photoPreview.style.display = 'none';
-            if (placeholder) placeholder.style.display = 'flex';
-            if (fileName) fileName.textContent = '';
-            
-            // Clear any validation messages
-            const validationMessages = form.querySelectorAll('.validation-message');
-            validationMessages.forEach(msg => {
-              if (msg) msg.textContent = '';
-            });
-            
-            // Reset validation icons
-            const validationIcons = form.querySelectorAll('.validation-icon');
-            validationIcons.forEach(icon => {
-              if (icon) {
-                icon.className = 'validation-icon absolute right-2 top-1/2 transform -translate-y-1/2';
-              }
-            });
+            resetAddManagerForm();
           }
 
           Swal.fire({
@@ -1582,7 +1789,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to refresh the managers table
   function refreshManagersTable() {
     const tbody = document.getElementById('managersTable');
-    console.log('🔄 Refreshing managers table...');
+    
+    if (!tbody) {
+      console.error("❌ managersTable tbody not found");
+      return;
+    }
     
     // Add fade out animation
     tbody.style.transition = 'opacity 0.3s ease';
@@ -1591,17 +1802,50 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       fetch('../app/api/managers_account-api.php?action=get_managers')
         .then(response => {
-          console.log('📡 API Response status:', response.status);
           return response.json();
         })
         .then(data => {
-          console.log('📊 API Response data:', data);
+          
           if (data.status === 'success') {
-            console.log('✅ Updating table with HTML:', data.html.substring(0, 100) + '...');
             tbody.innerHTML = data.html;
             
             // Rebind event listeners for new elements
             bindManagerEventListeners();
+            
+            // Update lastViewedManager with fresh data if it exists
+            if (window.lastViewedManager && window.lastViewedManager.id) {
+              // Find the updated manager in the new table data
+              const managerRow = tbody.querySelector(`[data-manager-id="${window.lastViewedManager.id}"]`);
+              if (managerRow) {
+                try {
+                  const freshData = JSON.parse(managerRow.dataset.manager || '{}');
+                  window.lastViewedManager = freshData;
+                } catch (e) {
+                  // If parsing fails, fetch fresh data from server
+                  fetch(`../app/api/managers_account-api.php?action=get_manager&id=${window.lastViewedManager.id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                      if (data.status === 'success') {
+                        window.lastViewedManager = data.manager;
+                      }
+                    })
+                    .catch(err => {
+                      // Silently handle error
+                    });
+                }
+              }
+            }
+            
+            // Also update any open edit modal with fresh data
+            const editModal = document.getElementById('updateManagerAccountModal');
+            if (editModal && editModal.classList.contains('show')) {
+              // If edit modal is open, refresh its data
+              const editDobInput = document.getElementById('m_edit_dob');
+              if (editDobInput && window.lastViewedManager && window.lastViewedManager.m_dob) {
+                // Update the DOB input with fresh data
+                editDobInput.value = window.lastViewedManager.m_dob;
+              }
+            }
             
             // Reapply search filter if there's a search term
             if (searchInput.value.trim()) {
@@ -1610,14 +1854,11 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Add fade in animation
             tbody.style.opacity = '1';
-            console.log('✅ Table refresh completed');
           } else {
-            console.error('❌ API returned error:', data.message);
             tbody.style.opacity = '1'; // Restore opacity on error
           }
         })
         .catch(err => {
-          console.error('❌ Error refreshing table:', err);
           tbody.style.opacity = '1'; // Restore opacity on error
         });
     }, 300);
@@ -1628,13 +1869,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Function to bind event listeners for manager buttons
   function bindManagerEventListeners() {
+
+
+
     // Rebind view buttons
     document.querySelectorAll(".viewManagerBtn").forEach(button => {
       button.addEventListener("click", () => {
         try {
           const data = JSON.parse(button.dataset.manager || '{}');
-          console.log("Manager data received:", data);
-          console.log("Raw dataset.manager:", button.dataset.manager);
           
           const defaultImg = data.m_sex?.toLowerCase() === 'female'
             ? '../public/assets/image/default_women.png'
@@ -1688,7 +1930,7 @@ document.addEventListener("DOMContentLoaded", () => {
       button.addEventListener("click", () => {
         try {
           const data = JSON.parse(button.dataset.manager || '{}');
-          populateEditModal(data);
+           editManagerFromObject(data);
         } catch (e) {
           console.error("❌ Failed to parse manager data:", e);
         }
@@ -1714,12 +1956,17 @@ document.addEventListener("DOMContentLoaded", () => {
             formData.append("id", id);
             formData.append("action", "soft_delete");
 
+
+
             fetch("../app/api/managers_account-api.php", {
               method: "POST",
               body: formData
             })
-            .then(res => res.json())
+            .then(res => {
+              return res.json();
+            })
             .then(data => {
+              
               if (data.status === "success") {
                 Swal.fire({
                   icon: "success",
@@ -1727,10 +1974,16 @@ document.addEventListener("DOMContentLoaded", () => {
                   text: data.message,
                   timer: 1500,
                   showConfirmButton: false
-                }).then(() => refreshManagersTable());
+                }).then(() => {
+                  refreshManagersTable();
+                });
               } else {
+                console.error("❌ Delete failed:", data.message);
                 Swal.fire({ icon: "error", title: "Delete failed", text: data.message });
               }
+            })
+            .catch(err => {
+              console.error("❌ Error during delete:", err);
             });
           }
         });
@@ -1738,9 +1991,607 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
+  // Initialize dropdowns
+  try {
+    // Static dropdowns
+    setupStaticDropdown(
+      'branchDropdownBtn',
+      'branchDropdownList',
+      'branchDropdownSelected',
+      'branchManager'
+    );
+    
+    setupStaticDropdown(
+      'positionDropdownBtn',
+      'positionDropdownList',
+      'positionDropdownSelected',
+      'position'
+    );
+    
+    setupStaticDropdown(
+      'editBranchDropdownBtn',
+      'editBranchDropdownList',
+      'editBranchDropdownSelected',
+      'm_edit_branchManager'
+    );
+    
+    setupStaticDropdown(
+      'editPositionDropdownBtn',
+      'editPositionDropdownList',
+      'editPositionDropdownSelected',
+      'm_edit_position'
+    );
+
+    // Blood type dropdowns (static options)
+    setupStaticDropdown(
+      'bloodTypeDropdownBtn',
+      'bloodTypeDropdownList',
+      'bloodTypeDropdownSelected',
+      'bloodType'
+    );
+    
+    setupStaticDropdown(
+      'editBloodTypeDropdownBtn',
+      'editBloodTypeDropdownList',
+      'editBloodTypeDropdownSelected',
+      'm_edit_bloodType'
+    );
+
+    // Sex dropdowns (static options)
+    setupStaticDropdown(
+      'sexDropdownBtn',
+      'sexDropdownList',
+      'sexDropdownSelected',
+      'sex'
+    );
+
+    setupStaticDropdown(
+      'editSexDropdownBtn',
+      'editSexDropdownList',
+      'editSexDropdownSelected',
+      'm_edit_sex'
+    );
+
+    // Civil Status dropdowns (static options)
+    setupStaticDropdown(
+      'civilStatusDropdownBtn',
+      'civilStatusDropdownList',
+      'civilStatusDropdownSelected',
+      'civilStatus'
+    );
+
+    setupStaticDropdown(
+      'editCivilStatusDropdownBtn',
+      'editCivilStatusDropdownList',
+      'editCivilStatusDropdownSelected',
+      'm_edit_civilStatus'
+    );
+
+    // Citizenship dropdowns (API-based)
+    setupCustomCitizenshipDropdown(
+      'citizenshipDropdownBtn',
+      'citizenshipDropdownList',
+      'citizenshipDropdownSelected',
+      'citizenship',
+      '../app/api/citizenship-api.php'
+    );
+    
+    setupCustomCitizenshipDropdown(
+      'editCitizenshipDropdownBtn',
+      'editCitizenshipDropdownList',
+      'editCitizenshipDropdownSelected',
+      'm_edit_citizenship',
+      '../app/api/citizenship-api.php'
+    );
+    
+  } catch (error) {
+    // Error initializing dropdowns
+  }
+  
+  // Function to reset Add Manager form
+  function resetAddManagerForm() {
+    const addModal = document.getElementById('addManagerAccountModal');
+    if (!addModal) {
+      return;
+    }
+
+    // Reset all text inputs
+    const textInputs = addModal.querySelectorAll('input[type="text"], input[type="email"]');
+    textInputs.forEach(input => {
+        input.value = '';
+    });
+
+    // Reset hidden inputs
+    const hiddenInputs = addModal.querySelectorAll('input[type="hidden"]');
+    hiddenInputs.forEach(input => {
+        input.value = '';
+    });
+
+    // Reset file input
+    const fileInput = document.getElementById('employeePhoto');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    // Reset photo preview
+    const photoPreview = document.getElementById('employeePhotoPreview');
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
+    const photoFileName = document.getElementById('photoFileName');
+    if (photoPreview) photoPreview.style.display = 'none';
+    if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
+    if (photoFileName) photoFileName.textContent = '';
+
+    // Reset dropdown displays and clear selections
+    const dropdownConfigs = [
+        { spanId: 'branchDropdownSelected', listId: 'branchDropdownList', defaultText: 'Select a branch' },
+        { spanId: 'positionDropdownSelected', listId: 'positionDropdownList', defaultText: 'Select a position' },
+        { spanId: 'citizenshipDropdownSelected', listId: 'citizenshipDropdownList', defaultText: 'Select citizenship' },
+        { spanId: 'bloodTypeDropdownSelected', listId: 'bloodTypeDropdownList', defaultText: 'Select blood type' },
+        { spanId: 'sexDropdownSelected', listId: 'sexDropdownList', defaultText: 'Select' },
+        { spanId: 'civilStatusDropdownSelected', listId: 'civilStatusDropdownList', defaultText: 'Select' }
+    ];
+
+    dropdownConfigs.forEach(config => {
+        // Reset the dropdown button text
+        const span = document.getElementById(config.spanId);
+        if (span) {
+            span.textContent = config.defaultText;
+        }
+
+        // Clear all selected states in the dropdown list
+        const list = document.getElementById(config.listId);
+        if (list) {
+            const options = list.querySelectorAll('.custom-dropdown-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+    });
+
+    // Reset date input
+    const dobInput = document.getElementById('dob');
+    if (dobInput) {
+        dobInput.value = '';
+    }
+
+    // Clear validation messages
+    const validationMessages = addModal.querySelectorAll('.validation-message');
+    validationMessages.forEach(msg => {
+        msg.textContent = '';
+    });
+
+    // Reset validation icons
+    const validationIcons = addModal.querySelectorAll('.validation-icon');
+    validationIcons.forEach(icon => {
+        icon.className = 'validation-icon absolute right-2 top-1/2 transform -translate-y-1/2';
+    });
+
+    // Reset employee ID
+    const employeeIdInput = document.getElementById('employeeId');
+    if (employeeIdInput) {
+        employeeIdInput.value = '';
+    }
+
+    // Force re-initialization of all dropdowns by clearing their state
+    const dropdownButtons = [
+        'branchDropdownBtn',
+        'positionDropdownBtn',
+        'citizenshipDropdownBtn',
+        'bloodTypeDropdownBtn',
+        'sexDropdownBtn',
+        'civilStatusDropdownBtn'
+    ];
+    
+    dropdownButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.classList.remove('active');
+        }
+    });
+  }
+
+  // Function to reset Edit Manager form
+  function resetEditManagerForm() {
+    const editModal = document.getElementById('updateManagerAccountModal');
+    if (!editModal) {
+      return;
+    }
+
+    // Reset all text inputs
+    const textInputs = editModal.querySelectorAll('input[type="text"], input[type="email"]');
+    textInputs.forEach(input => {
+        input.value = '';
+    });
+
+    // Reset hidden inputs
+    const hiddenInputs = editModal.querySelectorAll('input[type="hidden"]');
+    hiddenInputs.forEach(input => {
+        input.value = '';
+    });
+
+    // Reset file input
+    const fileInput = document.getElementById('managerEditPhoto');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    // Reset photo preview
+    const photoPreview = document.getElementById('edit_managerPhotoPreview');
+    const photoPlaceholder = document.getElementById('edit_photoPlaceholder');
+    const photoFileName = document.getElementById('edit_photoFileName');
+    if (photoPreview) photoPreview.style.display = 'none';
+    if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
+    if (photoFileName) photoFileName.textContent = '';
+
+    // Reset dropdown displays and clear selections
+    const dropdownConfigs = [
+        { spanId: 'editBranchDropdownSelected', listId: 'editBranchDropdownList', defaultText: 'Select a branch' },
+        { spanId: 'editPositionDropdownSelected', listId: 'editPositionDropdownList', defaultText: 'Select a position' },
+        { spanId: 'editCitizenshipDropdownSelected', listId: 'editCitizenshipDropdownList', defaultText: 'Select citizenship' },
+        { spanId: 'editBloodTypeDropdownSelected', listId: 'editBloodTypeDropdownList', defaultText: 'Select blood type' },
+        { spanId: 'editSexDropdownSelected', listId: 'editSexDropdownList', defaultText: 'Select' },
+        { spanId: 'editCivilStatusDropdownSelected', listId: 'editCivilStatusDropdownList', defaultText: 'Select' }
+    ];
+
+    dropdownConfigs.forEach(config => {
+        // Reset the dropdown button text
+        const span = document.getElementById(config.spanId);
+        if (span) {
+            span.textContent = config.defaultText;
+        }
+
+        // Clear all selected states in the dropdown list
+        const list = document.getElementById(config.listId);
+        if (list) {
+            const options = list.querySelectorAll('.custom-dropdown-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+    });
+
+    // Reset date input
+    const dobInput = document.getElementById('m_edit_dob');
+    if (dobInput) {
+        dobInput.value = '';
+    }
+
+    // Clear validation messages
+    const validationMessages = editModal.querySelectorAll('.validation-message');
+    validationMessages.forEach(msg => {
+        msg.textContent = '';
+    });
+
+    // Reset validation icons
+    const validationIcons = editModal.querySelectorAll('.validation-icon');
+    validationIcons.forEach(icon => {
+        icon.className = 'validation-icon absolute right-2 top-1/2 transform -translate-y-1/2';
+    });
+
+    // Force re-initialization of all dropdowns by clearing their state
+    const dropdownButtons = [
+        'editBranchDropdownBtn',
+        'editPositionDropdownBtn',
+        'editCitizenshipDropdownBtn',
+        'editBloodTypeDropdownBtn',
+        'editSexDropdownBtn',
+        'editCivilStatusDropdownBtn'
+    ];
+    
+    dropdownButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.classList.remove('active');
+        }
+    });
+  }
+  
   // Initial binding of event listeners
   bindManagerEventListeners();
+  
+  // Set up employee ID generation
+  const generateIdBtn = document.getElementById('generateIdBtn');
+  if (generateIdBtn) {
+    generateIdBtn.addEventListener('click', function() {
+      const employeeIdInput = document.getElementById('employeeId');
+      if (employeeIdInput) {
+        // Generate a unique employee ID with 6 random numbers
+        const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        const generatedId = `EMP-${randomNum}`;
+        
+        employeeIdInput.value = generatedId;
+      }
+    });
+  }
+
+  // Add modal close event listeners to reset forms
+  
+  // Reset on X button click
+  const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
+  closeButtons.forEach(button => {
+      button.addEventListener('click', function() {
+          const modal = this.closest('.modal');
+          if (modal && modal.id === 'addManagerAccountModal') {
+              setTimeout(() => {
+                  resetAddManagerForm();
+              }, 100);
+          }
+      });
+  });
+
+  // Reset on Cancel button click
+  const cancelButton = document.querySelector('#addManagerAccountModal .btn-secondary, #addManagerAccountModal .bg-gray-200');
+  if (cancelButton) {
+      cancelButton.addEventListener('click', function() {
+          setTimeout(() => {
+              resetAddManagerForm();
+          }, 100);
+      });
+  }
+
+  // Reset edit modal on X button click
+  const editCloseButtons = document.querySelectorAll('#updateManagerAccountModal [data-bs-dismiss="modal"]');
+  editCloseButtons.forEach(button => {
+      button.addEventListener('click', function() {
+          setTimeout(() => {
+              resetEditManagerForm();
+          }, 100);
+      });
+  });
+
+  // Reset edit modal on Cancel button click
+  const editCancelButton = document.querySelector('#updateManagerAccountModal .btn-secondary, #updateManagerAccountModal .bg-gray-200');
+  if (editCancelButton) {
+      editCancelButton.addEventListener('click', function() {
+          setTimeout(() => {
+              resetEditManagerForm();
+          }, 100);
+      });
+  }
+  
+  // Add modal event listener to ensure DOB is set correctly when edit modal is shown
+  const editModal = document.getElementById('updateManagerAccountModal');
+  if (editModal) {
+    editModal.addEventListener('shown.bs.modal', function() {
+      // If we have a lastViewedManager, ensure the DOB is set correctly
+      const editDobInput = document.getElementById('m_edit_dob');
+      if (window.lastViewedManager && window.lastViewedManager.m_dob) {
+        if (editDobInput) {
+          editDobInput.value = window.lastViewedManager.m_dob;
+        }
+      }
+    });
+  }
+  
+  // Add validation to Add Manager
+  if (saveBtn && form) {
+    saveBtn.addEventListener("click", e => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      
+      if (!validateManagerForm(form)) {
+        return;
+      }
+      
+      // ... existing code ...
+    });
+  }
+
+  // Add validation to Update Manager
+  const updateForm = document.getElementById('updateManagerForm');
+  if (updateForm) {
+    updateForm.addEventListener('submit', function(e) {
+      const formData = new FormData(updateForm);
+      
+      if (!validateManagerForm(updateForm)) {
+        e.preventDefault();
+        return false;
+      }
+    });
+  }
 });
+
+// Function for citizenship dropdown (fetches from API)
+function setupCustomCitizenshipDropdown(dropdownBtnId, dropdownListId, selectedSpanId, hiddenInputId, apiUrl, initialValue = "") {
+    const btn = document.getElementById(dropdownBtnId);
+    const list = document.getElementById(dropdownListId);
+    const selectedSpan = document.getElementById(selectedSpanId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    let options = [];
+    let selectedValue = initialValue;
+    let invalidCitizenship = false;
+    let warningDiv = null;
+
+    function renderOptions() {
+        list.innerHTML = '';
+        options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'custom-dropdown-option' + (opt.citizenship === selectedValue ? ' selected' : '');
+            div.textContent = opt.citizenship;
+            div.onclick = () => {
+                selectedValue = opt.citizenship;
+                selectedSpan.textContent = opt.citizenship;
+                hiddenInput.value = opt.citizenship;
+                list.classList.add('hidden');
+                btn.classList.remove('active');
+                
+                // Remove error message when valid citizenship is selected
+                if (warningDiv) {
+                    warningDiv.remove();
+                    warningDiv = null;
+                }
+                invalidCitizenship = false;
+                
+                // Re-render to update selected state
+                renderOptions();
+            };
+            list.appendChild(div);
+        });
+        
+        // Scroll to selected option if exists
+        if (selectedValue && options.some(opt => opt.citizenship === selectedValue)) {
+            const selectedOption = list.querySelector('.selected');
+            if (selectedOption) {
+                selectedOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    // Fetch options from API
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                options = data.data;
+                
+                // Check if current value is valid
+                const isValidValue = options.some(opt => opt.citizenship === selectedValue);
+                if (selectedValue && !isValidValue) {
+                    invalidCitizenship = true;
+                    // Show warning message
+                    if (!warningDiv) {
+                        warningDiv = document.createElement('div');
+                        warningDiv.className = 'text-red-500 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200';
+                        // warningDiv.textContent = 'The current citizenship is not valid. Please select a valid citizenship.';
+                        btn.parentNode.appendChild(warningDiv);
+                    }
+                    selectedSpan.textContent = 'Select citizenship';
+                    hiddenInput.value = '';
+                } else if (selectedValue) {
+                    selectedSpan.textContent = selectedValue;
+                    hiddenInput.value = selectedValue;
+                }
+                
+                renderOptions();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching citizenship data:', error);
+            selectedSpan.textContent = 'Error loading options';
+        });
+
+    // Toggle dropdown
+    btn.onclick = () => {
+        list.classList.toggle('hidden');
+        btn.classList.toggle('active');
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!btn.contains(e.target) && !list.contains(e.target)) {
+            list.classList.add('hidden');
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// Generic function for static dropdowns (like Branch and Position)
+function setupStaticDropdown(dropdownBtnId, dropdownListId, selectedSpanId, hiddenInputId, initialValue = "") {
+    const btn = document.getElementById(dropdownBtnId);
+    const list = document.getElementById(dropdownListId);
+    const selectedSpan = document.getElementById(selectedSpanId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    
+    if (!btn || !list || !selectedSpan || !hiddenInput) {
+        return;
+    }
+    
+    let selectedValue = initialValue;
+
+    // Clear any existing selections first
+    if (list) {
+        list.querySelectorAll('.custom-dropdown-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+    }
+
+    // Set default text based on dropdown type
+    const defaultTexts = {
+        'branchDropdownSelected': 'Select a branch',
+        'positionDropdownSelected': 'Select a position',
+        'bloodTypeDropdownSelected': 'Select blood type',
+        'editBranchDropdownSelected': 'Select a branch',
+        'editPositionDropdownSelected': 'Select a position',
+        'editBloodTypeDropdownSelected': 'Select blood type'
+    };
+
+    // Always start with default text unless there's a valid initial value
+    if (!initialValue) {
+        selectedSpan.textContent = defaultTexts[selectedSpanId] || 'Select';
+        hiddenInput.value = '';
+    }
+
+    function renderOptions() {
+        const options = list.querySelectorAll('.custom-dropdown-option');
+        options.forEach(option => {
+            option.classList.remove('selected');
+            if (option.dataset.value === selectedValue) {
+                option.classList.add('selected');
+            }
+        });
+        
+        // Scroll to selected option if exists
+        if (selectedValue) {
+            const selectedOption = list.querySelector('.selected');
+            if (selectedOption) {
+                selectedOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    // Set initial value if provided
+    if (initialValue) {
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+            const options = list.querySelectorAll('.custom-dropdown-option');
+            let displayText = initialValue;
+            
+            options.forEach(option => {
+                if (option.dataset.value === initialValue) {
+                    displayText = option.textContent;
+                }
+            });
+            
+            selectedSpan.textContent = displayText;
+            hiddenInput.value = initialValue;
+            renderOptions();
+        }, 10);
+    } else {
+        // Ensure dropdown shows default text
+        selectedSpan.textContent = defaultTexts[selectedSpanId] || 'Select';
+        hiddenInput.value = '';
+    }
+
+    // Add click handlers to options
+    list.querySelectorAll('.custom-dropdown-option').forEach(option => {
+        option.onclick = () => {
+            selectedValue = option.dataset.value;
+            selectedSpan.textContent = option.textContent; // Use the display text, not the value
+            hiddenInput.value = option.dataset.value;
+            
+
+            
+            list.classList.add('hidden');
+            btn.classList.remove('active');
+            renderOptions();
+        };
+    });
+
+    // Toggle dropdown
+    btn.onclick = () => {
+        list.classList.toggle('hidden');
+        btn.classList.toggle('active');
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!btn.contains(e.target) && !list.contains(e.target)) {
+            list.classList.add('hidden');
+            btn.classList.remove('active');
+        }
+    });
+}
 
 // --- JS validation for required fields ---
 function validateManagerForm(form) {
@@ -1771,25 +2622,10 @@ function validateManagerForm(form) {
   return valid;
 }
 
-// Add validation to Add Manager
-if (saveBtn && form) {
-  saveBtn.addEventListener("click", e => {
-    e.preventDefault();
-    if (!validateManagerForm(form)) return;
-    // ... existing code ...
-  });
-}
 
-// Add validation to Update Manager
-const updateForm = document.getElementById('updateManagerForm');
-if (updateForm) {
-  updateForm.addEventListener('submit', function(e) {
-    if (!validateManagerForm(updateForm)) {
-      e.preventDefault();
-      return false;
-    }
-  });
-}
 
 // ... existing code ...
 </script>
+
+
+

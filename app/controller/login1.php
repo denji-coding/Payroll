@@ -3,9 +3,10 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require_once "../app/core/database.php";
+require_once "../app/core/SecureAuth.php";
+require_once "../app/core/secure_session.php";
 
-$db = new Database();
+$auth = new SecureAuth();
 $msg = "";
 
 // Handle form submission
@@ -24,46 +25,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($loginType === 'admin') {
             // Admin login logic
-            $stmt = $db->query("SELECT * FROM admins WHERE email = ?", [$email]);
-            $user = $stmt ? $stmt[0] : null;
-
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['SESSION_EMAIL'] = $email;
-                $_SESSION['SESSION_USER_ID'] = $user['id'];
-                $_SESSION['USERNAME'] = $user['name'];
-                $_SESSION['login_success'] = true;
-
-                header("Location: index.php?payroll=dashboard1");
+            $result = $auth->authenticateAdmin($email, $password);
+            
+            if ($result['success']) {
+                header("Location: " . $result['redirect']);
                 exit;
             } else {
-                $_SESSION['error'] = 'Invalid admin email or password.';
+                $_SESSION['error'] = $result['message'];
             }
 
         } elseif ($loginType === 'employee') {
             // Employee login logic
-            $stmt = $db->query("SELECT * FROM employees WHERE email = ? AND employee_no = ?", [$email, $password]);
-            $employee = $stmt ? $stmt[0] : null;
-
-            if ($employee) {
-                $_SESSION['employee_id'] = $employee['id'];
-                $_SESSION['employee_no'] = $employee['employee_no'];
-                $_SESSION['email'] = $employee['email'];
-                $_SESSION['name'] = $employee['first_name'] . ' ' . $employee['last_name'];
-                $_SESSION['position'] = $employee['position'];
-                $_SESSION['photo_path'] = $employee['photo_path'];
-                $_SESSION['login_success'] = true;
-
-                header('Location: index.php?payroll=user_dashboard');
+            $result = $auth->authenticateEmployee($email, $password);
+            
+            if ($result['success']) {
+                header("Location: " . $result['redirect']);
                 exit;
             } else {
-                $_SESSION['error'] = 'Invalid employee email or password.';
+                $_SESSION['error'] = $result['message'];
             }
 
         } else {
             $_SESSION['error'] = 'Invalid login type.';
         }
-    } catch (PDOException $e) {
-        die("Database error: " . $e->getMessage());
+    } catch (Exception $e) {
+        error_log("Login error: " . $e->getMessage());
+        $_SESSION['error'] = 'Authentication error. Please try again.';
     }
 
     // Redirect back with error and correct login type

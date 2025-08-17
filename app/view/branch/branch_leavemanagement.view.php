@@ -424,7 +424,7 @@ try {
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr id="noLeavesRow"><td colspan="10" class="text-center text-muted">No leave requests found.</td></tr>
+                    <tr id="noLeavesRow"><td colspan="10" class="text-center px-6 py-4 text-muted">No leave requests found.</td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>

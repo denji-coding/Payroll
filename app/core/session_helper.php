@@ -13,34 +13,44 @@ if (session_status() === PHP_SESSION_NONE) {
  * Check if user is logged in as admin/HR
  */
 function isAdminLoggedIn() {
-    return isset($_SESSION['SESSION_EMAIL']) && isset($_SESSION['SESSION_USER_ID']);
+    return isset($_SESSION['SESSION_EMAIL']) && isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_EMAIL']);
 }
 
 /**
  * Check if user is logged in as employee
  */
 function isEmployeeLoggedIn() {
-    return isset($_SESSION['employee_id']) || isset($_SESSION['employee_no']);
+    return (isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id'])) || 
+           (isset($_SESSION['employee_no']) && !empty($_SESSION['employee_no']));
 }
 
 /**
  * Check if user is logged in as manager
  */
 function isManagerLoggedIn() {
-    return isset($_SESSION['manager_id']);
+    return isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id']);
 }
 
 /**
  * Get current user type
  */
 function getCurrentUserType() {
+    // Check for admin first (most restrictive)
     if (isAdminLoggedIn()) {
         return 'admin';
-    } elseif (isManagerLoggedIn()) {
+    }
+    
+    // Check for manager
+    if (isManagerLoggedIn()) {
         return 'manager';
-    } elseif (isEmployeeLoggedIn()) {
+    }
+    
+    // Check for employee
+    if (isEmployeeLoggedIn()) {
         return 'employee';
     }
+    
+    // If no valid session, return guest
     return 'guest';
 }
 
@@ -124,13 +134,13 @@ function redirectToLogin() {
     
     switch ($userType) {
         case 'admin':
-            header('Location: index.php?payroll=login1');
+            header('Location: index.php?payroll=login1&type=admin');
             break;
         case 'manager':
             header('Location: index.php?payroll=login_manager');
             break;
         case 'employee':
-            header('Location: index.php?payroll=login1');
+            header('Location: index.php?payroll=login1&type=employee');
             break;
         default:
             header('Location: index.php?payroll=login1');
@@ -168,6 +178,31 @@ function hasPageAccess($pageName) {
     }
     
     return false;
+}
+
+/**
+ * Clear all session data
+ */
+function clearAllSessions() {
+    // Clear all possible session variables
+    unset($_SESSION['SESSION_EMAIL']);
+    unset($_SESSION['SESSION_USER_ID']);
+    unset($_SESSION['USERNAME']);
+    unset($_SESSION['admin']);
+    unset($_SESSION['employee']);
+    unset($_SESSION['employee_id']);
+    unset($_SESSION['employee_no']);
+    unset($_SESSION['email']);
+    unset($_SESSION['name']);
+    unset($_SESSION['position']);
+    unset($_SESSION['photo_path']);
+    unset($_SESSION['manager_id']);
+    unset($_SESSION['manager_name']);
+    unset($_SESSION['manager_email']);
+    unset($_SESSION['manager_branch']);
+    
+    // Set logout flag
+    $_SESSION['logged_out'] = true;
 }
 
 /**

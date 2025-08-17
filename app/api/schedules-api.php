@@ -12,31 +12,87 @@ $db = new Database();
 $conn = $db->getConnection();
 $employeeModel = new Employees($conn);
 
-// === GET: fetch available employees (not scheduled) ===
+// === GET: fetch available employees and managers (not scheduled) ===
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['available_employees'])) {
+    // Get all employees
     $allEmployees = $employeeModel->getAllEmployees();
-    $scheduledIds = $conn->query("SELECT employee_id FROM employee_schedules")->fetchAll(PDO::FETCH_COLUMN);
+    $scheduledEmployeeIds = $conn->query("SELECT employee_id FROM employee_schedules")->fetchAll(PDO::FETCH_COLUMN);
 
-    $available = array_filter($allEmployees, function ($emp) use ($scheduledIds) {
-        return !in_array($emp['id'], $scheduledIds);
+    $availableEmployees = array_filter($allEmployees, function ($emp) use ($scheduledEmployeeIds) {
+        return !in_array($emp['id'], $scheduledEmployeeIds);
     });
 
-    echo json_encode(array_values($available));
+    // Get all managers
+    $stmt = $conn->prepare("SELECT id, m_first_name, m_middle_name, m_last_name, m_position, m_branch FROM managers WHERE deleted_at IS NULL");
+    $stmt->execute();
+    $allManagers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $scheduledManagerIds = $conn->query("SELECT manager_id FROM manager_schedules")->fetchAll(PDO::FETCH_COLUMN);
+
+    $availableManagers = array_filter($allManagers, function ($manager) use ($scheduledManagerIds) {
+        return !in_array($manager['id'], $scheduledManagerIds);
+    });
+
+    // Combine and format results
+    $result = [];
+    
+    // Add employees
+    foreach ($availableEmployees as $emp) {
+        $result[] = [
+            'id' => $emp['id'],
+            'name' => ucwords($emp['first_name']) . ' ' . 
+                     (isset($emp['middle_name'][0]) ? strtoupper($emp['middle_name'][0]) . '. ' : '') . 
+                     ucwords($emp['last_name']),
+            'position' => $emp['position'],
+            'type' => 'employee',
+            'approved_by_manager' => $emp['approved_by_manager'] ?? 1
+        ];
+    }
+    
+    // Add managers
+    foreach ($availableManagers as $manager) {
+        $result[] = [
+            'id' => $manager['id'],
+            'name' => ucwords($manager['m_first_name']) . ' ' . 
+                     (isset($manager['m_middle_name'][0]) ? strtoupper($manager['m_middle_name'][0]) . '. ' : '') . 
+                     ucwords($manager['m_last_name']),
+            'position' => $manager['m_position'],
+            'type' => 'manager',
+            'approved_by_manager' => 1 // Managers are always approved
+        ];
+    }
+
+    echo json_encode(array_values($result));
     exit;
 }
 
-// === GET: fetch a specific schedule with employee name ===
+// === GET: fetch a specific schedule with employee/manager name ===
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_schedule'])) {
     $id = (int) $_GET['fetch_schedule'];
     $stmt = $conn->prepare("
         SELECT 
             s.*,
+            CASE 
+                WHEN es.employee_id IS NOT NULL THEN 
             CONCAT(e.first_name, ' ',
                    IFNULL(CONCAT(UPPER(LEFT(e.middle_name, 1)), '. '), ''),
-                   e.last_name) AS employee_name
+                           e.last_name)
+                WHEN ms.manager_id IS NOT NULL THEN 
+                    CONCAT(m.m_first_name, ' ',
+                           IFNULL(CONCAT(UPPER(LEFT(m.m_middle_name, 1)), '. '), ''),
+                           m.m_last_name)
+                ELSE 'Unknown'
+            END AS record_name,
+            CASE 
+                WHEN es.employee_id IS NOT NULL THEN 'employee'
+                WHEN ms.manager_id IS NOT NULL THEN 'manager'
+                ELSE 'unknown'
+            END AS record_type
         FROM schedules s
         LEFT JOIN employee_schedules es ON es.schedule_id = s.id
         LEFT JOIN employees e ON e.id = es.employee_id
+        LEFT JOIN manager_schedules ms ON ms.schedule_id = s.id
+        LEFT JOIN managers m ON m.id = ms.manager_id
         WHERE s.id = :id
         LIMIT 1
     ");
@@ -51,7 +107,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_schedule'])) {
 
 // === GET: fetch table HTML for dynamic refresh ===
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_table'])) {
-    $stmt = $conn->query("SELECT * FROM schedules ORDER BY id DESC");
+    $stmt = $conn->query("
+        SELECT 
+            s.*,
+            CASE 
+                WHEN es.employee_id IS NOT NULL THEN 
+                    CONCAT(e.first_name, ' ',
+                           IFNULL(CONCAT(UPPER(LEFT(e.middle_name, 1)), '. '), ''),
+                           e.last_name)
+                WHEN ms.manager_id IS NOT NULL THEN 
+                    CONCAT(m.m_first_name, ' ',
+                           IFNULL(CONCAT(UPPER(LEFT(m.m_middle_name, 1)), '. '), ''),
+                           m.m_last_name)
+                ELSE s.name
+            END AS display_name,
+            CASE 
+                WHEN es.employee_id IS NOT NULL THEN 'employee'
+                WHEN ms.manager_id IS NOT NULL THEN 'manager'
+                ELSE 'unknown'
+            END AS record_type
+        FROM schedules s
+        LEFT JOIN employee_schedules es ON es.schedule_id = s.id
+        LEFT JOIN employees e ON e.id = es.employee_id
+        LEFT JOIN manager_schedules ms ON ms.schedule_id = s.id
+        LEFT JOIN managers m ON m.id = ms.manager_id
+        ORDER BY s.id DESC
+    ");
     ob_start();
     $i = 1;
     if ($stmt->rowCount() > 0):
@@ -59,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_table'])) {
 ?>
 <tr class="hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
   <td class="px-3 md:px-6 py-2"><?= $i++ ?></td>
-  <td class="px-2 md:px-6 py-2"><?= htmlspecialchars($row['name']) ?></td>
+  <td class="px-2 md:px-6 py-2"><?= htmlspecialchars($row['display_name']) ?></td>
   <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($row['sched_morning_in'])) ?></td>
   <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($row['sched_morning_out'])) ?></td>
   <td class="px-2 md:px-6 py-2"><?= date("g:i A", strtotime($row['sched_afternoon_in'])) ?></td>
@@ -68,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_table'])) {
   <td class="px-2 md:px-6 py-2 text-center whitespace-nowrap">
     <button type="button" class="edit-btn inline-flex h-8 w-8 items-center justify-center rounded-md transition duration-150 ease-in-out hover:bg-[#478547] hover:text-white transform hover:scale-105"
       data-id="<?= $row['id'] ?>"
-      data-name="<?= htmlspecialchars($row['name']) ?>"
+      data-name="<?= htmlspecialchars($row['display_name']) ?>"
       data-morningin="<?= $row['sched_morning_in'] ?>"
       data-morningout="<?= $row['sched_morning_out'] ?>"
       data-afternoonin="<?= $row['sched_afternoon_in'] ?>"
@@ -107,7 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_table'])) {
 
 // === POST: Add new schedule ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['employee_id'])) {
-    $employee_id = filter_var($_POST['employee_id'], FILTER_SANITIZE_NUMBER_INT);
+    $record_id = filter_var($_POST['employee_id'], FILTER_SANITIZE_NUMBER_INT);
+    $record_type = $_POST['record_type'] ?? 'employee';
     $fields = ['sched_morning_in', 'sched_morning_out', 'sched_afternoon_in', 'sched_afternoon_out', 'grace_period'];
 
     foreach ($fields as $field) {
@@ -118,31 +200,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['employee_id'])) {
     }
 
     try {
+        $fullName = '';
+        
+        if ($record_type === 'employee') {
         $stmt = $conn->prepare("SELECT first_name, middle_name, last_name FROM employees WHERE id = :id");
-        $stmt->execute(['id' => $employee_id]);
-        $emp = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->execute(['id' => $record_id]);
+            $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $fullName = $emp
-            ? ucwords($emp['first_name']) . ' ' .
-              (isset($emp['middle_name'][0]) ? strtoupper($emp['middle_name'][0]) . '. ' : '') .
-              ucwords($emp['last_name'])
+            $fullName = $record
+                ? ucwords($record['first_name']) . ' ' .
+                  (isset($record['middle_name'][0]) ? strtoupper($record['middle_name'][0]) . '. ' : '') .
+                  ucwords($record['last_name'])
             : 'Unknown Employee';
+        } else {
+            $stmt = $conn->prepare("SELECT m_first_name, m_middle_name, m_last_name FROM managers WHERE id = :id AND deleted_at IS NULL");
+            $stmt->execute(['id' => $record_id]);
+            $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $conn->prepare("INSERT INTO schedules (name, sched_morning_in, sched_morning_out, sched_afternoon_in, sched_afternoon_out, grace_period)
-            VALUES (:name, :min, :mout, :ain, :aout, :grace)")
+            $fullName = $record
+                ? ucwords($record['m_first_name']) . ' ' .
+                  (isset($record['m_middle_name'][0]) ? strtoupper($record['m_middle_name'][0]) . '. ' : '') .
+                  ucwords($record['m_last_name'])
+                : 'Unknown Manager';
+        }
+
+        $conn->prepare("INSERT INTO schedules (name, sched_morning_in, sched_morning_out, sched_afternoon_in, sched_afternoon_out, grace_period, type, record_type)
+            VALUES (:name, :min, :mout, :ain, :aout, :grace, :type, :record_type)")
             ->execute([
                 'name' => $fullName,
                 'min' => $_POST['sched_morning_in'],
                 'mout' => $_POST['sched_morning_out'],
                 'ain' => $_POST['sched_afternoon_in'],
                 'aout' => $_POST['sched_afternoon_out'],
-                'grace' => $_POST['grace_period']
+                'grace' => $_POST['grace_period'],
+                'type' => $record_type,
+                'record_type' => $record_type
             ]);
 
         $schedule_id = $conn->lastInsertId();
 
-        $conn->prepare("INSERT INTO employee_schedules (employee_id, schedule_id) VALUES (:eid, :sid)")
-            ->execute(['eid' => $employee_id, 'sid' => $schedule_id]);
+        if ($record_type === 'employee') {
+            $conn->prepare("INSERT INTO employee_schedules (employee_id, schedule_id) VALUES (:rid, :sid)")
+                ->execute(['rid' => $record_id, 'sid' => $schedule_id]);
+        } else {
+            $conn->prepare("INSERT INTO manager_schedules (manager_id, schedule_id) VALUES (:rid, :sid)")
+                ->execute(['rid' => $record_id, 'sid' => $schedule_id]);
+        }
 
         // Get inserted row to return HTML
         $stmt = $conn->prepare("SELECT * FROM schedules WHERE id = :id LIMIT 1");
@@ -248,6 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['sch
     $schedule_id = filter_var($_POST['schedule_id'], FILTER_SANITIZE_NUMBER_INT);
     try {
         $conn->prepare("DELETE FROM employee_schedules WHERE schedule_id = :id")->execute(['id' => $schedule_id]);
+        $conn->prepare("DELETE FROM manager_schedules WHERE schedule_id = :id")->execute(['id' => $schedule_id]);
         $conn->prepare("DELETE FROM schedules WHERE id = :id")->execute(['id' => $schedule_id]);
 
         echo json_encode(['status' => 'success', 'message' => 'Schedule deleted.', 'icon' => 'success']);

@@ -86,7 +86,32 @@ require_once views_path("partials/nav");
           $db = new Database();
           $conn = $db->getConnection();
 
-          $query = "SELECT * FROM schedules ORDER BY id DESC";
+          $query = "
+            SELECT 
+              s.*,
+              CASE 
+                WHEN es.employee_id IS NOT NULL THEN 
+                  CONCAT(e.first_name, ' ',
+                         IFNULL(CONCAT(UPPER(LEFT(e.middle_name, 1)), '. '), ''),
+                         e.last_name)
+                WHEN ms.manager_id IS NOT NULL THEN 
+                  CONCAT(m.m_first_name, ' ',
+                         IFNULL(CONCAT(UPPER(LEFT(m.m_middle_name, 1)), '. '), ''),
+                         m.m_last_name)
+                ELSE s.name
+              END AS display_name,
+              CASE 
+                WHEN es.employee_id IS NOT NULL THEN 'employee'
+                WHEN ms.manager_id IS NOT NULL THEN 'manager'
+                ELSE 'unknown'
+              END AS record_type
+            FROM schedules s
+            LEFT JOIN employee_schedules es ON es.schedule_id = s.id
+            LEFT JOIN employees e ON e.id = es.employee_id
+            LEFT JOIN manager_schedules ms ON ms.schedule_id = s.id
+            LEFT JOIN managers m ON m.id = ms.manager_id
+            ORDER BY s.id DESC
+          ";
           $result = $conn->query($query);
 
           if ($result->rowCount() > 0):
@@ -95,7 +120,7 @@ require_once views_path("partials/nav");
           ?>
           <tr class="fade-in-slide border-b-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
             <td class="px-3 md:px-6 text-center py-2"><?= $i++ ?></td>
-            <td class="px-2 md:px-6 py-2"><?= htmlspecialchars($row['name']) ?></td>
+            <td class="px-2 md:px-6 py-2"><?= htmlspecialchars($row['display_name']) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_morning_in'])) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_morning_out'])) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_afternoon_in'])) ?></td>
@@ -170,25 +195,22 @@ require_once views_path("partials/nav");
         <div class="modal-body space-y-3">
           <!-- Employee Dropdown -->
           <div class="mb-3">
-            <label class="form-label text-success ml-2">Employee Name</label>
+            <label class="form-label text-success ml-2">Employee/Manager Name</label>
             <select name="employee_id" class="form-select focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249]" required>
-              <option value="" disabled selected>--- Select an Employee ---</option>
+              <option value="" disabled selected>--- Select an Employee or Manager ---</option>
               <?php if (!empty($data['employees'])): ?>
                 <?php foreach ($data['employees'] as $employee): ?>
                   <?php if ($employee['approved_by_manager'] == 1): ?>
-                    <option value="<?= htmlspecialchars($employee['id']) ?>">
-                      <?= htmlspecialchars(
-                        ucwords($employee['first_name']) . ' ' .
-                        (isset($employee['middle_name'][0]) ? strtoupper($employee['middle_name'][0]) . '. ' : '') .
-                        ucwords($employee['last_name'])
-                      ) ?>
+                    <option value="<?= htmlspecialchars($employee['id']) ?>" data-type="<?= htmlspecialchars($employee['type'] ?? 'employee') ?>">
+                      <?= htmlspecialchars($employee['name']) ?> (<?= htmlspecialchars($employee['position']) ?>)
                     </option>
                   <?php endif; ?>
                 <?php endforeach; ?>
               <?php else: ?>
-                <option disabled>No available employees</option>
+                <option disabled>No available employees or managers</option>
               <?php endif; ?>
             </select>
+            <input type="hidden" name="record_type" id="recordType" value="employee">
           </div>
 
           <!-- Morning Time Row -->
@@ -549,7 +571,7 @@ function updateScheduleRowNumbers() {
         const formatName = (name) => name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
         document.getElementById('editScheduleId').value = s.id;
-        document.getElementById('editScheduleName').value = formatName(s.employee_name || s.name || '');
+        document.getElementById('editScheduleName').value = formatName(s.record_name || s.name || '');
         document.getElementById('editMorningIn').value = s.sched_morning_in;
         document.getElementById('editMorningOut').value = s.sched_morning_out;
         document.getElementById('editAfternoonIn').value = s.sched_afternoon_in;
@@ -607,29 +629,29 @@ window.refreshScheduleTable = async (highlightId = null) => {
 
 
 
-// === REFRESH EMPLOYEE SELECT (only approved employees) ===
+// === REFRESH EMPLOYEE SELECT (only approved employees and managers) ===
 window.refreshEmployeeSelect = async () => {
   try {
     const res = await fetch('../app/api/schedules-api.php?available_employees=1');
-    const employees = await res.json();
+    const records = await res.json();
 
     const select = document.querySelector('select[name="employee_id"]');
     if (!select) return;
 
-    select.innerHTML = `<option value="" disabled selected>--- Select an Employee ---</option>`;
+    select.innerHTML = `<option value="" disabled selected>--- Select an Employee or Manager ---</option>`;
 
-    // Only display approved employees
-    employees
-      .filter(emp => parseInt(emp.approved_by_manager) === 1)
-      .forEach(emp => {
-        const fullName = `${capitalize(emp.first_name)} ${emp.middle_name ? emp.middle_name.charAt(0).toUpperCase() + '. ' : ''}${capitalize(emp.last_name)}`;
+    // Display approved employees and managers
+    records
+      .filter(record => parseInt(record.approved_by_manager) === 1)
+      .forEach(record => {
         const option = document.createElement('option');
-        option.value = emp.id;
-        option.textContent = fullName;
+        option.value = record.id;
+        option.textContent = `${record.name} (${record.position})`;
+        option.setAttribute('data-type', record.type);
         select.appendChild(option);
       });
   } catch (err) {
-    console.error('Failed to refresh employee list:', err);
+    console.error('Failed to refresh employee/manager list:', err);
   }
 };
 
@@ -642,6 +664,18 @@ window.refreshEmployeeSelect = async () => {
 
   // Call once on page load
   refreshEmployeeSelect();
+
+  // Handle record type selection
+  const employeeSelect = document.querySelector('select[name="employee_id"]');
+  const recordTypeInput = document.getElementById('recordType');
+  
+  if (employeeSelect && recordTypeInput) {
+    employeeSelect.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const recordType = selectedOption.getAttribute('data-type') || 'employee';
+      recordTypeInput.value = recordType;
+    });
+  }
 });
 </script>
 

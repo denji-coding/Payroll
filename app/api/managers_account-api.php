@@ -2,6 +2,11 @@
 // File: ../app/api/managers_account-api.php
 
 require_once __DIR__ . '/../core/database.php';
+require __DIR__ . '/../../vendor/autoload.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 $db = new Database();
 $conn = $db->getConnection();
 
@@ -21,6 +26,8 @@ if ($method === 'POST') {
 } elseif ($method === 'GET') {
     if (isset($_GET['action']) && $_GET['action'] === 'get_managers') {
         getManagersTable($conn);
+    } elseif (isset($_GET['action']) && $_GET['action'] === 'get_manager') {
+        getManager($conn, $_GET['id'] ?? null);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Invalid GET request']);
     }
@@ -54,17 +61,76 @@ function addManager($conn) {
         $data[$field] = sanitize($_POST[$field] ?? '');
     }
 
-    // Check if email, employee ID, or RFID already exists
-    $checkStmt = $conn->prepare("SELECT id FROM managers 
-        WHERE m_email = :email OR m_employee_id = :employeeId OR m_rfid_number = :rfidNumber");
-    $checkStmt->execute([
-        ':email' => $data['email'],
-        ':employeeId' => $data['employeeId'],
-        ':rfidNumber' => $data['rfidNumber']
-    ]);
+    // Check for duplicates
+    $duplicateErrors = [];
+    
+    // Check email
+    $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_email = :email AND deleted_at IS NULL");
+    $stmt->execute([':email' => $data['email']]);
+    $duplicate = $stmt->fetch();
+    if ($duplicate) {
+        $duplicateErrors[] = "Email already exists.";
+    }
 
-    if ($checkStmt->rowCount() > 0) {
-        echo json_encode(['status' => 'error', 'message' => 'Email, Employee ID, or RFID already exists']);
+    // Check employee ID
+    $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_employee_id = :employeeId AND deleted_at IS NULL");
+    $stmt->execute([':employeeId' => $data['employeeId']]);
+    $duplicate = $stmt->fetch();
+    if ($duplicate) {
+        $duplicateErrors[] = "Employee ID already exists.";
+    }
+
+    // Check RFID
+    $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_rfid_number = :rfidNumber AND deleted_at IS NULL");
+    $stmt->execute([':rfidNumber' => $data['rfidNumber']]);
+    $duplicate = $stmt->fetch();
+    if ($duplicate) {
+        $duplicateErrors[] = "RFID already exists.";
+    }
+
+    // Check phone number
+    if (!empty($data['contactNumber'])) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_contact_number = :contactNumber AND deleted_at IS NULL");
+        $stmt->execute([':contactNumber' => $data['contactNumber']]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Phone number already exists.";
+        }
+    }
+
+    // Check SSS number
+    if (!empty($data['sssNumber'])) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_sss_number = :sssNumber AND deleted_at IS NULL");
+        $stmt->execute([':sssNumber' => $data['sssNumber']]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "SSS number already exists with manager: " . ucwords(strtolower($duplicate['m_first_name'])) . " " . ucwords(strtolower($duplicate['m_last_name']));
+        }
+    }
+
+    // Check Pag-IBIG number
+    if (!empty($data['pagibigNumber'])) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_pagibig_number = :pagibigNumber AND deleted_at IS NULL");
+        $stmt->execute([':pagibigNumber' => $data['pagibigNumber']]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Pag-IBIG number already exists with manager: " . ucwords(strtolower($duplicate['m_first_name'])) . " " . ucwords(strtolower($duplicate['m_last_name']));
+        }
+    }
+
+    // Check Philhealth number
+    if (!empty($data['philhealthNumber'])) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_philhealth_number = :philhealthNumber AND deleted_at IS NULL");
+        $stmt->execute([':philhealthNumber' => $data['philhealthNumber']]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Philhealth number already exists with manager: " . ucwords(strtolower($duplicate['m_first_name'])) . " " . ucwords(strtolower($duplicate['m_last_name']));
+        }
+    }
+
+    // If there are duplicate errors, return them all
+    if (!empty($duplicateErrors)) {
+        echo json_encode(['status' => 'error', 'message' => implode('. ', $duplicateErrors)]);
         return;
     }
 
@@ -130,10 +196,79 @@ function addManager($conn) {
         ':password' => $hashedPassword
     ]);
 
+    if ($success) {
+        // Send welcome email to the new manager
+        if (!empty($data['email'])) {
+            try {
+                $firstName = ucwords(strtolower($data['firstName']));
+                $middleInitial = !empty($data['middleName']) ? strtoupper(substr($data['middleName'], 0, 1)) . '.' : '';
+                $lastName = ucwords(strtolower($data['lastName']));
+                $fullName = trim("$firstName $middleInitial $lastName");
+
+                $mail = new PHPMailer(true);
+                $mail->isSMTP();
+                $mail->SMTPAuth   = true;
+                $mail->Host       = 'mail.smtp2go.com';
+                $mail->Username   = 'nabesis.roy@dnsc.edu.ph';
+                $mail->Password   = 'pGdu8SqFpeLnVp2Y';
+                $mail->SMTPSecure = 'tls';
+                $mail->Port       = 587;
+
+                $mail->setFrom('noreply@migrantsventurecorp.ip-ddns.com', 'Migrants Venture Corporation');
+                $mail->addReplyTo('support@migrantsventurecorp.ip-ddns.com', 'Support Team');
+                $mail->addAddress($data['email'], $fullName);
+
+                $mail->isHTML(true);
+                $mail->Subject = 'Manager Account Created - Migrants Venture Corporation';
+                $mail->Body = "
+                    <p>Hi {$firstName},</p>
+                    <p>Your <strong>manager account</strong> has been <strong>created successfully</strong>.</p>
+                    <p>You may now access the <strong>manager portal</strong> using the link below:</p>
+                    <p>
+                        <a href='http://migrantsventurecorporation.atwebpages.com/mvcPayroll/public/index.php?payroll=login1&type=manager' target='_blank'>
+                            Link: http://migrantsventurecorporation.atwebpages.com/mvcPayroll/public/index.php?payroll=login1&type=manager
+                        </a>
+                    </p>
+                    <p><strong>Login Credentials:</strong></p>
+                    <ul>
+                        <li>Email: {$data['email']}</li>
+                        <li>Password: {$data['employeeId']}</li>
+                    </ul>
+                    <br>
+                    <p>– Migrants Venture Corporation</p>
+                ";
+
+                $mail->AltBody = "Hi {$firstName},\n
+                Your manager account has been created by HR successfully.\n
+                Access the manager portal here: http://migrantsventurecorporation.atwebpages.com/mvcPayroll/public/index.php?payroll=login1&type=manager\n
+                Login Credentials:\n
+                Email: {$data['email']}\n
+                Password: {$data['employeeId']}\n
+                – Migrants Venture Corporation";
+
+                $mail->send();
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Manager added successfully and welcome email sent. Default password is their Employee ID: ' . $data['employeeId']
+                ]);
+            } catch (Exception $e) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Manager added successfully, but welcome email failed: ' . $mail->ErrorInfo . '. Default password is their Employee ID: ' . $data['employeeId']
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Manager added successfully. Default password is their Employee ID: ' . $data['employeeId'] . '. No email sent (no email address provided).'
+            ]);
+        }
+    } else {
     echo json_encode([
-        'status' => $success ? 'success' : 'error',
-        'message' => $success ? 'Manager added successfully. Default password is their Employee ID: ' . $data['employeeId'] : 'Failed to add manager'
+            'status' => 'error',
+            'message' => 'Failed to add manager'
     ]);
+    }
 }
 
 function updateManager($conn) {
@@ -144,7 +279,7 @@ function updateManager($conn) {
     }
 
     // Fetch current values
-    $stmt = $conn->prepare("SELECT m_email, m_employee_id, m_rfid_number FROM managers WHERE id = :id");
+    $stmt = $conn->prepare("SELECT m_email, m_employee_id, m_rfid_number, m_contact_number, m_sss_number, m_pagibig_number, m_philhealth_number FROM managers WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $current = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -164,34 +299,83 @@ function updateManager($conn) {
         $data[$field] = sanitize($_POST[$field] ?? '');
     }
 
+    // Check for duplicates (excluding current manager)
+    $duplicateErrors = [];
+
     // Check email if changed
     if ($data['email'] !== $current['m_email']) {
-        $stmt = $conn->prepare("SELECT id FROM managers WHERE m_email = :email AND id != :id");
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_email = :email AND id != :id AND deleted_at IS NULL");
         $stmt->execute([':email' => $data['email'], ':id' => $id]);
-        if ($stmt->fetch()) {
-            echo json_encode(['status' => 'error', 'message' => 'Email already exists.']);
-            return;
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Email already exists.";
         }
     }
 
     // Check employeeId if changed
     if ($data['employeeId'] !== $current['m_employee_id']) {
-        $stmt = $conn->prepare("SELECT id FROM managers WHERE m_employee_id = :employeeId AND id != :id");
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_employee_id = :employeeId AND id != :id AND deleted_at IS NULL");
         $stmt->execute([':employeeId' => $data['employeeId'], ':id' => $id]);
-        if ($stmt->fetch()) {
-            echo json_encode(['status' => 'error', 'message' => 'Employee ID already exists.']);
-            return;
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Employee ID already exists.";
         }
     }
 
     // Check RFID if changed
     if ($data['rfidNumber'] !== $current['m_rfid_number']) {
-        $stmt = $conn->prepare("SELECT id FROM managers WHERE m_rfid_number = :rfidNumber AND id != :id");
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_rfid_number = :rfidNumber AND id != :id AND deleted_at IS NULL");
         $stmt->execute([':rfidNumber' => $data['rfidNumber'], ':id' => $id]);
-        if ($stmt->fetch()) {
-            echo json_encode(['status' => 'error', 'message' => 'RFID already exists.']);
-            return;
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "RFID already exists.";
         }
+    }
+
+    // Check phone number if changed
+    if ($data['contactNumber'] !== $current['m_contact_number']) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_contact_number = :contactNumber AND id != :id AND deleted_at IS NULL");
+        $stmt->execute([':contactNumber' => $data['contactNumber'], ':id' => $id]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Phone number already exists.";
+        }
+    }
+
+    // Check SSS number if changed
+    if ($data['sssNumber'] !== $current['m_sss_number']) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_sss_number = :sssNumber AND id != :id AND deleted_at IS NULL");
+        $stmt->execute([':sssNumber' => $data['sssNumber'], ':id' => $id]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "SSS number already exists.";
+        }
+    }
+
+    // Check Pag-IBIG number if changed
+    if ($data['pagibigNumber'] !== $current['m_pagibig_number']) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_pagibig_number = :pagibigNumber AND id != :id AND deleted_at IS NULL");
+        $stmt->execute([':pagibigNumber' => $data['pagibigNumber'], ':id' => $id]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Pag-IBIG number already exists.";
+        }
+    }
+
+    // Check Philhealth number if changed
+    if ($data['philhealthNumber'] !== $current['m_philhealth_number']) {
+        $stmt = $conn->prepare("SELECT id, m_first_name, m_last_name FROM managers WHERE m_philhealth_number = :philhealthNumber AND id != :id AND deleted_at IS NULL");
+        $stmt->execute([':philhealthNumber' => $data['philhealthNumber'], ':id' => $id]);
+        $duplicate = $stmt->fetch();
+        if ($duplicate) {
+            $duplicateErrors[] = "Philhealth number already exists.";
+        }
+    }
+
+    // If there are duplicate errors, return them all
+    if (!empty($duplicateErrors)) {
+        echo json_encode(['status' => 'error', 'message' => implode('. ', $duplicateErrors)]);
+        return;
     }
 
     // Handle photo upload - preserve existing photo if no new one is uploaded
@@ -296,7 +480,10 @@ function deleteManager($conn, $id) {
     }
 
     try {
-        // Try soft delete first (if deleted_at column exists)
+        // Add deleted_at column if it doesn't exist
+        $conn->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
+        
+        // Perform soft delete
         $stmt = $conn->prepare("UPDATE managers SET deleted_at = NOW() WHERE id = ?");
         $stmt->bindParam(1, $id);
         
@@ -306,27 +493,33 @@ function deleteManager($conn, $id) {
             echo json_encode(['status' => 'error', 'message' => 'Failed to delete manager']);
         }
     } catch (PDOException $e) {
-        // Fallback to hard delete if deleted_at column doesn't exist
-        $stmt = $conn->prepare("DELETE FROM managers WHERE id = ?");
-        $stmt->bindParam(1, $id);
-        
-        if ($stmt->execute()) {
-            echo json_encode(['status' => 'success', 'message' => 'Manager deleted successfully']);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to delete manager']);
-        }
+        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
 }
 
 function softDeleteManager($conn) {
     $id = $_POST['id'] ?? null;
+    
     if (!$id) {
         echo json_encode(['status' => 'error', 'message' => 'Manager ID is required']);
         return;
     }
 
     try {
-        // Try soft delete first (if deleted_at column exists)
+        // Add deleted_at column if it doesn't exist
+        $conn->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
+        
+        // Check if manager exists before soft delete
+        $checkStmt = $conn->prepare("SELECT id FROM managers WHERE id = ?");
+        $checkStmt->bindParam(1, $id);
+        $checkStmt->execute();
+        
+        if ($checkStmt->rowCount() === 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Manager not found']);
+            return;
+        }
+        
+        // Perform soft delete
         $stmt = $conn->prepare("UPDATE managers SET deleted_at = NOW() WHERE id = ?");
         $stmt->bindParam(1, $id);
         
@@ -336,26 +529,49 @@ function softDeleteManager($conn) {
             echo json_encode(['status' => 'error', 'message' => 'Failed to delete manager']);
         }
     } catch (PDOException $e) {
-        // Fallback to hard delete if deleted_at column doesn't exist
-        $stmt = $conn->prepare("DELETE FROM managers WHERE id = ?");
-        $stmt->bindParam(1, $id);
+        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
+    }
+}
+
+function getManager($conn, $id) {
+    if (!$id) {
+        echo json_encode(['status' => 'error', 'message' => 'Manager ID is required']);
+        return;
+    }
+
+    try {
+        // Add deleted_at column if it doesn't exist
+        $conn->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
         
-        if ($stmt->execute()) {
-            echo json_encode(['status' => 'success', 'message' => 'Manager deleted successfully']);
+        $stmt = $conn->prepare("SELECT * FROM managers WHERE id = ? AND deleted_at IS NULL");
+        $stmt->bindParam(1, $id);
+        $stmt->execute();
+        
+        $manager = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($manager) {
+            echo json_encode(['status' => 'success', 'manager' => $manager]);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to delete manager']);
+            echo json_encode(['status' => 'error', 'message' => 'Manager not found']);
         }
+    } catch (PDOException $e) {
+        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
 }
 
 function getManagersTable($conn) {
     try {
-        // Try to fetch non-deleted managers (if deleted_at column exists)
+        // Add deleted_at column if it doesn't exist
+        $conn->exec("ALTER TABLE managers ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL");
+        
+
+        
+        // Fetch only non-deleted managers
         $stmt = $conn->prepare("SELECT * FROM managers WHERE deleted_at IS NULL ORDER BY id DESC");
         $stmt->execute();
         $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        // Fallback if deleted_at column doesn't exist
+        // Fallback if there's an error
         $stmt = $conn->prepare("SELECT * FROM managers ORDER BY id DESC");
         $stmt->execute();
         $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
