@@ -116,6 +116,9 @@ function secureLogin($userData, $userType) {
             break;
     }
     
+    // Set login success flag for toast notification
+    $_SESSION['login_success'] = true;
+    
     // Log successful login
     logUserActivity('login', "User logged in successfully");
 }

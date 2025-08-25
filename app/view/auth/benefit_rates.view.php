@@ -67,6 +67,32 @@ $latest = $rates[0] ?? ['sss_rate' => '', 'pagibig_rate' => '', 'philhealth_rate
 .flatpickr-calendar .flatpickr-next-month:hover svg {
     fill: white; /* hover arrow becomes white */
 }
+
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
 </style>
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
@@ -193,7 +219,9 @@ $latest = $rates[0] ?? ['sss_rate' => '', 'pagibig_rate' => '', 'philhealth_rate
         <h5 class="modal-title text-success fs-5" id="updateBenefitsLabel">
           <i class="bi bi-gear me-2"></i> Update Benefits Rate
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal">
+        <span aria-hidden="true">&times;</span>
+        </button>
       </div>
 
       <form id="benefitsRateForm" method="POST" action="update_rates-api.php">

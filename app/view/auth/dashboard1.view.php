@@ -568,6 +568,20 @@ endif;
 
             // Close modal with close button
             document.getElementById('closeCalendarModal').addEventListener('click', closeCalendarModal);
+            
+            // Login Success Notification
+            <?php if ($loginSuccess): ?>
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Login Successfully!',
+                text: 'Welcome back, <?php echo addslashes(htmlspecialchars($username)); ?>',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+            });
+            <?php endif; ?>
         });
     </script>
 

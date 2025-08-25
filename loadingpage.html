@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MVC Loader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Montserrat", sans-serif;
+      background: #f9fbe7;
+      color: #333;
+    }
+
+    /* Loader overlay */
+    .loader-wrapper {
+      position: fixed;
+      inset: 0;
+      background: #f9fbe7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    .loader-wrapper.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Loader with MVC letters inside dots */
+    .loader {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4CAF50; /* Material Green */
+      color: white;
+      font-weight: 700;
+      font-size: 0.7rem;
+      font-family: "Montserrat", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: bounce 0.6s infinite alternate;
+    }
+
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      from { transform: translateY(0); opacity: 0.6; }
+      to   { transform: translateY(-10px); opacity: 1; }
+    }
+
+    /* Navbar */
+    nav {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    nav a {
+      color: white;
+      margin-right: 20px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    nav a:hover { color: #C8E6C9; }
+
+    /* Pages */
+    .page {
+      display: none;
+      padding: 30px;
+      animation: fadeIn 0.5s ease;
+    }
+    .page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 { color: #388E3C; }
+  </style>
+</head>
+<body>
+
+  <!-- Loader -->
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="dot">M</div>
+      <div class="dot">V</div>
+      <div class="dot">C</div>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav>
+    <a href="#" onclick="navigateTo('dashboard')">Dashboard</a>
+    <a href="#" onclick="navigateTo('profile')">My Profile</a>
+  </nav>
+
+  <!-- Pages -->
+  <div id="dashboard" class="page active">
+    <h1>📊 Dashboard</h1>
+    <p>Welcome to your Material Design dashboard. Everything loads smoothly with a green vibe. 🌿</p>
+  </div>
+
+  <div id="profile" class="page">
+    <h1>👤 Profile</h1>
+    <p>This is your profile page styled with Material Green.</p>
+  </div>
+
+  <script>
+    function navigateTo(pageId) {
+      const loader = document.getElementById("loader");
+      loader.classList.remove("hidden");
+
+      setTimeout(() => {
+        document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+        document.getElementById(pageId).classList.add("active");
+        loader.classList.add("hidden");
+      }, 1500);
+    }
+
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        document.getElementById("loader").classList.add("hidden");
+      }, 1200);
+    });
+  </script>
+
+</body>
+</html>

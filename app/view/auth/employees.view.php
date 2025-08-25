@@ -66,6 +66,33 @@ require_once views_path("partials/nav");
     flex: 1;
     text-align: left;
 }
+
+/* Ensure close button is visible */
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
 </style>
 
 
@@ -251,7 +278,9 @@ require_once views_path("partials/nav");
             <div class="modal-header">
                 <i class="bi bi-person-plus text-[#16a249] fs-4 mr-2"></i>
                 <h1 class="modal-title fs-5 text-[#16a249]" id="addModalLabel">Add Employees</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="container-fluid  p-2 ">
@@ -593,7 +622,9 @@ require_once views_path("partials/nav");
                 <h5 class="modal-title text-success text-lg fw-semibold">
                     <i class="bi bi-info-circle me-2"></i>Employee Details
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body">
@@ -687,7 +718,9 @@ require_once views_path("partials/nav");
             <div class="modal-header">
                 <i class="fa fa-file-pen text-[#16a249] fs-4 mr-2"></i>
                 <h1 class="modal-title fs-5 text-[#16a249]" id="editEmployeeModalLabel">Edit Employees</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="container-fluid  p-2 ">

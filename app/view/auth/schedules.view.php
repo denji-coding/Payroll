@@ -19,6 +19,32 @@ require_once views_path("partials/nav");
 .fade-in-slide {
   animation: fadeInSlide 0.4s ease-out;
 }
+
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
 </style>
 
 
@@ -189,7 +215,9 @@ require_once views_path("partials/nav");
           <h5 class="modal-title text-success fs-5" id="addScheduleModalLabel">
             <i class="fa fa-plus me-2"></i>Add New Schedule
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          </button>
         </div>
 
         <div class="modal-body space-y-3">
@@ -262,7 +290,9 @@ require_once views_path("partials/nav");
       <div class="modal-header">
         <h5 class="modal-title text-success fs-5" id="viewScheduleModalLabel">
           <i class="bi bi-info-circle me-2"></i>Schedule Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal">
+        <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body space-y-2" id="viewScheduleBody">
         <!-- JS will populate this -->
@@ -280,7 +310,9 @@ require_once views_path("partials/nav");
           <h5 class="modal-title text-success fs-5" id="editScheduleModalLabel">
             <i class="fa fa-pen-to-square me-2"></i>Edit Schedule
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          </button>
         </div>
 
         <div class="modal-body space-y-3">

@@ -11,12 +11,38 @@ ob_start();
 
 require_once __DIR__ . '/../core/database.php';
 
+// Configure session cookie path to match the main application
+if (session_status() === PHP_SESSION_NONE) {
+    $cookiePath = '/mvcPayroll/';
+    session_set_cookie_params([
+        'path' => $cookiePath,
+        'secure' => false, // Set to true in production with HTTPS
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
+
 // Check if user is logged in as admin
 session_start();
-if (!isset($_SESSION['admin_id']) && !isset($_SESSION['employee_id'])) {
+
+// Debug: Log session information
+error_log("Admin Download API - Session status: " . (session_status() === PHP_SESSION_ACTIVE ? 'active' : 'inactive'));
+error_log("Admin Download API - Session ID: " . session_id());
+error_log("Admin Download API - Session data: " . print_r($_SESSION, true));
+
+// Check for admin session using the same session keys as the main application
+if (!isset($_SESSION['SESSION_EMAIL']) && !isset($_SESSION['SESSION_USER_ID'])) {
     error_log("Admin Download API - No admin session found");
+    error_log("Admin Download API - Available session keys: " . implode(', ', array_keys($_SESSION)));
     http_response_code(403);
     exit('Unauthorized - Admin access required');
+}
+
+// Additional check to ensure it's actually an admin
+if (!isset($_SESSION['SESSION_EMAIL']) || empty($_SESSION['SESSION_EMAIL'])) {
+    error_log("Admin Download API - Invalid admin session");
+    http_response_code(403);
+    exit('Unauthorized - Invalid admin session');
 }
 
 // Clear output buffers safely
@@ -140,6 +166,8 @@ try {
     } elseif ($download_mode === 'view') {
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="payslip_' . $payslip['employee_no'] . '_' . date('Y-m-d', strtotime($payslip['pay_period_start'])) . '_' . date('Y-m-d', strtotime($payslip['pay_period_end'])) . '.pdf"');
+        // Allow framing for view mode to enable printing
+        header('X-Frame-Options: SAMEORIGIN');
     } else {
         // Default to download
         header('Content-Type: application/pdf');
@@ -152,6 +180,12 @@ try {
     header('Expires: 0');
     header('Content-Length: ' . filesize($fullPath));
     header('Accept-Ranges: bytes');
+    
+    // Security headers - allow same origin for PDF viewing
+    header('X-Content-Type-Options: nosniff');
+    if ($download_mode !== 'view') {
+        header('X-Frame-Options: DENY');
+    }
     
     // Output the PDF file
     readfile($fullPath);

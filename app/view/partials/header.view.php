@@ -51,5 +51,6 @@
     <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
     <script src="../public/assets/js/flatpickr/monthSelect/index.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>
 </head>
 <body>

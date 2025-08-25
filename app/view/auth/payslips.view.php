@@ -5,10 +5,52 @@ require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
 ?>
 
-<main class="font-sans flex-1 bg-[#f8fbf8] overflow-auto mt-12 p-4 md:p-6 ml-[255px]">
+<style>
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
+
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
+</style>
+
+<main class="font-sans flex-1 h-[calc(100vh-3rem)] bg-[#f8fbf8] overflow-auto mt-12 p-4 md:p-6 ml-[255px]">
   <div class="space-y-6">
     <!-- Header -->
-    <div>
+    <div data-aos="fade-in" data-aos-delay="0" data-aos-duration="500">
       <span class="text-2xl font-bold tracking-tight">Payslips</span>
       <p class="text-[#478547]">View and manage employee payslips</p>
     </div>
@@ -16,14 +58,14 @@ require_once views_path("partials/nav");
     <!-- Card -->
     <div class="rounded-lg border-2 border-green-200 bg-card text-card-foreground shadow-sm bg-white"
     data-aos="fade-in" 
-                    data-aos-delay="0"
+                    data-aos-delay="100"
                     data-aos-duration="500">
       <!-- Card Header -->
       <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
-        <span class="text-xl md:text-2xl font-semibold text-[#133913]">All Employee Payslips</span>
+        <span class="text-xl md:text-2xl font-semibold text-[#133913]" data-aos="fade-in" data-aos-delay="200" data-aos-duration="500">All Employee Payslips</span>
 
         <!-- Search Bar -->
-        <div class="relative w-64">
+        <div class="relative w-64" data-aos="fade-in" data-aos-delay="300" data-aos-duration="500">
             <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.3-4.3"></path>
@@ -33,9 +75,9 @@ require_once views_path("partials/nav");
                 id="searchInput"
                 class="flex h-10 w-full placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8 text-base placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
                 placeholder="Search employee..."
-                oninput="toggleClearButton()"
+                oninput="searchPayslips()"
             >
-            <button id="clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" onclick="clearInput()">×</button>
+            <button id="clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" onclick="clearSearch()">×</button>
         </div>
       </div>
 
@@ -67,9 +109,6 @@ require_once views_path("partials/nav");
 let currentPayslipLink = '';
 
 window.downloadPayslip = () => {
-  console.log('Download function called with payroll ID:', currentPayslipLink);
-  console.log('Current location origin:', window.location.origin);
-  
   if (!currentPayslipLink) {
     Swal.fire({
       icon: 'error',
@@ -98,7 +137,6 @@ window.downloadPayslip = () => {
   if (downloadWindow) {
     // Close loading message
     Swal.close();
-    console.log('Download window opened successfully');
   } else {
     // If popup blocked, show error
     Swal.fire({
@@ -135,8 +173,6 @@ function printPayslip(payrollId) {
         const payslip = result.data.find(item => item.payroll_id == payrollId);
         
         if (!payslip) {
-            console.log('Available payslips:', result.data);
-            console.log('Looking for payroll ID:', payrollId);
             Swal.close();
             Swal.fire({
                 icon: 'error',
@@ -157,9 +193,6 @@ function printPayslip(payrollId) {
             return;
         }
 
-        console.log('Found payslip:', payslip);
-        console.log('PDF path:', payslip.ps_pdf_file_path);
-
         // Close loading dialog
         Swal.close();
 
@@ -179,7 +212,6 @@ function printPayslip(payrollId) {
                     // Keep iframe permanently - don't remove it
                     // This ensures the print dialog stays open
                 } catch (error) {
-                    console.error('Direct print error:', error);
                     // Fallback: try to open in new window but keep it open
                     fallbackDirectPrint();
                 }
@@ -203,7 +235,6 @@ function printPayslip(payrollId) {
                             // DON'T close the window - let user control it
                             // The window will stay open until user manually closes it
                         } catch (error) {
-                            console.error('Fallback print error:', error);
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Print Failed',
@@ -232,78 +263,76 @@ function printPayslip(payrollId) {
 
     })
     .catch(err => {
-        console.error('Error loading payslip data for print:', err);
-    Swal.close();
-    Swal.fire({
-      icon: 'error',
-      title: 'Print Failed',
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Print Failed',
             text: 'Failed to load payslip data for printing. Please try again.'
+        });
     });
-  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const tbody = document.getElementById('payslipTableBody');
 
-  tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500">Loading payslips...</td></tr>`;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center py-12">
+        <div class="flex flex-col items-center justify-center space-y-4">
+          <div class="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+          <p class="text-gray-500 font-medium">Loading payslips...</p>
+        </div>
+      </td>
+    </tr>
+  `;
 
   fetch(`../app/api/payslips-api.php`)
     .then(response => response.json())
     .then(result => {
       if (result.status === 'success' && result.data.length > 0) {
-        tbody.innerHTML = '';
-        result.data.forEach((record, i) => {
-          const payPeriod = record.pay_period_start && record.pay_period_end
-            ? new Date(record.pay_period_start).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ' - ' +
-              new Date(record.pay_period_end).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-            : '';
-
-          const employeeName = record.full_name || 'N/A';
-
-          const row = `
-            <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-              <td class="p-2 md:p-4 align-middle">${i + 1}</td>
-              <td class="p-2 md:p-4 align-middle">${employeeName}</td>
-              <td class="p-2 md:p-4 align-middle">${payPeriod}</td>
-              <td class="p-2 md:p-4 align-middle text-center">
-                <button 
-                  type="button"
-                  class="btn btn-sm btn-outline-success view-payslip-btn"
-                  data-bs-toggle="modal"
-                  data-bs-target="#payslipModal"
-                  data-employee="${employeeName}"
-                  data-id="${record.employee_no || record.employee_id || 'N/A'}"
-                  data-position="${record.position}" 
-                  data-salary="${record.base_salary}" 
-                  data-period="${payPeriod}"
-                  data-totalhours="${record.total_hours}"
-                  data-absent="${record.absent_days}"
-                  data-leave="${record.leave_days}"
-                  data-gross="${record.gross_pay}"
-                  data-net="${record.net_pay}"
-                                     data-sss="${record.sss_deduction}"
-                   data-philhealth="${record.philhealth_deduction}"
-                   data-pagibig="${record.pagibig_deduction}"
-                   data-late-deduction="0"
-                   data-leave-deduction="0"
-                   data-total-deductions="${record.total_deductions}"
-                  data-payroll-id="${record.payroll_id}"
-                  data-link="/mvcPayroll/public/${record.ps_pdf_file_path}"
-                  title="View Payslip"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        // Store all data globally for search functionality
+        allPayslipsData = result.data;
+        
+        // Display all payslips initially
+        updatePayslipsTable(allPayslipsData);
       } else {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500">No payslip records found.</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center py-12">
+              <div class="flex flex-col items-center justify-center space-y-4">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+                <div class="text-center">
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">No payslip records</h3>
+                  <p class="text-gray-500">No payslips have been generated yet</p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
       }
     })
     .catch(() => {
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-red-500">Error loading payslips.</td></tr>`;
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center py-12">
+            <div class="flex flex-col items-center justify-center space-y-4">
+              <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+              <div class="text-center">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Error loading payslips</h3>
+                <p class="text-gray-500">Please try refreshing the page</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
     });
 });
 </script>
@@ -316,12 +345,14 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Modal -->
 <div class="modal fade" id="payslipModal" tabindex="-1" aria-labelledby="payslipModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable"> <!-- Removed modal-xl -->
-    <div class="modal-content bg-[#f8fbf8] border">
-      <div class="modal-header border-b">
+    <div class="modal-content bg-[#f8fbf8] border" data-aos="zoom-in" data-aos-delay="100" data-aos-duration="300">
+      <div class="modal-header border-b" data-aos="fade-in" data-aos-delay="200" data-aos-duration="300">
         <h5 class="modal-title text-lg font-semibold" id="payslip-title">Payslip Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-      <div class="modal-body p-6">
+      <div class="modal-body p-6" data-aos="fade-in" data-aos-delay="300" data-aos-duration="300">
         <div id="payslip-content">
           <!-- Real data will be injected here -->
           <p>Loading payslip data...</p>
@@ -329,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-4">
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4" data-aos="fade-in" data-aos-delay="400" data-aos-duration="300">
         <button type="button" class="btn btn-outline-success" id="download-btn" onclick="downloadPayslip()">
           <i class="bi bi-download me-1"></i> Download
         </button>
@@ -366,9 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get data attributes and store the payroll ID globally
     const name = button.getAttribute('data-employee') || '—';
     currentPayslipLink = button.getAttribute('data-payroll-id') || '';
-    console.log('Modal opened with payroll ID:', currentPayslipLink);
-    console.log('Button data attributes:', button.attributes);
-    console.log('data-payroll-id value:', button.getAttribute('data-payroll-id'));
     const empId = button.getAttribute('data-id') || '—';
     const position = button.getAttribute('data-position') || '—';
     const basicSalary = parseFloat(button.getAttribute('data-salary') || 0).toFixed(2);
@@ -544,22 +572,138 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial check when the page loads
   window.addEventListener('load', adjustTableHeight);
 
-  // Function to clear the input field
-  function clearInput() {
-    const inputField = document.getElementById('searchInput');
-    inputField.value = '';  // Clear the input field
-    toggleClearButton();  // Hide the clear button
+  // Global variable to store all payslip data
+  let allPayslipsData = [];
+  let searchTimeout = null;
+
+  // Debounced search function
+  function debouncedSearch() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const clearButton = document.getElementById('clearButton');
+    
+    // Show/hide clear button
+    if (searchTerm.length > 0) {
+      clearButton.classList.remove('hidden');
+    } else {
+      clearButton.classList.add('hidden');
+    }
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounced search
+    searchTimeout = setTimeout(() => {
+      // Filter the payslips data
+      const filteredPayslips = allPayslipsData.filter(payslip => {
+        const employeeName = (payslip.full_name || '').toLowerCase();
+        const employeeId = (payslip.employee_no || payslip.employee_id || '').toString().toLowerCase();
+        const payPeriod = (payslip.pay_period_start || '').toLowerCase();
+        
+        return employeeName.includes(searchTerm) || 
+               employeeId.includes(searchTerm) || 
+               payPeriod.includes(searchTerm);
+      });
+      
+      // Update the table with filtered results
+      updatePayslipsTable(filteredPayslips);
+    }, 300); // 300ms delay
   }
 
-  // Function to toggle the visibility of the clear button based on input content
-  function toggleClearButton() {
+  // Function to search payslips (now calls debounced version)
+  function searchPayslips() {
+    debouncedSearch();
+  }
+
+  // Function to clear search
+  function clearSearch() {
     const inputField = document.getElementById('searchInput');
-    const clearButton = document.getElementById('clearButton');
-    if (inputField.value.length > 0) {
-      clearButton.classList.remove('hidden');  // Show the clear button
-    } else {
-      clearButton.classList.add('hidden');  // Hide the clear button
+    inputField.value = '';
+    document.getElementById('clearButton').classList.add('hidden');
+    
+    // Clear any pending search timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      searchTimeout = null;
     }
+    
+    // Show all payslips
+    updatePayslipsTable(allPayslipsData);
+  }
+
+  // Function to update the payslips table
+  function updatePayslipsTable(payslipsData) {
+    const tbody = document.getElementById('payslipTableBody');
+    
+    if (payslipsData.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center py-12">
+            <div class="flex flex-col items-center justify-center space-y-4">
+              <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <div class="text-center">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No payslips found</h3>
+                <p class="text-gray-500">Try adjusting your search terms or browse all payslips</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tbody.innerHTML = '';
+    payslipsData.forEach((record, i) => {
+      const payPeriod = record.pay_period_start && record.pay_period_end
+        ? new Date(record.pay_period_start).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ' - ' +
+          new Date(record.pay_period_end).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+        : '';
+
+      const employeeName = record.full_name || 'N/A';
+
+      const row = `
+        <tr class="fade-in-slide border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]" style="animation-delay: ${i * 30}ms;">
+          <td class="p-2 md:p-4 align-middle">${i + 1}</td>
+          <td class="p-2 md:p-4 align-middle">${employeeName}</td>
+          <td class="p-2 md:p-4 align-middle">${payPeriod}</td>
+          <td class="p-2 md:p-4 align-middle text-center">
+            <button 
+              type="button"
+              class="btn btn-sm btn-outline-success view-payslip-btn"
+              data-bs-toggle="modal"
+              data-bs-target="#payslipModal"
+              data-employee="${employeeName}"
+              data-id="${record.employee_no || record.employee_id || 'N/A'}"
+              data-position="${record.position}" 
+              data-salary="${record.base_salary}" 
+              data-period="${payPeriod}"
+              data-totalhours="${record.total_hours}"
+              data-absent="${record.absent_days}"
+              data-leave="${record.leave_days}"
+              data-gross="${record.gross_pay}"
+              data-net="${record.net_pay}"
+              data-sss="${record.sss_deduction}"
+              data-philhealth="${record.philhealth_deduction}"
+              data-pagibig="${record.pagibig_deduction}"
+              data-late-deduction="0"
+              data-leave-deduction="0"
+              data-total-deductions="${record.total_deductions}"
+              data-payroll-id="${record.payroll_id}"
+              data-link="/mvcPayroll/public/${record.ps_pdf_file_path}"
+              title="View Payslip"
+            >
+              <i class="bi bi-eye"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
   }
 
 

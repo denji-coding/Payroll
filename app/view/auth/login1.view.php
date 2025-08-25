@@ -58,10 +58,20 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php endif; ?>
 
         <style>
-            
     #adminLoginForm,
     #employeeLoginForm {
         display: none;
+    }
+    
+    /* Ensure proper form styling within the new card layout */
+    .form-control {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+    }
+    
+    .form-control:focus {
+        border-color: #16a34a;
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
     }
 </style>
 
@@ -80,57 +90,54 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 </script>
 
-<main class="min-h-screen flex items-center justify-center p-4">
-<div class="login-container mb-[10px] mt-[15px] d-md-flex ">
-    <!-- Left side image container -->
-    <div class="login-left col-md-6">
-        <img src="../public/assets/image/image.svg" alt="Login Illustration">
+<main class="relative min-h-screen flex items-center justify-center bg-center bg-no-repeat bg-cover px-4" style="background-image: url('../public/assets/image/image_bg.jpg');">
+  <!-- Soft light blur overlay -->
+  <div class="absolute inset-0 bg-white/10 backdrop-blur-sm z-0"></div>
+
+  <!-- Login Card -->
+  <div class="w-full max-w-md bg-white bg-opacity-95 p-8 rounded-2xl shadow-xl relative z-10 transition-all duration-300">
+    <div class="flex flex-col items-center mb-6">
+      <!-- User Icon -->
+      <i class="bi bi-person-circle" style="color: green; font-size: 2.9rem;"></i>
+      <!-- Title -->
+      <div class="text-center mt-3">
+        <span class="text-xl font-semibold">Migrants Venture</span>
+        <p>HRM & Payroll Management System</p>
+      </div>
     </div>
-    
-    <!-- Right side login form -->
-    <div class="login-right col-md-6">
-        <div class="text-center -mt-7">
-            <!-- User icon -->
-            <i class="bi bi-person-circle -mt-7" style="color: green; font-size: 2.9rem;"></i>
-            <!-- System name and subtitle -->
-            <div class="texxt-center">
-                <span class="text-xl font-semibol">Migrants Venture</span>
-                <p class="p">HRM & Payroll Management System</p>
-            </div>
-        </div>
-        <hr>
+    <hr>
 
         <!-- Login type toggle -->
-        <!-- Toggle Buttons -->
-        <div class="text-center mt-4 mb-4">
-            <div class="inline-flex rounded-lg overflow-hidden border-1 border-green-600">
-                <button 
-                    type="button" 
-                    id="adminLoginBtn" 
-                    class="px-4 py-1 font-semibold text-sm transition-all duration-300 bg-green-600 text-white hover:bg-green-700 focus:outline-none"
-                    onclick="toggleLoginForm('admin')"
-                >
-                    Admin Login
-                </button>
-                <button 
-                    type="button" 
-                    id="employeeLoginBtn" 
-                    class="px-4 py-1 font-semibold text-sm transition-all duration-300 bg-white text-green-600 hover:bg-green-100 focus:outline-none"
-                    onclick="toggleLoginForm('employee')"
-                >
-                    Employees
-                </button>
-            </div>
-        </div>
+                 <!-- Toggle Buttons -->
+         <div class="text-center mt-4 mb-4">
+             <div class="inline-flex rounded-xl overflow-hidden shadow-sm border border-green-200 bg-white">
+                                   <button 
+                      type="button" 
+                      id="adminLoginBtn" 
+                      class="px-4 py-2 font-semibold text-sm transition-all duration-300 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transform hover:scale-105"
+                      onclick="toggleLoginForm('admin')"
+                  >
+                      Admin Login
+                  </button>
+                  <button 
+                      type="button" 
+                      id="employeeLoginBtn" 
+                      class="px-4 py-2 font-semibold text-sm transition-all duration-300 bg-white text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transform hover:scale-105"
+                      onclick="toggleLoginForm('employee')"
+                  >
+                      Employees
+                  </button>
+             </div>
+         </div>
 
 
         <!-- Login instructions -->
         <!-- <h5 class="text-center mt-3" data-aos="fade-up">Login to your account</h5>
         <p class="text-center" data-aos="fade-up" data-aos-delay="50">Enter your credentials to access the system</p> -->
 
-        <!-- Display error message if available -->
+                <!-- Display error message if available -->
 
-       <form id="adminLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'admin' ? 'block' : 'none' ?>;">
+        <form id="adminLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'admin' ? 'block' : 'none' ?>;">
     <input type="hidden" name="login_type" value="admin">
     
     <!-- Email input -->
@@ -141,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43]
                     focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 
                     focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2" 
-                name="email" placeholder="Enter admin email" 
+                name="email" id="adminEmail" placeholder="Enter admin email" 
                 value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
             <i class="bi bi-envelope position-absolute top-50 start-0 translate-middle-y ps-3" 
             style="color: #396A39; font-size: 1.4rem;" data-aos="fade-up" data-aos-delay="70"></i>
@@ -171,15 +178,15 @@ document.addEventListener('DOMContentLoaded', function () {
         <a href="forgot-password.php">Forgot Password?</a>
     </div> -->
 
-    <!-- Login button -->
-    <button type="submit" name="submit" class="btn btn-login btn-lg bg-[#12823A] text-white hover:bg-[#128d3d] p-2 flex items-center justify-center gap-2 mt-6" data-aos="fade-up" data-aos-delay="100">
-        <svg id="adminSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
-        </svg>
-        <span id="adminLoginText" class="text-lg">Admin Login</span>
-        <span id="adminLoggingInText" class="hidden">Logging in...</span>
-    </button>
+                                       <!-- Login button -->
+       <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 mt-4 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
+         <svg id="adminSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
+         </svg>
+         <span id="adminLoginText" class="text-md font-medium">Admin Login</span>
+         <span id="adminLoggingInText" class="hidden">Logging in...</span>
+     </button>
 </form>
 
 <!-- Employee Login Form -->
@@ -194,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43]
                     focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 
                     focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2" 
-                name="email" placeholder="Enter your email address" 
+                name="email" id="employeeEmail" placeholder="Enter your email address" 
                 value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>" required>
             <i class="bi bi-envelope position-absolute top-50 start-0 translate-middle-y ps-3" 
                style="color: #396A39; font-size: 1.4rem;" data-aos="fade-up" data-aos-delay="70"></i>
@@ -224,15 +231,15 @@ document.addEventListener('DOMContentLoaded', function () {
         <a href="forgot-password.php?type=employee">Forgot Password?</a>
     </div>
 
-    <!-- Login button -->
-    <button type="submit" name="submit" class="btn btn-login btn-lg bg-[#12823A] text-white hover:bg-[#128d3d] p-2 flex items-center justify-center gap-2" data-aos="fade-up" data-aos-delay="100">
-        <svg id="employeeSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
-        </svg>
-        <span id="employeeLoginText">Employee Login</span>
-        <span id="employeeLoggingInText" class="hidden">Logging in...</span>
-    </button>
+                                       <!-- Login button -->
+       <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
+         <svg id="employeeSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
+         </svg>
+         <span id="employeeLoginText" class="text-md font-medium">Employee Login</span>
+         <span id="employeeLoggingInText" class="hidden">Logging in...</span>
+     </button>
 </form>
 
 
@@ -241,8 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
     Don't have an account? <a href="index.php?payroll=register" class="text-decoration-none">Register</a>
 </div> -->
 
-    </div>
-</div>
+  </div>
 </main>
 
 <script>
@@ -338,12 +344,46 @@ document.getElementById('adminLoginForm').addEventListener('submit', function() 
     document.getElementById('adminSpinner').classList.remove('hidden');
     document.getElementById('adminLoginText').classList.add('hidden');
     document.getElementById('adminLoggingInText').classList.remove('hidden');
+    
+    // Store email for potential error handling
+    const email = document.getElementById('adminEmail').value;
+    sessionStorage.setItem('adminEmail', email);
 });
 
 document.getElementById('employeeLoginForm').addEventListener('submit', function() {
     document.getElementById('employeeSpinner').classList.remove('hidden');
     document.getElementById('employeeLoginText').classList.add('hidden');
     document.getElementById('employeeLoggingInText').classList.remove('hidden');
+    
+    // Store email for potential error handling
+    const email = document.getElementById('employeeEmail').value;
+    sessionStorage.setItem('employeeEmail', email);
+});
+
+// Function to restore email and clear password on error
+function restoreEmailOnError() {
+    // Restore admin email if exists
+    const adminEmail = sessionStorage.getItem('adminEmail');
+    if (adminEmail) {
+        document.getElementById('adminEmail').value = adminEmail;
+        sessionStorage.removeItem('adminEmail');
+    }
+    
+    // Restore employee email if exists
+    const employeeEmail = sessionStorage.getItem('employeeEmail');
+    if (employeeEmail) {
+        document.getElementById('employeeEmail').value = employeeEmail;
+        sessionStorage.removeItem('employeeEmail');
+    }
+    
+    // Clear all password fields
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('employeePassword').value = '';
+}
+
+// Call this function when page loads to restore email if there was an error
+document.addEventListener('DOMContentLoaded', function() {
+    restoreEmailOnError();
 });
 </script>
 
