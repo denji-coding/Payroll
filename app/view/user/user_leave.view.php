@@ -170,6 +170,32 @@ $isMobile = false;
             .flatpickr-calendar .flatpickr-next-month:hover svg {
             fill: white; /* hover arrow becomes white */
             }
+            /* Ensure close button is visible */
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
 </style>
 
 
@@ -346,7 +372,9 @@ $isMobile = false;
           <h5 class="modal-title" id="leaveModalLabel">
             <i class="bi bi-file-earmark-text me-2"></i>Leave Application
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close btn-close-white z-[1000]" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+          </button>
         </div>
 
         <div class="modal-body">

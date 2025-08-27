@@ -13,7 +13,7 @@ require_once views_path("partials/nav");
                 <p class="text-[#478547]">Track and manage employee attendance</p>
             </div>
             <div class="flex gap-3">
-                <button class="btn btn-success d-flex align-items-center justify-content-center h-10 px-4 py-2 gap-3">
+                <button class="btn btn-success d-flex align-items-center justify-content-center h-10 px-4 py-2 gap-3" onclick="openExportModal()">
                     <i class="bi bi-download h-4 w-4 -mt-2"></i>
                     <span>Export</span>
                 </button>
@@ -37,7 +37,7 @@ require_once views_path("partials/nav");
                             id="searchInput"
                             class="flex h-10 w-full placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8 text-base placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
                             placeholder="Search employee..."
-                            oninput="toggleClearButton()"
+                            oninput="handleSearchInput()"
                         >
                         <button id="clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden hover:text-[#16a249]" onclick="clearInput()">×</button>
                     </div>
@@ -90,6 +90,12 @@ require_once views_path("partials/nav");
                             </svg>
                         </button>
                     </div>
+                    <div>
+                        <button title="Show All" id="showAllBtn" type="button" class="flex h-10 items-center justify-between rounded border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:ring-offset-2 transition-all duration-200" onclick="showAllAttendance()">
+                            <i class="bi bi-list-ul "></i>
+                            <!-- <span class="text-gray-900">Show All</span> -->
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -130,51 +136,57 @@ require_once views_path("partials/nav");
 
 
                             <tbody class="[&_tr:last-child]:border-0" id="attendanceTableBody">
-                                <!-- Sample data - This will be replaced with dynamic data -->
-                                
+                                <?php if (!empty($attendanceRecords)): ?>
+                                    <?php foreach ($attendanceRecords as $index => $rec): ?>
+                                        <?php 
+                                            $photo = !empty($rec['photo_path']) ? $rec['photo_path'] : '../public/assets/image/default_user_image.svg';
+                                            $name  = ucwords(strtolower($rec['full_name']));
+                                            $pos   = $rec['position'] ?? '';
+                                            $date  = date('Y-m-d', strtotime($rec['date']));
+                                            $min   = $rec['morning_in']   ? date('h:i A', strtotime($rec['morning_in']))   : '-';
+                                            $mout  = $rec['morning_out']  ? date('h:i A', strtotime($rec['morning_out']))  : '-';
+                                            $ain   = $rec['afternoon_in'] ? date('h:i A', strtotime($rec['afternoon_in'])) : '-';
+                                            $aout  = $rec['afternoon_out']? date('h:i A', strtotime($rec['afternoon_out'])): '-';
+                                            $status= $rec['status'] ?? 'Present';
+                                            $statusClass = 'bg-green-100 text-green-800 border-green-200';
+                                            if ($status === 'Late') $statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                                            if ($status === 'Absent') $statusClass = 'bg-red-100 text-red-800 border-red-200';
+                                        ?>
                                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                                    <td class="p-4 align-middle font-medium">1</td>
-                                    <td class="p-4 align-middle font-medium">
+                                            <td class="p-2 align-middle font-medium"><?= $index + 1 ?></td>
+                                    <td class="p-2 align-middle font-medium">
                                         <span class="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
-                                            <img class="aspect-square h-full w-full" src="../public/assets/images/employee1.svg" alt="">
+                                                    <img class="aspect-square h-full w-full" src="<?= htmlspecialchars($photo) ?>" alt="">
                                         </span>
                                     </td>
-                                    <td class="p-4 align-middle font-medium">
+                                    <td class="p-2 align-middle font-medium">
                                         <div class="flex items-center space-x-2">
                                             <div class="flex flex-col">
-                                                <span class="font-medium">John Doe</span>
-                                                <span class="text-xs text-gray-500">EMP-001</span>
+                                                        <span class="font-medium text-sm"><?= htmlspecialchars($name) ?></span>
+                                                        <span class="text-[11px] text-gray-500"><?= htmlspecialchars($rec['employee_no']) ?></span>
                                         </div>
                                         </div>
                                     </td>
-                                    <td class="p-4 align-middle">
-                                        <span class="text-sm">Software Engineer</span>
+                                    <td class="p-2 align-middle">
+                                                <span class="text-sm"><?= htmlspecialchars($pos) ?></span>
                                     </td>
-                                    <td class="p-4 align-middle">2024-03-15</td>
-                                    <!-- Morning IN/OUT -->
-                                    <td class="p-4 align-middle text-center">08:00 AM</td>
-                                    <td class="p-4 align-middle text-center">11:00 AM</td>
-                                    <!-- Afternoon IN/OUT -->
-                                    <td class="p-4 align-middle text-center">01:00 PM</td>
-                                    <td class="p-4 align-middle text-center">04:00 PM</td>
-                                    <!-- Status -->
-                                    <td class="p-4 align-middle">
-                                        <div class="inline-flex items-center rounded-full border border-transparent bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-semibold">Present</div>
+                                            <td class="p-2 align-middle"><?= htmlspecialchars($date) ?></td>
+                                            <td class="p-2 align-middle text-center"><?= $min ?></td>
+                                            <td class="p-2 align-middle text-center"><?= $mout ?></td>
+                                            <td class="p-2 align-middle text-center"><?= $ain ?></td>
+                                            <td class="p-2 align-middle text-center"><?= $aout ?></td>
+                                    <td class="p-2 align-middle">
+                                                <div class="inline-flex items-center rounded-full border <?= $statusClass ?> px-2.5 py-0.5 text-xs font-semibold"><?= htmlspecialchars($status) ?></div>
                                     </td>
                                 </tr>
-
-                                    <!-- Actions column cell -->
-                                    <!-- <td class="p-4 align-middle">
-                                        <div class="flex gap-2">
-                                            <button class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium hover:bg-[#478547] hover:text-white transition duration-100 transform hover:scale-105" onclick="openModal('editTimeRecordModal')" type="button">
-                                                <i class="bi bi-pencil-square h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                                            </button>
-                                            <button class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium hover:bg-[#b91c1c] hover:text-white transition duration-100 transform hover:scale-105" onclick="openModal('deleteTimeRecordModal')" type="button">
-                                                <i class="bi bi-trash  h-5 w-5 md:h-7 md:w-7 text-lg"></i>
-                                            </button>
-                                        </div>
-                                    </td> -->
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
+                                            <i class="bi bi-calendar-x me-2"></i>No attendance records found.
+                                        </td>
                                     </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                         <!-- No Records Message -->
@@ -183,6 +195,15 @@ require_once views_path("partials/nav");
                                 <i class="bi bi-calendar-x text-4xl text-gray-400"></i>
                                 <p class="text-lg font-medium text-gray-500">No attendance records found for this date</p>
                                 <p class="text-sm text-gray-400">Select another date or check back later</p>
+                            </div>
+                        </div>
+                        <div id="paginationBar" class="flex items-center justify-between mt-3 hidden">
+                            <div class="text-sm">
+                                Page <span id="pageNum">1</span> of <span id="pageTotal">1</span> — <span id="pageCount">0</span> records
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="prevPageBtn" class="px-3 py-1 rounded border text-sm hover:bg-[#f2f8f2]" onclick="changePage(-1)">Previous</button>
+                                <button id="nextPageBtn" class="px-3 py-1 rounded border text-sm hover:bg-[#f2f8f2]" onclick="changePage(1)">Next</button>
                             </div>
                         </div>
                     </div>
@@ -288,6 +309,96 @@ require_once views_path("partials/nav");
                 <div>Sa</div>
             </div>
             <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="exportModalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 opacity-0 transition-opacity duration-500" onclick="closeExportModal()"></div>
+<div id="exportModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded-md w-full max-w-md shadow-lg">
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-[#16a249] text-center">Export Attendance Report</h2>
+                <button onclick="closeExportModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700">Select Month and Year</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <select id="exportMonth" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:border-transparent">
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="exportYear" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:border-transparent">
+                                <?php for ($year = date('Y'); $year >= 2020; $year--): ?>
+                                    <option value="<?= $year ?>" <?= $year == date('Y') ? 'selected' : '' ?>><?= $year ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700">Export Format</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="exportFormat" value="csv" class="mr-2" checked>
+                            <div>
+                                <div class="font-medium text-sm">CSV Format</div>
+                                <div class="text-xs text-gray-500">Simple data, opens in Excel</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="exportFormat" value="html" class="mr-2">
+                            <div>
+                                <div class="font-medium text-sm">HTML Format</div>
+                                <div class="text-xs text-gray-500">Web view with styling</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <div class="flex items-start">
+                        <i class="bi bi-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                        <div class="text-sm text-blue-700">
+                            <p class="font-medium">Export Information:</p>
+                            <ul class="mt-1 space-y-1">
+                                <li>• Exports all employee attendance for the selected month</li>
+                                <li>• Includes time in/out, status, and total hours worked</li>
+                                <li>• CSV: Simple data format for Excel analysis</li>
+                                <li>• HTML: Professional styling with colored headers</li>
+                                <li>• HTML: Web view with browser styling</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#cde4cd] bg-[#f8fbf8] px-4 py-2 text-sm font-medium ring-offset-[#f8fbf8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 hover:bg-[#16a249] hover:text-[#ffffff] disabled:pointer-events-none disabled:opacity-50" onclick="closeExportModal()">
+                    <i class="bi bi-x h-4 w-4"></i>
+                    Cancel
+                </button>
+                <button type="button" id="exportBtn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#16a249] px-4 py-2 text-sm font-medium text-white hover:bg-[#16a249]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2" onclick="exportAttendance()">
+                    <i class="bi bi-download h-4 w-4"></i>
+                    Export Report
+                </button>
+
+            </div>
         </div>
     </div>
 </div>
@@ -403,13 +514,37 @@ function filterTableByStatus(status) {
     const tbody = document.getElementById('attendanceTableBody');
     const noRecordsMessage = document.getElementById('noRecordsMessage');
     const rows = tbody.querySelectorAll('tr');
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.trim().toLowerCase();
     let hasVisibleRows = false;
     
     rows.forEach(row => {
-        const statusCell = row.querySelector('td:nth-child(7)');
-        const statusText = statusCell.querySelector('.inline-flex').textContent.trim();
+        const statusCell = row.querySelector('td:nth-child(10)');
+        if (!statusCell) return;
+        const badge = statusCell.querySelector('.inline-flex');
+        const statusText = (badge ? badge.textContent : statusCell.textContent).trim();
         
-        if (status === 'All Status' || statusText === status) {
+        // Check status filter
+        const statusMatches = status === 'All Status' || statusText === status;
+        
+        // Check search filter
+        let searchMatches = true;
+        if (searchTerm.length > 0) {
+            const nameCell = row.querySelector('td:nth-child(3)');
+            if (nameCell) {
+                const nameElement = nameCell.querySelector('.font-medium');
+                const idElement = nameCell.querySelector('.text-gray-500');
+                
+                if (nameElement && idElement) {
+                    const employeeName = nameElement.textContent.toLowerCase();
+                    const employeeId = idElement.textContent.toLowerCase();
+                    searchMatches = employeeName.includes(searchTerm) || employeeId.includes(searchTerm);
+                }
+            }
+        }
+        
+        // Show row only if both status and search match
+        if (statusMatches && searchMatches) {
             row.style.display = '';
             hasVisibleRows = true;
         } else {
@@ -421,32 +556,296 @@ function filterTableByStatus(status) {
     if (!hasVisibleRows) {
         tbody.style.display = 'none';
         noRecordsMessage.classList.remove('hidden');
+        
+        // Determine the appropriate message based on active filters
+        let message = '';
+        let icon = 'bi-calendar-x';
+        
+        if (searchTerm.length > 0 && status !== 'All Status') {
+            message = `No ${status.toLowerCase()} records found for "${searchTerm}"`;
+            icon = 'bi-search';
+        } else if (searchTerm.length > 0) {
+            message = `No employees found for "${searchTerm}"`;
+            icon = 'bi-search';
+        } else if (status !== 'All Status') {
+            message = `No ${status.toLowerCase()} records found`;
+            icon = 'bi-calendar-x';
+        } else {
+            message = 'No attendance records found for this date';
+            icon = 'bi-calendar-x';
+        }
+        
         noRecordsMessage.innerHTML = `
             <div class="flex flex-col items-center justify-center gap-4">
-                <i class="bi bi-calendar-x text-4xl text-gray-400"></i>
-                <p class="text-lg font-medium text-gray-500">No ${status.toLowerCase()} records found</p>
-                <p class="text-sm text-gray-400">Try selecting a different status or date</p>
+                <i class="bi ${icon} text-4xl text-gray-400"></i>
+                <p class="text-lg font-medium text-gray-500">${message}</p>
+                <p class="text-sm text-gray-400">Try selecting a different status, date, or search term</p>
                 <button onclick="resetStatusFilter()" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#cde4cd] bg-[#f8fbf8] px-4 py-2 text-sm font-medium ring-offset-[#f8fbf8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 hover:bg-[#16a249] hover:text-[#ffffff] disabled:pointer-events-none disabled:opacity-50">
                     <i class="bi bi-arrow-counterclockwise h-4 w-4"></i>
                     Reset Filter
                 </button>
             </div>
         `;
+        // Keep pagination visible but disabled at the bottom when empty
+        // Don't call updatePagination(null) here as it hides the pagination
+        // The pagination should remain visible from the previous state
     } else {
         tbody.style.display = '';
         noRecordsMessage.classList.add('hidden');
     }
 }
 
-function resetStatusFilter() {
+async function resetStatusFilter() {
+    // Reset status dropdown visual and state
     const statusButton = document.querySelector('[role="combobox"]');
-    const statusSpan = statusButton.querySelector('span');
-    statusSpan.textContent = 'All Status';
+    if (statusButton) {
+        const statusSpan = statusButton.querySelector('span');
+        if (statusSpan) statusSpan.textContent = 'All Status';
+        statusButton.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+    }
     currentStatus = 'All Status';
-    filterTableByStatus('All Status');
+
+    // Reset date to today and label
+    const today = new Date();
+    selectedDateGlobal = today;
+    const formattedDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const selectedSpan = document.getElementById('selectedDate');
+    if (selectedSpan) selectedSpan.textContent = formattedDate;
+    // Refresh calendar highlight
+    if (typeof updateCalendar === 'function') updateCalendar();
+
+    // Fetch today's records via API (no page reload)
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateParam = `${yyyy}-${mm}-${dd}`;
+    
+    try {
+        window.__tr_state = { scope: dateParam, page: 1, per_page: 10 };
+        const res = await fetch(`../app/api/timerecords-api.php?date=${dateParam}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, { headers: { 'Accept': 'application/json' } });
+        const raw = await res.text();
+        const data = JSON.parse(raw);
+        const tbody = document.getElementById('attendanceTableBody');
+        const noRecordsMessage = document.getElementById('noRecordsMessage');
+        
+        if (data && data.status === 'success') {
+            // Always use the HTML from the API response
+            if (tbody) tbody.innerHTML = data.html;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            
+            // Ensure filter is cleared visually
+            filterTableByStatus('All Status');
+            
+            // Always update pagination with the meta data from API
+            updatePagination(data.meta || null);
+        } else {
+            // Show the inline empty-state row in the table body
+            if (tbody) tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                            <i class="bi bi-calendar-x text-4xl text-gray-400"></i>
+                            <p class="text-lg font-medium text-gray-500">No attendance records found for this date</p>
+                            <p class="text-sm text-gray-400">Select another date or check back later</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            updatePagination(null);
+        }
+    } catch (e) {
+        console.error('Reset filter fetch failed:', e);
+        updatePagination(null);
+    }
+}
+
+async function showAllAttendance() {
+    const showAllBtn = document.getElementById('showAllBtn');
+    const isCurrentlyShowingAll = showAllBtn.classList.contains('bg-[#f2f8f2]');
+    
+    if (isCurrentlyShowingAll) {
+        // Currently showing all, so undo and return to current date
+        await undoShowAll();
+        return;
+    }
+    
+    // Currently showing date-specific, so show all
+    try {
+        window.__tr_state = { scope: 'all', page: 1, per_page: 10 };
+        const res = await fetch(`../app/api/timerecords-api.php?all=1&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, { headers: { 'Accept': 'application/json' } });
+        const raw = await res.text();
+        const data = JSON.parse(raw);
+        const tbody = document.getElementById('attendanceTableBody');
+        const noRecordsMessage = document.getElementById('noRecordsMessage');
+        if (data && data.status === 'success') {
+            if (tbody) tbody.innerHTML = data.html;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            // Keep current status filter applied
+            filterTableByStatus(currentStatus);
+            // Update date label to "All Dates"
+            const selectedSpan = document.getElementById('selectedDate');
+            if (selectedSpan) selectedSpan.textContent = 'All Dates';
+            selectedDateGlobal = null;
+            if (typeof updateCalendar === 'function') updateCalendar();
+            updatePagination(data.meta || null);
+            // Activate Show All button style
+            if (showAllBtn) {
+                showAllBtn.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+            }
+        } else {
+            if (tbody) tbody.innerHTML = '';
+            if (tbody) tbody.style.display = 'none';
+            if (noRecordsMessage) noRecordsMessage.classList.remove('hidden');
+            updatePagination(null);
+        }
+    } catch (e) {
+        console.error('Show all fetch failed:', e);
+        updatePagination(null);
+    }
+}
+
+async function undoShowAll() {
+    try {
+        // Return to current date view
+        const today = new Date();
+        selectedDateGlobal = today;
+        const formattedDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const selectedSpan = document.getElementById('selectedDate');
+        if (selectedSpan) selectedSpan.textContent = formattedDate;
+        
+        // Refresh calendar highlight
+        if (typeof updateCalendar === 'function') updateCalendar();
+        
+        // Fetch today's records
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const res = await fetch(`../app/api/timerecords-api.php?date=${yyyy}-${mm}-${dd}`, { headers: { 'Accept': 'application/json' } });
+        const raw = await res.text();
+        const data = JSON.parse(raw);
+        const tbody = document.getElementById('attendanceTableBody');
+        const noRecordsMessage = document.getElementById('noRecordsMessage');
+        
+        if (data && data.status === 'success') {
+            const html = (data.html || '').trim();
+            if (tbody) tbody.innerHTML = html.length > 0 ? html : `
+                <tr>
+                    <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                            <i class="bi bi-calendar-x text-4xl text-gray-400"></i>
+                            <p class="text-lg font-medium text-gray-500">No attendance records found for this date</p>
+                            <p class="text-sm text-gray-400">Select another date or check back later</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            updatePagination(html.length > 0 ? (data.meta || null) : null);
+        } else {
+            // Show empty state
+            if (tbody) tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                            <i class="bi bi-calendar-x text-4xl text-gray-400"></i>
+                            <p class="text-lg font-medium text-gray-500">No attendance records found for this date</p>
+                            <p class="text-sm text-gray-400">Select another date or check back later</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            updatePagination(null);
+        }
+        
+        // Reset Show All button style
+        const showAllBtn = document.getElementById('showAllBtn');
+        if (showAllBtn) {
+            showAllBtn.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+        }
+        
+        // Don't affect date button styling - let it keep its current state
+        
+        // Reset pagination state
+        window.__tr_state = { scope: `${yyyy}-${mm}-${dd}`, page: 1, per_page: 10 };
+        
+    } catch (e) {
+        console.error('Undo show all failed:', e);
+    }
+}
+
+function updatePagination(meta) {
+    const bar = document.getElementById('paginationBar');
+    const pageNum = document.getElementById('pageNum');
+    const pageTotal = document.getElementById('pageTotal');
+    const pageCount = document.getElementById('pageCount');
+    const prev = document.getElementById('prevPageBtn');
+    const next = document.getElementById('nextPageBtn');
+    if (bar) bar.classList.remove('hidden');
+    if (!meta) {
+        if (pageNum) pageNum.textContent = '1';
+        if (pageTotal) pageTotal.textContent = '1';
+        if (pageCount) pageCount.textContent = '0';
+        if (prev) prev.disabled = true;
+        if (next) next.disabled = true;
+        return;
+    }
+    if (pageNum) pageNum.textContent = meta.page;
+    if (pageTotal) pageTotal.textContent = meta.total_pages;
+    if (pageCount) pageCount.textContent = meta.total;
+    if (prev) prev.disabled = meta.page <= 1 || meta.total === 0;
+    if (next) next.disabled = meta.page >= meta.total_pages || meta.total === 0;
+}
+
+async function changePage(delta) {
+    if (!window.__tr_state) return;
+    const newPage = Math.max(1, window.__tr_state.page + delta);
+    if (newPage === window.__tr_state.page) return;
+    window.__tr_state.page = newPage;
+    try {
+        const scope = window.__tr_state.scope; // 'all' or 'date'
+        let url;
+        if (scope === 'all') {
+            url = `../app/api/timerecords-api.php?all=1&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`;
+        } else {
+            const d = scope; // YYYY-MM-DD
+            url = `../app/api/timerecords-api.php?date=${d}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`;
+        }
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        const tbody = document.getElementById('attendanceTableBody');
+        if (data && data.status === 'success') {
+            if (tbody) tbody.innerHTML = data.html;
+            filterTableByStatus(currentStatus);
+            updatePagination(data.meta || null);
+            // Sync Show All button style with current scope
+            const showAllBtn = document.getElementById('showAllBtn');
+            if (showAllBtn) {
+                if (scope === 'all') {
+                    showAllBtn.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+                } else {
+                    showAllBtn.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+                }
+            }
+        } else {
+            if (tbody) tbody.innerHTML = '';
+            if (tbody) tbody.style.display = 'none';
+            updatePagination(null);
+        }
+    } catch (e) {
+        console.error('Pagination fetch failed:', e);
+        updatePagination(null);
+    }
 }
 
 let currentDate = new Date();
+let selectedDateGlobal = null; // currently selected date (for active highlight)
 
 function openCalendarModal() {
     const modal = document.getElementById('calendarModal');
@@ -512,13 +911,23 @@ function updateCalendar() {
     // Add days of the month
     for (let day = 1; day <= totalDays; day++) {
         const dayCell = document.createElement('div');
-        dayCell.className = 'p-2 cursor-pointer hover:bg-[#f2f8f2] rounded text-center';
+        dayCell.className = 'p-2 cursor-pointer rounded text-center transition-colors transition-transform duration-150 ease-out hover:bg-[#f2f8f2] hover:-translate-y-0.5 hover:shadow-sm hover:ring-1 hover:ring-[#16a249]/40';
         dayCell.textContent = day;
         
-        // Highlight current day
+        // Highlight logic for today vs selected date
         const today = new Date();
-        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-            dayCell.classList.add('bg-[#16a249]', 'text-white');
+        const isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+        const isSelected = (selectedDateGlobal &&
+            day === selectedDateGlobal.getDate() &&
+            month === selectedDateGlobal.getMonth() &&
+            year === selectedDateGlobal.getFullYear());
+
+        if (isSelected) {
+            // Active selected date: stronger ring, soft green bg, darker green text
+            dayCell.classList.add('ring-2', 'ring-[#16a249]', 'bg-[#eaf7ea]', 'text-[#0f6b2f]', 'shadow-sm');
+        } else if (isToday) {
+            // Today (not selected): subtle ring and soft background to match hover tone
+            dayCell.classList.add('ring-1', 'ring-[#16a249]/60', 'bg-[#f2f8f2]', 'text-[#16a249]', 'font-semibold');
         }
         
         dayCell.onclick = () => selectDate(day, month, year);
@@ -548,18 +957,47 @@ async function selectDate(day, month, year) {
     const dateButton = document.querySelector('button[onclick="openCalendarModal()"]');
     dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
     document.getElementById('selectedDate').textContent = formattedDate;
+    // Set active selected date and refresh calendar grid highlight
+    selectedDateGlobal = selectedDate;
+    updateCalendar();
     
     // Close modal
     closeCalendarModal();
     
-    // Fetch and display attendance records
-    const response = await fetchAttendanceRecords(selectedDate);
-    if (response.success) {
-        updateAttendanceTable(response.data, selectedDate);
-        // Apply status filter after updating the table
+    // Fetch rows via AJAX without reloading
+    const yyyy = selectedDate.getFullYear();
+    const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(selectedDate.getDate()).padStart(2, '0');
+    const dateParam = `${yyyy}-${mm}-${dd}`;
+    try {
+        window.__tr_state = { scope: dateParam, page: 1, per_page: 10 };
+        const res = await fetch(`../app/api/timerecords-api.php?date=${dateParam}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const raw = await res.text();
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            console.error('Failed to parse JSON. Raw response:', raw);
+            return;
+        }
+        if (data && data.status === 'success') {
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = data.html;
+            // Re-apply current status filter
         filterTableByStatus(currentStatus);
-    } else {
-        console.error(response.error);
+            updatePagination(data.meta);
+            // Deactivate Show All button style
+            const showAllBtn = document.getElementById('showAllBtn');
+            if (showAllBtn) {
+                showAllBtn.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+            }
+        } else if (data && data.status === 'error') {
+            console.error('Server error:', data.message || 'Unknown error');
+        }
+    } catch (err) {
+        console.error('Failed to fetch time records:', err);
     }
 }
 
@@ -686,33 +1124,232 @@ function updateAttendanceTable(records, selectedDate) {
 }
 
 
+// Export Modal Functions
+function openExportModal() {
+    const modal = document.getElementById('exportModal');
+    const overlay = document.getElementById('exportModalOverlay');
+    
+    if (modal && overlay) {
+        modal.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        
+        setTimeout(() => {
+            modal.classList.remove('opacity-0', 'scale-75');
+            modal.classList.add('opacity-100', 'scale-100');
+            overlay.classList.add('opacity-100');
+        }, 10);
+        
+        // Set current month as default
+        const currentMonth = new Date().getMonth() + 1;
+        const monthSelect = document.getElementById('exportMonth');
+        if (monthSelect) {
+            monthSelect.value = String(currentMonth).padStart(2, '0');
+        }
+    }
+}
+
+function closeExportModal() {
+    const modal = document.getElementById('exportModal');
+    const overlay = document.getElementById('exportModalOverlay');
+    
+    if (modal && overlay) {
+        modal.classList.add('opacity-0', 'scale-75');
+        modal.classList.remove('opacity-100', 'scale-100');
+        overlay.classList.remove('opacity-100');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            overlay.classList.add('hidden');
+        }, 300);
+    }
+}
+
+function exportAttendance() {
+    const month = document.getElementById('exportMonth').value;
+    const year = document.getElementById('exportYear').value;
+    const exportFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+    const exportBtn = document.getElementById('exportBtn');
+    
+    if (!month || !year) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Selection Required',
+            text: 'Please select both month and year for export.',
+            confirmButtonColor: '#16a249'
+        });
+        return;
+    }
+    
+    // Disable button and show loading state
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="bi bi-hourglass-split h-4 w-4 animate-spin"></i> Exporting...';
+    
+    // Choose API endpoint based on format
+    const apiEndpoint = exportFormat === 'html' 
+        ? `../app/api/export-attendance-html.php?month=${month}&year=${year}`
+        : `../app/api/export-attendance-api.php?month=${month}&year=${year}`;
+    
+    // Use fetch to get the file data
+    fetch(apiEndpoint, {
+        method: 'GET',
+        credentials: 'same-origin' // Include cookies/session
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Export failed');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const fileExtension = exportFormat === 'html' ? 'html' : 'csv';
+        link.download = `attendance_report_${year}_${month}.${fileExtension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        // Show success message
+        const formatText = exportFormat === 'html' ? 'HTML file with styling' : 'CSV file';
+        Swal.fire({
+            icon: 'success',
+            title: 'Export Successful!',
+            text: `Attendance report for ${getMonthName(month)} ${year} has been downloaded as ${formatText}.`,
+            confirmButtonColor: '#16a249',
+            timer: 3000,
+            timerProgressBar: true
+        });
+        
+        // Reset button state
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<i class="bi bi-download h-4 w-4"></i> Export';
+        
+        // Close modal
+        closeExportModal();
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'Failed to export attendance data. Please try again.',
+            confirmButtonColor: '#16a249'
+        });
+        
+        // Reset button state
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<i class="bi bi-download h-4 w-4"></i> Export';
+    });
+}
+
+function getMonthName(month) {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[parseInt(month) - 1];
+}
+
+
+
 // Initialize with current date
 document.addEventListener('DOMContentLoaded', () => {
-    // Set current date in the button
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    // Highlight date button and show server-selected date (or today)
     const dateButton = document.querySelector('button[onclick="openCalendarModal()"]');
+    if (dateButton) {
     dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
-    document.getElementById('selectedDate').textContent = formattedDate;
+    }
+    const initialDate = '<?= htmlspecialchars($_GET['date'] ?? date('Y-m-d')) ?>';
+    const dateObj = new Date(initialDate + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const selectedSpan = document.getElementById('selectedDate');
+    if (selectedSpan) selectedSpan.textContent = formattedDate;
+    // Initialize active date highlight to the server-provided date
+    selectedDateGlobal = dateObj;
     
     // Initialize calendar
     updateCalendar();
-    
-    // Load attendance records for current date
-    fetchAttendanceRecords(today).then(response => {
-        if (response.success) {
-            updateAttendanceTable(response.data, today);
-            filterTableByStatus(currentStatus);
-        }
-    });
 
     // Initialize clear button state
     toggleClearButton();
+    
+    // Initialize pagination for current date (even if no records)
+    const hasRecords = <?= !empty($attendanceRecords) ? 'true' : 'false' ?>;
+    
+    if (!hasRecords) {
+        // If no records for current date, show pagination with 0 records
+        updatePagination({
+            total: 0,
+            page: 1,
+            per_page: 10,
+            total_pages: 1
+        });
+        // Set the state for pagination
+        window.__tr_state = { 
+            scope: initialDate, 
+            page: 1, 
+            per_page: 10 
+        };
+    } else {
+        // If there are records, set the state for pagination
+        window.__tr_state = { 
+            scope: initialDate, 
+            page: 1, 
+            per_page: 10 
+        };
+        // Show pagination with actual data
+        updatePagination({
+            total: <?= count($attendanceRecords) ?>,
+            page: 1,
+            per_page: 10,
+            total_pages: 1
+        });
+    }
 });
+
+// Search functionality with debounce
+let searchTimeout = null;
+
+function handleSearchInput() {
+    const searchInput = document.getElementById('searchInput');
+    const clearButton = document.getElementById('clearButton');
+    
+    // Toggle clear button visibility
+    if (searchInput.value.trim().length > 0) {
+        clearButton.classList.remove('hidden');
+    } else {
+        clearButton.classList.add('hidden');
+    }
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounce (300ms delay)
+    searchTimeout = setTimeout(() => {
+        performSearch();
+    }, 300);
+}
+
+function performSearch() {
+    // Re-apply the current status filter which now includes search functionality
+    filterTableByStatus(currentStatus);
+}
+
+function clearSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearButton = document.getElementById('clearButton');
+    
+    searchInput.value = '';
+    clearButton.classList.add('hidden');
+    
+    // Re-apply current status filter (which will now show all rows since search is cleared)
+    filterTableByStatus(currentStatus);
+}
 
 // Search bar clear button functions
 function toggleClearButton() {
@@ -727,14 +1364,306 @@ function toggleClearButton() {
 }
 
 function clearInput() {
+    clearSearch();
+}
+</script>
+
+<?php require_once views_path("partials/footer"); ?>
+
+
+    records.forEach((record, index) => {
+        const statusStyle = getStatusStyle(record.status);
+        const statusDetails = getStatusDetails(record.status, record.time_in);
+        
+        const row = document.createElement('tr');
+        row.className = 'border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]';
+        
+        row.innerHTML = `
+            <td class="p-4 align-middle font-medium">${index + 1}</td>
+            <td class="p-4 align-middle font-medium">
+                <div class="flex items-center space-x-2">
+                    <span class="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
+                        <img class="aspect-square h-full w-full" src="${record.avatar}" alt="">
+                    </span>
+                    <div class="flex flex-col">
+                        <span class="font-medium">${record.name}</span>
+                        <span class="text-xs text-gray-500">${record.employee_id}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="p-4 align-middle">
+                <span class="text-sm">${record.position}</span>
+            </td>
+            <td class="p-4 align-middle">${record.date}</td>
+            <td class="p-4 align-middle">${record.time_in}</td>
+            <td class="p-4 align-middle">${record.time_out}</td>
+            <td class="p-4 align-middle">
+                <div class="group relative">
+                    <div class="inline-flex items-center rounded-full border ${statusStyle.border} ${statusStyle.bg} ${statusStyle.text} px-2.5 py-0.5 text-xs font-semibold cursor-pointer">
+                        <i class="bi ${statusStyle.icon} mr-1"></i>
+                        ${record.status}
+                    </div>
+                    <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white p-2 hidden group-hover:block z-50">
+                        <div class="text-sm">
+                            <div class="font-medium ${statusStyle.text}">${statusDetails.message}</div>
+                            ${statusDetails.time ? `<div class="text-gray-500 text-xs mt-1">${statusDetails.time}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    // Apply current status filter after updating the table
+    filterTableByStatus(currentStatus);
+}
+
+
+// Export Modal Functions
+function openExportModal() {
+    const modal = document.getElementById('exportModal');
+    const overlay = document.getElementById('exportModalOverlay');
+    
+    if (modal && overlay) {
+        modal.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        
+        setTimeout(() => {
+            modal.classList.remove('opacity-0', 'scale-75');
+            modal.classList.add('opacity-100', 'scale-100');
+            overlay.classList.add('opacity-100');
+        }, 10);
+        
+        // Set current month as default
+        const currentMonth = new Date().getMonth() + 1;
+        const monthSelect = document.getElementById('exportMonth');
+        if (monthSelect) {
+            monthSelect.value = String(currentMonth).padStart(2, '0');
+        }
+    }
+}
+
+function closeExportModal() {
+    const modal = document.getElementById('exportModal');
+    const overlay = document.getElementById('exportModalOverlay');
+    
+    if (modal && overlay) {
+        modal.classList.add('opacity-0', 'scale-75');
+        modal.classList.remove('opacity-100', 'scale-100');
+        overlay.classList.remove('opacity-100');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            overlay.classList.add('hidden');
+        }, 300);
+    }
+}
+
+function exportAttendance() {
+    const month = document.getElementById('exportMonth').value;
+    const year = document.getElementById('exportYear').value;
+    const exportFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+    const exportBtn = document.getElementById('exportBtn');
+    
+    if (!month || !year) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Selection Required',
+            text: 'Please select both month and year for export.',
+            confirmButtonColor: '#16a249'
+        });
+        return;
+    }
+    
+    // Disable button and show loading state
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="bi bi-hourglass-split h-4 w-4 animate-spin"></i> Exporting...';
+    
+    // Choose API endpoint based on format
+    const apiEndpoint = exportFormat === 'html' 
+        ? `../app/api/export-attendance-html.php?month=${month}&year=${year}`
+        : `../app/api/export-attendance-api.php?month=${month}&year=${year}`;
+    
+    // Use fetch to get the file data
+    fetch(apiEndpoint, {
+        method: 'GET',
+        credentials: 'same-origin' // Include cookies/session
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Export failed');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const fileExtension = exportFormat === 'html' ? 'html' : 'csv';
+        link.download = `attendance_report_${year}_${month}.${fileExtension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        // Show success message
+        const formatText = exportFormat === 'html' ? 'HTML file with styling' : 'CSV file';
+        Swal.fire({
+            icon: 'success',
+            title: 'Export Successful!',
+            text: `Attendance report for ${getMonthName(month)} ${year} has been downloaded as ${formatText}.`,
+            confirmButtonColor: '#16a249',
+            timer: 3000,
+            timerProgressBar: true
+        });
+        
+        // Reset button state
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<i class="bi bi-download h-4 w-4"></i> Export';
+        
+        // Close modal
+        closeExportModal();
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'Failed to export attendance data. Please try again.',
+            confirmButtonColor: '#16a249'
+        });
+        
+        // Reset button state
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<i class="bi bi-download h-4 w-4"></i> Export';
+    });
+}
+
+function getMonthName(month) {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[parseInt(month) - 1];
+}
+
+
+
+// Initialize with current date
+document.addEventListener('DOMContentLoaded', () => {
+    // Highlight date button and show server-selected date (or today)
+    const dateButton = document.querySelector('button[onclick="openCalendarModal()"]');
+    if (dateButton) {
+    dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+    }
+    const initialDate = '<?= htmlspecialchars($_GET['date'] ?? date('Y-m-d')) ?>';
+    const dateObj = new Date(initialDate + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const selectedSpan = document.getElementById('selectedDate');
+    if (selectedSpan) selectedSpan.textContent = formattedDate;
+    // Initialize active date highlight to the server-provided date
+    selectedDateGlobal = dateObj;
+    
+    // Initialize calendar
+    updateCalendar();
+
+    // Initialize clear button state
+    toggleClearButton();
+    
+    // Initialize pagination for current date (even if no records)
+    const hasRecords = <?= !empty($attendanceRecords) ? 'true' : 'false' ?>;
+    
+    if (!hasRecords) {
+        // If no records for current date, show pagination with 0 records
+        updatePagination({
+            total: 0,
+            page: 1,
+            per_page: 10,
+            total_pages: 1
+        });
+        // Set the state for pagination
+        window.__tr_state = { 
+            scope: initialDate, 
+            page: 1, 
+            per_page: 10 
+        };
+    } else {
+        // If there are records, set the state for pagination
+        window.__tr_state = { 
+            scope: initialDate, 
+            page: 1, 
+            per_page: 10 
+        };
+        // Show pagination with actual data
+        updatePagination({
+            total: <?= count($attendanceRecords) ?>,
+            page: 1,
+            per_page: 10,
+            total_pages: 1
+        });
+    }
+});
+
+// Search functionality with debounce
+let searchTimeout = null;
+
+function handleSearchInput() {
+    const searchInput = document.getElementById('searchInput');
+    const clearButton = document.getElementById('clearButton');
+    
+    // Toggle clear button visibility
+    if (searchInput.value.trim().length > 0) {
+        clearButton.classList.remove('hidden');
+    } else {
+        clearButton.classList.add('hidden');
+    }
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounce (300ms delay)
+    searchTimeout = setTimeout(() => {
+        performSearch();
+    }, 300);
+}
+
+function performSearch() {
+    // Re-apply the current status filter which now includes search functionality
+    filterTableByStatus(currentStatus);
+}
+
+function clearSearch() {
     const searchInput = document.getElementById('searchInput');
     const clearButton = document.getElementById('clearButton');
     
     searchInput.value = '';
     clearButton.classList.add('hidden');
-    // Trigger search if you have a search function
-    // searchTable();
+    
+    // Re-apply current status filter (which will now show all rows since search is cleared)
+    filterTableByStatus(currentStatus);
+}
+
+// Search bar clear button functions
+function toggleClearButton() {
+    const searchInput = document.getElementById('searchInput');
+    const clearButton = document.getElementById('clearButton');
+    
+    if (searchInput.value.trim().length > 0) {
+        clearButton.classList.remove('hidden');
+    } else {
+        clearButton.classList.add('hidden');
+    }
+}
+
+function clearInput() {
+    clearSearch();
 }
 </script>
 
 <?php require_once views_path("partials/footer"); ?>
+

@@ -103,41 +103,41 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="text-center mt-3">
         <span class="text-xl font-semibold">Migrants Venture</span>
         <p>HRM & Payroll Management System</p>
-      </div>
-    </div>
-    <hr>
+            </div>
+        </div>
+        <hr>
 
         <!-- Login type toggle -->
-                 <!-- Toggle Buttons -->
-         <div class="text-center mt-4 mb-4">
+        <!-- Toggle Buttons -->
+        <div class="text-center mt-4 mb-4">
              <div class="inline-flex rounded-xl overflow-hidden shadow-sm border border-green-200 bg-white">
-                                   <button 
-                      type="button" 
-                      id="adminLoginBtn" 
+                <button 
+                    type="button" 
+                    id="adminLoginBtn" 
                       class="px-4 py-2 font-semibold text-sm transition-all duration-300 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transform hover:scale-105"
-                      onclick="toggleLoginForm('admin')"
-                  >
-                      Admin Login
-                  </button>
-                  <button 
-                      type="button" 
-                      id="employeeLoginBtn" 
+                    onclick="toggleLoginForm('admin')"
+                >
+                    Admin Login
+                </button>
+                <button 
+                    type="button" 
+                    id="employeeLoginBtn" 
                       class="px-4 py-2 font-semibold text-sm transition-all duration-300 bg-white text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transform hover:scale-105"
-                      onclick="toggleLoginForm('employee')"
-                  >
-                      Employees
-                  </button>
-             </div>
-         </div>
+                    onclick="toggleLoginForm('employee')"
+                >
+                    Employees
+                </button>
+            </div>
+        </div>
 
 
         <!-- Login instructions -->
         <!-- <h5 class="text-center mt-3" data-aos="fade-up">Login to your account</h5>
         <p class="text-center" data-aos="fade-up" data-aos-delay="50">Enter your credentials to access the system</p> -->
 
-                <!-- Display error message if available -->
+        <!-- Display error message if available -->
 
-        <form id="adminLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'admin' ? 'block' : 'none' ?>;">
+       <form id="adminLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'admin' ? 'block' : 'none' ?>;">
     <input type="hidden" name="login_type" value="admin">
     
     <!-- Email input -->
@@ -178,15 +178,15 @@ document.addEventListener('DOMContentLoaded', function () {
         <a href="forgot-password.php">Forgot Password?</a>
     </div> -->
 
-                                       <!-- Login button -->
+    <!-- Login button -->
        <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 mt-4 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
-         <svg id="adminSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
-         </svg>
+        <svg id="adminSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
+        </svg>
          <span id="adminLoginText" class="text-md font-medium">Admin Login</span>
-         <span id="adminLoggingInText" class="hidden">Logging in...</span>
-     </button>
+        <span id="adminLoggingInText" class="hidden">Logging in...</span>
+    </button>
 </form>
 
 <!-- Employee Login Form -->
@@ -231,15 +231,15 @@ document.addEventListener('DOMContentLoaded', function () {
         <a href="forgot-password.php?type=employee">Forgot Password?</a>
     </div>
 
-                                       <!-- Login button -->
+    <!-- Login button -->
        <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
-         <svg id="employeeSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
-         </svg>
+        <svg id="employeeSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
+        </svg>
          <span id="employeeLoginText" class="text-md font-medium">Employee Login</span>
-         <span id="employeeLoggingInText" class="hidden">Logging in...</span>
-     </button>
+        <span id="employeeLoggingInText" class="hidden">Logging in...</span>
+    </button>
 </form>
 
 
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
     Don't have an account? <a href="index.php?payroll=register" class="text-decoration-none">Register</a>
 </div> -->
 
-  </div>
+</div>
 </main>
 
 <script>

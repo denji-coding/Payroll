@@ -146,7 +146,7 @@ require_once views_path("partials/nav");
           ?>
           <tr class="fade-in-slide border-b-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
             <td class="px-3 md:px-6 text-center py-2"><?= $i++ ?></td>
-            <td class="px-2 md:px-6 py-2"><?= htmlspecialchars($row['display_name']) ?></td>
+            <td class="px-2 md:px-6 py-2"><?= htmlspecialchars(ucwords(strtolower($row['display_name']))) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_morning_in'])) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_morning_out'])) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_afternoon_in'])) ?></td>
@@ -776,6 +776,788 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+
+
+
+
+
+            icon: result.icon,
+
+            timer: 1000,
+
+            timerProgressBar: true,
+
+            showConfirmButton: false
+
+          }).then(() => {
+
+            addForm.reset();
+
+
+
+            // ✅ If the API returns the new row's HTML, insert with animation
+
+            if (result.new_row_html) {
+
+              insertRowWithAnimation(result.new_row_html);
+
+            } else {
+
+              refreshScheduleTable(); // fallback if no HTML returned
+
+            }
+
+
+
+            refreshEmployeeSelect();
+
+          });
+
+        }, 400);
+
+      } else {
+
+        Swal.fire({
+
+          title: 'Error',
+
+          text: result.message,
+
+          icon: result.icon || 'error'
+
+        });
+
+      }
+
+    } catch (err) {
+
+      Swal.fire({
+
+        title: 'Request Failed',
+
+        text: 'An unexpected error occurred. Please try again.',
+
+        icon: 'error'
+
+      });
+
+      console.error('Add Schedule Error:', err);
+
+    }
+
+  });
+
+}
+
+
+
+// 🔁 Helper to insert a single row with animation
+
+function insertRowWithAnimation(rowHTML) {
+
+  const tbody = document.getElementById('scheduleTableBody');
+
+  const temp = document.createElement('tbody');
+
+  temp.innerHTML = rowHTML.trim();
+
+
+
+  const newRow = temp.querySelector('tr');
+
+  if (newRow) {
+
+    newRow.style.opacity = '0';
+
+    newRow.style.transition = 'opacity 0.4s ease';
+
+    tbody.prepend(newRow);
+
+
+
+    // Trigger fade-in
+
+    setTimeout(() => {
+
+      newRow.style.opacity = '1';
+
+    }, 10); // slight delay to trigger transition
+
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // === EDIT SCHEDULE ===
+
+  if (editForm) {
+
+    editForm.addEventListener('submit', async (e) => {
+
+      e.preventDefault();
+
+      const formData = new FormData(editForm);
+
+
+
+      try {
+
+        const res = await fetch('../app/api/schedules-api.php', {
+
+          method: 'POST',
+
+          body: formData
+
+        });
+
+
+
+        const result = await res.json();
+
+
+
+        if (result.status === 'success') {
+
+          const modalEl = document.getElementById('editScheduleModal');
+
+          const modal = bootstrap.Modal.getInstance(modalEl);
+
+          if (modal) modal.hide();
+
+
+
+          setTimeout(() => {
+
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+
+            document.body.classList.remove('modal-open');
+
+            document.body.style.overflow = '';
+
+            document.body.style.paddingRight = '';
+
+
+
+            Swal.fire({
+
+              title: result.message,
+
+              icon: result.icon,
+
+              timer: 1000,
+
+              timerProgressBar: true,
+
+              showConfirmButton: false
+
+            }).then(() => {
+
+              const row = document.querySelector(`tr[data-id="${formData.get('id')}"]`);
+
+
+
+              if (row) {
+
+                // 👇 Fade out the updated row
+
+                row.style.transition = 'opacity 0.4s ease';
+
+                row.style.opacity = '0';
+
+
+
+                setTimeout(() => {
+
+                  row.remove();
+
+                  refreshScheduleTable();      // ✅ get updated version from server
+
+                  refreshEmployeeSelect();     // ✅ refresh dropdowns
+
+                }, 400);
+
+              } else {
+
+                refreshScheduleTable();
+
+                refreshEmployeeSelect();
+
+              }
+
+            });
+
+          }, 400);
+
+        } else {
+
+          Swal.fire(result.message, '', result.icon);
+
+        }
+
+      } catch (err) {
+
+        console.error('Edit Schedule Error:', err);
+
+      }
+
+    });
+
+  }
+
+
+
+// === DELETE SCHEDULE ===
+
+document.addEventListener('click', async (e) => {
+
+  const btn = e.target.closest('[data-action="delete-schedule"]');
+
+  if (btn) {
+
+    const scheduleId = btn.getAttribute('data-id');
+
+
+
+    const confirm = await Swal.fire({
+
+      title: 'Are you sure?',
+
+      text: 'This schedule will be permanently deleted.',
+
+      icon: 'warning',
+
+      showCancelButton: true,
+
+      confirmButtonColor: '#d33',
+
+      cancelButtonColor: '#6c757d',
+
+      confirmButtonText: 'Confirm'
+
+    });
+
+
+
+    if (confirm.isConfirmed) {
+
+      const formData = new FormData();
+
+      formData.append('action', 'delete');
+
+      formData.append('schedule_id', scheduleId);
+
+
+
+      try {
+
+        const res = await fetch('../app/api/schedules-api.php', {
+
+          method: 'POST',
+
+          body: formData
+
+        });
+
+
+
+        const result = await res.json();
+
+
+
+        if (result.status === 'success') {
+
+          const row = btn.closest('tr');
+
+
+
+          // First show the Swal
+
+          Swal.fire({
+
+            title: result.message,
+
+            icon: result.icon,
+
+            timer: 1000,
+
+            timerProgressBar: true,
+
+            showConfirmButton: false
+
+          }).then(() => {
+
+            // After Swal closes, apply fade out animation
+
+            if (row) {
+
+              row.style.transition = 'opacity 0.4s ease';
+
+              row.style.opacity = '0';
+
+
+
+              setTimeout(() => {
+
+                row.remove();
+
+                updateScheduleRowNumbers();
+
+                refreshEmployeeSelect(); // Update employee select after row removal
+
+              }, 400); // match the transition duration
+
+            } else {
+
+              refreshScheduleTable(); // Fallback: if no row found
+
+              refreshEmployeeSelect();
+
+            }
+
+          });
+
+
+
+        } else {
+
+          Swal.fire(result.message, '', result.icon);
+
+        }
+
+
+
+      } catch (err) {
+
+        console.error('Delete Schedule Error:', err);
+
+        Swal.fire('Error', 'Something went wrong during deletion.', 'error');
+
+      }
+
+    }
+
+  }
+
+});
+
+
+
+function updateScheduleRowNumbers() {
+
+  const rows = document.querySelectorAll('#scheduleTableBody tr');
+
+  rows.forEach((row, index) => {
+
+    const numberCell = row.querySelector('td');
+
+    if (numberCell) {
+
+      numberCell.textContent = index + 1;
+
+    }
+
+  });
+
+}
+
+
+
+
+
+
+
+
+
+  // === FILL EDIT MODAL ===
+
+  window.populateEditSchedule = async (id) => {
+
+    try {
+
+      const res = await fetch(`../app/api/schedules-api.php?fetch_schedule=${id}`);
+
+      const result = await res.json();
+
+
+
+      if (result.status === 'success') {
+
+        const s = result.data;
+
+
+
+        const formatName = (name) => name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+
+
+        document.getElementById('editScheduleId').value = s.id;
+
+        document.getElementById('editScheduleName').value = formatName(s.record_name || s.name || '');
+
+        document.getElementById('editMorningIn').value = s.sched_morning_in;
+
+        document.getElementById('editMorningOut').value = s.sched_morning_out;
+
+        document.getElementById('editAfternoonIn').value = s.sched_afternoon_in;
+
+        document.getElementById('editAfternoonOut').value = s.sched_afternoon_out;
+
+        document.getElementById('editGracePeriod').value = s.grace_period;
+
+
+
+        // const modal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
+
+        // modal.show();
+
+      } else {
+
+        Swal.fire('Error', result.message, 'error');
+
+      }
+
+    } catch (err) {
+
+      console.error('Fetch Schedule Error:', err);
+
+      Swal.fire('Error', 'Something went wrong while fetching the schedule.', 'error');
+
+    }
+
+  };
+
+
+
+// === REFRESH SCHEDULE TABLE ===
+
+window.refreshScheduleTable = async (highlightId = null) => {
+
+  try {
+
+    const res = await fetch('../app/api/schedules-api.php?fetch_table=1');
+
+    const html = await res.text();
+
+
+
+    // Create a temp container to parse new rows
+
+    const temp = document.createElement('tbody');
+
+    temp.innerHTML = html.trim();
+
+
+
+    const tbody = document.getElementById('scheduleTableBody');
+
+    tbody.innerHTML = ''; // Clear existing rows
+
+
+
+    // Append each row with animation
+
+    temp.querySelectorAll('tr').forEach((row, index) => {
+
+      const rowId = row.getAttribute('data-id');
+
+
+
+      // Only animate the newly inserted row
+
+      if (highlightId && rowId === highlightId.toString()) {
+
+        row.style.opacity = '0';
+
+        row.style.transition = 'opacity 0.4s ease';
+
+        tbody.appendChild(row);
+
+
+
+        requestAnimationFrame(() => {
+
+          row.style.opacity = '1';
+
+        });
+
+      } else {
+
+        setTimeout(() => {
+
+          row.classList.add('fade-in-slide');
+
+          tbody.appendChild(row);
+
+        }, index * 30);
+
+      }
+
+    });
+
+  } catch (err) {
+
+    console.error("Failed to refresh schedule table", err);
+
+  }
+
+};
+
+
+
+
+
+
+
+// === REFRESH EMPLOYEE SELECT (only approved employees and managers) ===
+
+window.refreshEmployeeSelect = async () => {
+
+  try {
+
+    const res = await fetch('../app/api/schedules-api.php?available_employees=1');
+
+    const records = await res.json();
+
+
+
+    const select = document.querySelector('select[name="employee_id"]');
+
+    if (!select) return;
+
+
+
+    select.innerHTML = `<option value="" disabled selected>--- Select an Employee or Manager ---</option>`;
+
+
+
+    // Display approved employees and managers
+
+    records
+
+      .filter(record => parseInt(record.approved_by_manager) === 1)
+
+      .forEach(record => {
+
+        const option = document.createElement('option');
+
+        option.value = record.id;
+
+        option.textContent = `${record.name} (${record.position})`;
+
+        option.setAttribute('data-type', record.type);
+
+        select.appendChild(option);
+
+      });
+
+  } catch (err) {
+
+    console.error('Failed to refresh employee/manager list:', err);
+
+  }
+
+};
+
+
+
+
+
+
+
+  // === CAPITALIZE UTILITY ===
+
+  function capitalize(str) {
+
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+  }
+
+
+
+  // Call once on page load
+
+  refreshEmployeeSelect();
+
+
+
+  // Handle record type selection
+
+  const employeeSelect = document.querySelector('select[name="employee_id"]');
+
+  const recordTypeInput = document.getElementById('recordType');
+
+  
+
+  if (employeeSelect && recordTypeInput) {
+
+    employeeSelect.addEventListener('change', function() {
+
+      const selectedOption = this.options[this.selectedIndex];
+
+      const recordType = selectedOption.getAttribute('data-type') || 'employee';
+
+      recordTypeInput.value = recordType;
+
+    });
+
+  }
+
+});
+
+</script>
+
+
+
+<?php require_once views_path("partials/footer"); ?>
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  const searchInput = document.getElementById("searchInput");
+
+  const clearBtn = document.getElementById("clearButton");
+
+
+
+  let debounceTimer;
+
+
+
+  searchInput.addEventListener("input", function () {
+
+    toggleClearButton();
+
+    clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+
+      filterTable();
+
+    }, 300);
+
+  });
+
+
+
+  clearBtn.addEventListener("click", function () {
+
+    searchInput.value = "";
+
+    toggleClearButton();
+
+    filterTable();
+
+  });
+
+
+
+  function toggleClearButton() {
+
+    clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+
+  }
+
+
+
+  function filterTable() {
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+
+    const rows = document.querySelectorAll("tbody tr");
+
+    let visibleCount = 0;
+
+
+
+    rows.forEach(row => {
+
+      const nameCell = row.querySelector("td:nth-child(2)");
+
+      if (!nameCell || row.id === "noResultRow") return;
+
+
+
+      const nameText = nameCell.textContent.trim().toLowerCase();
+
+
+
+      // Split by space and check each word or initial
+
+      const words = nameText.split(/\s+/); // e.g., ["juan", "d.", "cruz"]
+
+      const match = words.some(word => word.startsWith(searchTerm));
+
+
+
+      row.style.display = match || searchTerm === "" ? "" : "none";
+
+
+
+      if (match) visibleCount++;
+
+    });
+
+
+
+    // Handle no result
+
+    let noResultRow = document.getElementById("noResultRow");
+
+    if (visibleCount === 0) {
+
+      if (!noResultRow) {
+
+        noResultRow = document.createElement("tr");
+
+        noResultRow.id = "noResultRow";
+
+        noResultRow.innerHTML = `
+
+          <td colspan="8" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+
+            <i class="bi bi-person-x fs-5 me-2"></i>No matching schedules found.
+
+          </td>`;
+
+        document.querySelector("tbody").appendChild(noResultRow);
+
+      }
+
+    } else {
+
+      if (noResultRow) noResultRow.remove();
+
+    }
+
+  }
+
+});
+
+</script>
+
+
+
+
+
+
 
 
 

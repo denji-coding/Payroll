@@ -1,8 +1,8 @@
 <?php
 require_once '../app/core/session_helper.php';
 
-// Check if admin is logged in
-requireAdminAuth();
+// Public access: Allow viewing attendance without requiring admin/HR login
+// (If you want to re-enable protection, restore: requireAdminAuth();)
 
 // Log user activity
 logUserActivity('Access attendance page');

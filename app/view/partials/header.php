@@ -24,8 +24,11 @@
     <link rel="stylesheet" href="../public/assets/css/dashboard.css">
     <link rel="stylesheet" href="../public/assets/css/login1.css">
     <link rel="stylesheet" href="../public/assets/css/attendance.css">
+    <!-- Tailwind (offline build) -->
+    <!-- <link rel="stylesheet" href="../src/output.css"> -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-         <!-- Loading Spinner Styles -->
+    <!-- Loading Spinner Styles -->
      <style>
          /* Page Loading Spinner */
          #pageLoadingSpinner {

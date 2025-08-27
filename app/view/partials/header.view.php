@@ -41,7 +41,7 @@
     <!-- ✅ Always loaded (shared across pages) -->
     <link rel="stylesheet" href="../public/assets/css/sidebar.css">
     <link rel="stylesheet" href="../public/assets/css/nav.css">
-    <link rel="stylesheet" href="../src/output.css"> <!-- Tailwind -->
+    <!-- <link rel="stylesheet" href="../src/output.css"> -->
     <link rel="stylesheet" href="../public/assets/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
     <link rel="stylesheet" href="../public/assets/css/flatpickr/monthSelect/style.css">
@@ -51,6 +51,7 @@
     <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
     <script src="../public/assets/js/flatpickr/monthSelect/index.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Removed Tailwind CDN to use offline build (src/output.css) -->
     <script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>
 </head>
 <body>

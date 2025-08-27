@@ -19,6 +19,8 @@
 <!-- Bootstrap Bundle JS -->
 <script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>
 
+<!-- <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
+
 <!-- Logout Confirmation with SweetAlert2 -->
 <script>
     function confirmLogout(event) {

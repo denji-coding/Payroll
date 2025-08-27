@@ -38,7 +38,7 @@ $loginType = 'manager';
             value="<?php echo isset($_POST['m_email']) ? htmlspecialchars($_POST['m_email']) : ''; ?>"
             required
           >
-          <i class="bi bi-envelope position-absolute top-1/2 left-3 transform -translate-y-1/2" style="color: #396A39; font-size: 1.4rem;" data-aos="fade-up" data-aos-delay="70"></i>
+          <i class="bi bi-envelope absolute top-1/2 left-3 -translate-y-1/2" style="color: #396A39; font-size: 1.4rem;"></i>
         </div>
       </div>
 
@@ -55,11 +55,11 @@ $loginType = 'manager';
             required
           >
           <!-- Lock Icon -->
-          <span class="absolute top-1/2 left-3 transform -translate-y-1/2" data-aos="fade-up" data-aos-delay="70">
+          <span class="absolute top-1/2 left-3 -translate-y-1/2">
             <i class="bi bi-lock" style="font-size: 1.4rem; color: #396A39;"></i>
           </span>
           <!-- Eye Toggle Icon -->
-          <span class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer" onclick="togglePassword(event, 'managerPassword')" data-aos="fade-up" data-aos-delay="90">
+          <span class="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" onclick="togglePassword(event, 'managerPassword')">
             <i class="bi bi-eye-slash" style="font-size: 1.2rem; color: #396A39;"></i>
           </span>
         </div>

@@ -20,7 +20,7 @@ require_once views_path("partials/nav");
   animation: fadeInSlide 0.4s ease-out;
 }
 
-.btn-close {
+  .btn-close {
     background: transparent;
     border: 0;
     font-size: 1.5rem;
@@ -263,13 +263,13 @@ function printPayslip(payrollId) {
 
     })
     .catch(err => {
-        Swal.close();
-        Swal.fire({
-            icon: 'error',
-            title: 'Print Failed',
+    Swal.close();
+    Swal.fire({
+      icon: 'error',
+      title: 'Print Failed',
             text: 'Failed to load payslip data for printing. Please try again.'
-        });
     });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -310,9 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   <p class="text-gray-500">No payslips have been generated yet</p>
                 </div>
               </div>
-            </td>
-          </tr>
-        `;
+              </td>
+            </tr>
+          `;
       }
     })
     .catch(() => {

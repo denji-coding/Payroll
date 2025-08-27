@@ -17,9 +17,9 @@ function startSecureSession() {
         ini_set('session.use_strict_mode', 1);
         ini_set('session.cookie_samesite', 'Strict');
         
-        // Set session timeout (30 minutes)
-        ini_set('session.gc_maxlifetime', 1800);
-        session_set_cookie_params(1800);
+        // Set session timeout (1 day)
+        ini_set('session.gc_maxlifetime', 86400);
+        session_set_cookie_params(86400);
         
         session_start();
     }
@@ -41,7 +41,7 @@ startSecureSession();
  * Session timeout check
  */
 function checkSessionTimeout() {
-    $timeout = 1800; // 30 minutes
+    $timeout = 86400; // 1 day
     $lastActivity = $_SESSION['last_activity'] ?? 0;
     
     if (time() - $lastActivity > $timeout) {

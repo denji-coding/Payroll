@@ -99,7 +99,8 @@ function applyAuthMiddleware($controllerName) {
         'dashboard1' => ['admin'],
         'employees' => ['admin'],
         'managers_account' => ['admin'],
-        'attendance' => ['admin'],
+        // Publicly accessible attendance page (no auth required)
+        'attendance' => [],
         'schedules' => ['admin'],
         'payroll' => ['admin'],
         'payslips' => ['admin'],
