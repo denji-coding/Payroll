@@ -8,7 +8,30 @@ echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></scri
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
 $username = isset($_SESSION['manager_name']) ? $_SESSION['manager_name'] : 'Guest';
+
+// Session handling for login success
+$loginSuccess = isset($_SESSION['login_success']) && $_SESSION['login_success'] === true;
+if ($loginSuccess) {
+    unset($_SESSION['login_success']);
+}
 ?>
+
+<?php if ($loginSuccess): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Login Successfully!',
+            text: 'Welcome back, <?php echo addslashes(htmlspecialchars($username)); ?>',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+        });
+    });
+</script>
+<?php endif; ?>
 
 <div class="flex min-h-screen overflow-hidden">
     <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">

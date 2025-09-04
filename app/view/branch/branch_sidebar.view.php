@@ -273,7 +273,7 @@ a {
 /* Underline style for expanded (full label) */
 #sidebar:not(.collapsed) #portalLabel .underline {
     width: 100%;
-    margin-left: 89px; /* reset margin */
+    /* margin-left: 1px; reset margin */
 }
 
 /* Ensure parent wrapper is relatively positioned */
@@ -288,7 +288,7 @@ a {
     width: 100%;
     position: absolute;
     bottom: -4px; /* or adjust as needed */
-    left: 14px;
+    left: 0.2px;
     transform: none; /* remove translateX */
     height: 4px;
     background-color: #22c55e; /* green-500 */
