@@ -5,15 +5,6 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// === Session Validation ===
-require_once __DIR__ . '/../core/session_helper.php';
-
-// Check if any user is authenticated (admin, manager, or employee)
-requireAnyAuth();
-
-// Log API access
-logUserActivity('API access', 'employees-api.php');
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -21,6 +12,10 @@ error_reporting(E_ALL);
 // === Load Dependencies ===
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../Model/Employees.php';
+require_once __DIR__ . '/../core/SecureAPIMiddleware.php';
+
+// === Apply API Middleware ===
+applyAPIMiddleware('employees');
 
 header('Content-Type: application/json');
 

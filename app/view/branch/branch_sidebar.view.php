@@ -418,7 +418,7 @@ function confirmLogout() {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = 'index.php?payroll=login_manager&logout=true';
+            window.location.href = 'index.php?payroll=login1&type=manager&logout=true';
         }
     });
 }

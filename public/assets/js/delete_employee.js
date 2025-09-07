@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData();
         formData.append('employeeId', employeeId);
         formData.append('action', 'delete');
+        formData.append('csrf_token', window.csrfToken || '');
 
         try {
           const res = await fetch('index.php?payroll=api/employees', {

@@ -286,6 +286,7 @@ require_once views_path("partials/nav");
                 <div class="container-fluid  p-2 ">
                     <form method="post" id="addEmployeeForm" action="../app/api/employees-api.php"
                         enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <div class="border rounded-lg mb-4">
                             <div class="bg-yellow-100 px-4 py-2 rounded-t-lg border-b border-b-gray-200">
                                 <span class="font-semibold text-[#133913]">PERSONAL INFORMATION</span>
@@ -729,6 +730,7 @@ require_once views_path("partials/nav");
                         <?php if (isset($employee)) : ?>
                             <input type="hidden" name="isUpdate" value="1">
                         <?php endif; ?>
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <div class="border rounded-lg mb-4">
                             <div class="bg-yellow-100 px-4 py-2 rounded-t-lg border-b border-b-gray-200">
                                 <span class="font-semibold text-[#133913]">PERSONAL INFORMATION</span>

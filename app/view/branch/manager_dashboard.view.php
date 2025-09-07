@@ -16,22 +16,7 @@ if ($loginSuccess) {
 }
 ?>
 
-<?php if ($loginSuccess): ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Login Successfully!',
-            text: 'Welcome back, <?php echo addslashes(htmlspecialchars($username)); ?>',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-        });
-    });
-</script>
-<?php endif; ?>
+<?php // Removed login success toast ?>
 
 <div class="flex min-h-screen overflow-hidden">
     <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">

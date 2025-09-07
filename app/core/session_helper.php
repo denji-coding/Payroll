@@ -134,10 +134,10 @@ function redirectToLogin() {
     
     switch ($userType) {
         case 'admin':
-            header('Location: index.php?payroll=login1&type=admin');
+            header('Location: index.php?payroll=login_admin');
             break;
         case 'manager':
-            header('Location: index.php?payroll=login_manager');
+            header('Location: index.php?payroll=login1&type=manager');
             break;
         case 'employee':
             header('Location: index.php?payroll=login1&type=employee');
@@ -200,9 +200,17 @@ function clearAllSessions() {
     unset($_SESSION['manager_name']);
     unset($_SESSION['manager_email']);
     unset($_SESSION['manager_branch']);
+    unset($_SESSION['user_id']);
+    unset($_SESSION['user_type']);
+    unset($_SESSION['user_email']);
+    unset($_SESSION['user_name']);
+    unset($_SESSION['login_time']);
+    unset($_SESSION['last_activity']);
+    unset($_SESSION['ip_address']);
+    unset($_SESSION['user_agent']);
+    unset($_SESSION['login_success']);
     
-    // Set logout flag
-    $_SESSION['logged_out'] = true;
+    // Don't set logged_out here - it should only be set during actual logout
 }
 
 /**

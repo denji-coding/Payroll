@@ -11,7 +11,10 @@ $msg = "";
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $loginType = $_POST['login_type'] ?? 'admin'; // get login type
+    // Reset session for fresh login attempt
+    resetSessionForLogin();
+    
+    $loginType = $_POST['login_type'] ?? 'manager'; // get login type
 
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
@@ -23,9 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        if ($loginType === 'admin') {
-            // Admin login logic
-            $result = $auth->authenticateAdmin($email, $password);
+        if ($loginType === 'manager') {
+            // Manager login logic
+            $result = $auth->authenticateManager($email, $password);
             
             if ($result['success']) {
                 header("Location: " . $result['redirect']);
@@ -66,7 +69,7 @@ if (!empty($_SESSION['logged_out'])) {
 }
 
 // Determine active form type for the view
-$loginType = $_GET['type'] ?? 'admin'; // used in view to show correct form
+$loginType = $_GET['type'] ?? 'manager'; // used in view to show correct form
 
 // $_SESSION['login_success'] = true;
 // $_SESSION['username'] = $employee['first_name'] . ' ' . $employee['last_name'];

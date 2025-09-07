@@ -3,16 +3,33 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Include database configuration
+require_once __DIR__ . '/db_config.php';
 
 class Database
 {
     private function db_connect()
     {
-        $DBHOST   = "localhost";
-        $DBNAME   = "payroll_db";
-        $DBUSER   = "root";
-        $DBPASS   = "";
-        $DBDRIVER = "mysql";
+        // Check if we're on InfinityFree hosting
+        $isInfinityFree = (strpos($_SERVER['HTTP_HOST'] ?? '', 'free.nf') !== false) || 
+                          (strpos($_SERVER['HTTP_HOST'] ?? '', 'epizy.com') !== false) ||
+                          (strpos($_SERVER['HTTP_HOST'] ?? '', 'infinityfree.net') !== false);
+        
+        if ($isInfinityFree) {
+            // InfinityFree database credentials
+            $DBHOST   = INFINITYFREE_DB_HOST;
+            $DBNAME   = INFINITYFREE_DB_NAME;
+            $DBUSER   = INFINITYFREE_DB_USER;
+            $DBPASS   = INFINITYFREE_DB_PASS;
+            $DBDRIVER = "mysql";
+        } else {
+            // Local development credentials
+            $DBHOST   = LOCAL_DB_HOST;
+            $DBNAME   = LOCAL_DB_NAME;
+            $DBUSER   = LOCAL_DB_USER;
+            $DBPASS   = LOCAL_DB_PASS;
+            $DBDRIVER = "mysql";
+        }
 
         try {
             $conn = new PDO("$DBDRIVER:host=$DBHOST;dbname=$DBNAME", $DBUSER, $DBPASS);
@@ -27,7 +44,7 @@ class Database
         catch(PDOException $e) {
             // Log error instead of echoing
             error_log("Database connection failed: " . $e->getMessage());
-            throw new Exception("Database connection failed");
+            throw new Exception("Database connection failed: " . $e->getMessage());
         }
     }
 

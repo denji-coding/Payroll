@@ -55,11 +55,11 @@
     });
 
     function goToAdminLogin() {
-      window.location.href = 'index.php?payroll=login1&type=admin';
+      window.location.href = 'index.php?payroll=login_admin';
     }
 
     function goToManagerLogin() {
-      window.location.href = 'index.php?payroll=login_manager';
+      window.location.href = 'index.php?payroll=login1&type=manager';
     }
 
     function goToEmployeeLogin() {

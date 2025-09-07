@@ -6,8 +6,8 @@ if (isset($_SESSION['error'])) {
     $msg = $_SESSION['error'];
     unset($_SESSION['error']);
 }
-// Determine which form to show initially (default to admin)
-$loginType = $_GET['type'] ?? 'admin';
+// Determine which form to show initially (default to manager)
+$loginType = $_GET['type'] ?? 'manager';
 ?>
 <!-- <script>
   // Reset the sidebar collapse state on fresh login
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php endif; ?>
 
         <style>
-    #adminLoginForm,
+    #managerLoginForm,
     #employeeLoginForm {
         display: none;
     }
@@ -113,11 +113,11 @@ document.addEventListener('DOMContentLoaded', function () {
              <div class="inline-flex rounded-xl overflow-hidden shadow-sm border border-green-200 bg-white">
                 <button 
                     type="button" 
-                    id="adminLoginBtn" 
+                    id="managerLoginBtn" 
                       class="px-4 py-2 font-semibold text-sm transition-all duration-300 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transform hover:scale-105"
-                    onclick="toggleLoginForm('admin')"
+                    onclick="toggleLoginForm('manager')"
                 >
-                    Admin Login
+                    Manager
                 </button>
                 <button 
                     type="button" 
@@ -137,18 +137,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         <!-- Display error message if available -->
 
-       <form id="adminLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'admin' ? 'block' : 'none' ?>;">
-    <input type="hidden" name="login_type" value="admin">
+       <form id="managerLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'manager' ? 'block' : 'none' ?>;">
+    <input type="hidden" name="login_type" value="manager">
     
     <!-- Email input -->
     <div class="mb-3">
-        <label class="block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Admin Email</label>
+        <label class="block mb-1 text-sm font-bold text-[#403E43]" data-aos="fade-up">Email</label>
         <div class="position-relative mb-3" data-aos="fade-up" data-aos-delay="50">
             <input type="email" 
                 class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43]
                     focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 
                     focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2" 
-                name="email" id="adminEmail" placeholder="Enter admin email" 
+                name="email" id="managerEmail" placeholder="Enter your email address" 
                 value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
             <i class="bi bi-envelope position-absolute top-50 start-0 translate-middle-y ps-3" 
             style="color: #396A39; font-size: 1.4rem;" data-aos="fade-up" data-aos-delay="70"></i>
@@ -163,11 +163,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43]
                     focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 
                     focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2" 
-                name="password" id="adminPassword" placeholder="Enter your password" required>
+                name="password" id="managerPassword" placeholder="Enter your password" required>
             <span class="position-absolute top-50 start-0 translate-middle-y ps-3" data-aos="fade-up" data-aos-delay="70">
                 <i class="bi bi-lock" style="font-size: 1.4rem; color: #396A39;"></i>
             </span>
-            <span class="position-absolute top-50 end-0 translate-middle-y pe-3" onclick="togglePassword('adminPassword')" style="cursor: pointer;" data-aos="fade-up" data-aos-delay="90">
+            <span class="position-absolute top-50 end-0 translate-middle-y pe-3" onclick="togglePassword('managerPassword')" style="cursor: pointer;" data-aos="fade-up" data-aos-delay="90">
                 <i class="bi bi-eye-slash" style="font-size: 1.2rem; color: #396A39;"></i>
             </span>
         </div>
@@ -180,12 +180,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     <!-- Login button -->
        <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 mt-4 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
-        <svg id="adminSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg id="managerSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
         </svg>
-         <span id="adminLoginText" class="text-md font-medium">Admin Login</span>
-        <span id="adminLoggingInText" class="hidden">Logging in...</span>
+         <span id="managerLoginText" class="text-md font-medium">Manager Login</span>
+        <span id="managerLoggingInText" class="hidden">Logging in...</span>
     </button>
 </form>
 
@@ -254,29 +254,33 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 // Initialize form display based on URL parameter
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear any existing session storage data
+    sessionStorage.clear();
+    localStorage.removeItem('sidebar-collapsed');
+    
     const urlParams = new URLSearchParams(window.location.search);
-    const loginType = urlParams.get('type') || 'admin';
+    const loginType = urlParams.get('type') || 'manager';
     toggleLoginForm(loginType, false);
 });
 
 function toggleLoginForm(type, updateUrl = true) {
-    const adminForm = document.getElementById('adminLoginForm');
+    const managerForm = document.getElementById('managerLoginForm');
     const employeeForm = document.getElementById('employeeLoginForm');
-    const adminBtn = document.getElementById('adminLoginBtn');
+    const managerBtn = document.getElementById('managerLoginBtn');
     const employeeBtn = document.getElementById('employeeLoginBtn');
 
     // Toggle forms
-    adminForm.style.display = type === 'admin' ? 'block' : 'none';
+    managerForm.style.display = type === 'manager' ? 'block' : 'none';
     employeeForm.style.display = type === 'employee' ? 'block' : 'none';
 
     // Update form actions with current type
-    adminForm.action = "index.php?payroll=login1&type=admin";
+    managerForm.action = "index.php?payroll=login1&type=manager";
     employeeForm.action = "index.php?payroll=login1&type=employee";
 
     // Update button styles
-    if (type === 'admin') {
-        // Set admin as active
-        adminBtn.className = `px-4 py-1 font-semibold text-sm transition-all duration-300
+    if (type === 'manager') {
+        // Set manager as active
+        managerBtn.className = `px-4 py-1 font-semibold text-sm transition-all duration-300
                            bg-green-600 text-white hover:bg-green-700 focus:outline-none`;
         
         // Set employee as inactive
@@ -287,13 +291,13 @@ function toggleLoginForm(type, updateUrl = true) {
         employeeBtn.className = `px-4 py-1 font-semibold text-sm transition-all duration-300
                               bg-green-600 text-white hover:bg-green-700 focus:outline-none`;
         
-        // Set admin as inactive
-        adminBtn.className = `px-4 py-1 font-semibold text-sm transition-all duration-300
+        // Set manager as inactive
+        managerBtn.className = `px-4 py-1 font-semibold text-sm transition-all duration-300
                            bg-white text-green-600 hover:bg-green-100 focus:outline-none`;
     }
 
     // Reset AOS for the active form
-    resetAOS(type === 'admin' ? adminForm : employeeForm);
+    resetAOS(type === 'manager' ? managerForm : employeeForm);
 
     if (updateUrl) {
         const url = new URL(window.location);
@@ -340,14 +344,14 @@ function togglePassword(fieldId) {
 }
 
 // Handle form submission spinners and text
-document.getElementById('adminLoginForm').addEventListener('submit', function() {
-    document.getElementById('adminSpinner').classList.remove('hidden');
-    document.getElementById('adminLoginText').classList.add('hidden');
-    document.getElementById('adminLoggingInText').classList.remove('hidden');
+document.getElementById('managerLoginForm').addEventListener('submit', function() {
+    document.getElementById('managerSpinner').classList.remove('hidden');
+    document.getElementById('managerLoginText').classList.add('hidden');
+    document.getElementById('managerLoggingInText').classList.remove('hidden');
     
     // Store email for potential error handling
-    const email = document.getElementById('adminEmail').value;
-    sessionStorage.setItem('adminEmail', email);
+    const email = document.getElementById('managerEmail').value;
+    sessionStorage.setItem('managerEmail', email);
 });
 
 document.getElementById('employeeLoginForm').addEventListener('submit', function() {
@@ -362,11 +366,11 @@ document.getElementById('employeeLoginForm').addEventListener('submit', function
 
 // Function to restore email and clear password on error
 function restoreEmailOnError() {
-    // Restore admin email if exists
-    const adminEmail = sessionStorage.getItem('adminEmail');
-    if (adminEmail) {
-        document.getElementById('adminEmail').value = adminEmail;
-        sessionStorage.removeItem('adminEmail');
+    // Restore manager email if exists
+    const managerEmail = sessionStorage.getItem('managerEmail');
+    if (managerEmail) {
+        document.getElementById('managerEmail').value = managerEmail;
+        sessionStorage.removeItem('managerEmail');
     }
     
     // Restore employee email if exists
@@ -377,7 +381,7 @@ function restoreEmailOnError() {
     }
     
     // Clear all password fields
-    document.getElementById('adminPassword').value = '';
+    document.getElementById('managerPassword').value = '';
     document.getElementById('employeePassword').value = '';
 }
 

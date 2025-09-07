@@ -599,7 +599,7 @@ async function resetStatusFilter() {
     // Reset status dropdown visual and state
     const statusButton = document.querySelector('[role="combobox"]');
     if (statusButton) {
-        const statusSpan = statusButton.querySelector('span');
+    const statusSpan = statusButton.querySelector('span');
         if (statusSpan) statusSpan.textContent = 'All Status';
         statusButton.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
     }
@@ -635,7 +635,7 @@ async function resetStatusFilter() {
             if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
             
             // Ensure filter is cleared visually
-            filterTableByStatus('All Status');
+    filterTableByStatus('All Status');
             
             // Always update pagination with the meta data from API
             updatePagination(data.meta || null);

@@ -206,8 +206,8 @@ class SecureAPIMiddleware {
 function applyAPIMiddleware($endpoint) {
     // Define protection requirements for each API endpoint
     $apiProtection = [
-        // Admin only APIs
-        'employees' => ['roles' => ['admin'], 'methods' => ['GET', 'POST', 'PUT', 'DELETE']],
+        // Admin and Manager APIs
+        'employees' => ['roles' => ['admin', 'manager'], 'methods' => ['GET', 'POST', 'PUT', 'DELETE']],
         'managers_account' => ['roles' => ['admin'], 'methods' => ['GET', 'POST', 'PUT', 'DELETE']],
         'attendance' => ['roles' => ['admin'], 'methods' => ['GET', 'POST', 'PUT', 'DELETE']],
         'schedules' => ['roles' => ['admin'], 'methods' => ['GET', 'POST', 'PUT', 'DELETE']],

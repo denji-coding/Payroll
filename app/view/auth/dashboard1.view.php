@@ -354,22 +354,7 @@ endif;
 ?> -->
 
 
-    <?php if ($loginSuccess): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Login Successfully!',
-                text: 'Welcome back, <?php echo addslashes(htmlspecialchars($username)); ?>',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true,
-            });
-        });
-    </script>
-    <?php endif; ?>
+    <?php // Removed login success toast ?>
 
     <style>
         /* Add these new animation classes */

@@ -2,16 +2,7 @@
 // Include security configuration first
 require_once "../app/core/SecurityConfig.php";
 
-// Configure session cookie path BEFORE starting the session
-if (session_status() === PHP_SESSION_NONE) {
-    $cookiePath = '/mvcPayroll/';
-    session_set_cookie_params([
-        'path' => $cookiePath,
-        'secure' => false, // Set to true in production with HTTPS
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
-}
+// Session configuration is handled by secure_session.php
 
 // Start secure session
 require_once "../app/core/secure_session.php";

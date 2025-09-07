@@ -24,7 +24,18 @@ class AuthMiddleware {
         // If specific roles are required, check access
         if (!empty($allowedRoles) && !in_array($userType, $allowedRoles)) {
             http_response_code(403);
-            require_once __DIR__ . '/../Error/unauthorized.php';
+            $unauthPage = __DIR__ . '/../Error/unauthorized.php';
+            if (count($allowedRoles) === 1) {
+                $requiredRole = $allowedRoles[0];
+                if ($requiredRole === 'admin') {
+                    $unauthPage = __DIR__ . '/../Error/unauthorized_admin.php';
+                } elseif ($requiredRole === 'manager') {
+                    $unauthPage = __DIR__ . '/../Error/unauthorized_manager.php';
+                } elseif ($requiredRole === 'employee') {
+                    $unauthPage = __DIR__ . '/../Error/unauthorized_employee.php';
+                }
+            }
+            require_once $unauthPage;
             exit;
         }
         
@@ -129,7 +140,7 @@ function applyAuthMiddleware($controllerName) {
         
         // Public controllers (no auth required)
         'login1' => [],
-        'login_manager' => [],
+        'login_admin' => [],
         'register' => [],
         'register_manager' => [],
         'logout1' => [],

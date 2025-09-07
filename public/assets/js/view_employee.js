@@ -53,6 +53,17 @@ function formatManagerName(first, middle, last) {
 function viewEmployee(employeeId) {
   fetch(`index.php?payroll=api/employees&id=${employeeId}`)
     .then(async (response) => {
+      // Check if response is ok
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Access denied. You do not have permission to view employee details.');
+        } else if (response.status === 404) {
+          throw new Error('Employee not found.');
+        } else {
+          throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+      }
+
       const text = await response.text();
 
       try {
@@ -141,11 +152,17 @@ function viewEmployee(employeeId) {
       } catch (err) {
         console.error('❌ Invalid JSON from API:', err);
         console.warn('🧾 Raw API Response:', text);
-        alert('⚠️ Invalid response from server. Check console.');
+        
+        // Check if the response contains HTML error messages
+        if (text.includes('<br />') || text.includes('<b>')) {
+          alert('⚠️ Server error occurred. Please check your login status and try again.');
+        } else {
+          alert('⚠️ Invalid response from server. Please try again.');
+        }
       }
     })
     .catch(error => {
       console.error('Fetch failed:', error);
-      alert('⚠️ Network error while loading employee.');
+      alert(`⚠️ ${error.message}`);
     });
 }

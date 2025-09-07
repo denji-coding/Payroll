@@ -405,22 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     });
 </script>
-<?php if ($loginSuccess): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-            title: 'Welcome back!',
-            text: 'You have successfully logged in.',
-                showConfirmButton: false,
-            timer: 3000,
-                timerProgressBar: true,
-            });
-        });
-    </script>
-    <?php endif; ?>
+<?php // Removed login success toast ?>
 
 <style>
 /* Custom scrollbar for activity log */

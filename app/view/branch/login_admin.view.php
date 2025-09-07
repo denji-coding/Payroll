@@ -3,7 +3,7 @@ $title = "Login";
 require_once views_path("partials/header");
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
-$loginType = 'manager';
+$loginType = 'admin';
 
 if (isset($_SESSION['error'])) {
     $msg = $_SESSION['error'];
@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 
     <!-- Login Form -->
-    <form id="managerLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'manager' ? 'block' : 'none' ?>;">
-      <input type="hidden" name="login_type" value="manager">
+    <form id="adminLoginForm" action="" method="post" data-aos="fade-up" data-aos-delay="60" style="display: <?= $loginType === 'admin' ? 'block' : 'none' ?>;">
+      <input type="hidden" name="login_type" value="admin">
 
       <!-- Email Input -->
       <div class="mb-4">
@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', function () {
           <input
             type="email"
             class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43] focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2 w-full rounded"
-            name="m_email"
-            placeholder="Enter your email"
-            value="<?php echo isset($_POST['m_email']) ? htmlspecialchars($_POST['m_email']) : ''; ?>"
+            name="a_email"
+            placeholder="Enter your email address"
+            value="<?php echo isset($_POST['a_email']) ? htmlspecialchars($_POST['a_email']) : ''; ?>"  
             required
           >
           <i class="bi bi-envelope absolute top-1/2 left-3 -translate-y-1/2" style="color: #396A39; font-size: 1.4rem;"></i>
@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', function () {
           <input
             type="password"
             class="form-control form-control-lg ps-5 text-sm bg-[#eaf5ea] placeholder:text-sm text-[#403E43] focus:bg-[#eaf5ea] focus:border-green-500 focus:ring-1 focus:ring-green-200 focus:outline-none focus:outline-2 focus:outline-green-500 focus:outline-offset-2 w-full rounded"
-            name="m_password"
-            id="managerPassword"
+            name="a_password"
+            id="adminPassword"
             placeholder="Enter your password"
             required
           >
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <i class="bi bi-lock" style="font-size: 1.4rem; color: #396A39;"></i>
           </span>
           <!-- Eye Toggle Icon -->
-          <span class="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" onclick="togglePassword(event, 'managerPassword')">
+          <span class="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer" onclick="togglePassword(event, 'adminPassword')">
             <i class="bi bi-eye-slash" style="font-size: 1.2rem; color: #396A39;"></i>
           </span>
         </div>
@@ -89,12 +89,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- Submit Button -->
       <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 mt-4 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
-        <svg id="managerSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg id="adminSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
         </svg>
-        <span id="managerLoginText" class="text-md font-medium">Manager Login</span>
-        <span id="managerLoggingInText" class="hidden">Logging in...</span>
+        <span id="adminLoginText" class="text-md font-medium">Admin Login</span>
+        <span id="adminLoggingInText" class="hidden">Logging in...</span>
       </button>
     </form>
   </div>
@@ -118,31 +118,35 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Handle form submission spinners and text
-  document.getElementById('managerLoginForm').addEventListener('submit', function() {
-    document.getElementById('managerSpinner').classList.remove('hidden');
-    document.getElementById('managerLoginText').classList.add('hidden');
-    document.getElementById('managerLoggingInText').classList.remove('hidden');
+  document.getElementById('adminLoginForm').addEventListener('submit', function() {
+    document.getElementById('adminSpinner').classList.remove('hidden');
+    document.getElementById('adminLoginText').classList.add('hidden');
+    document.getElementById('adminLoggingInText').classList.remove('hidden');
     
     // Store email for potential error handling
-    const email = document.querySelector('input[name="m_email"]').value;
-    sessionStorage.setItem('managerEmail', email);
+    const email = document.querySelector('input[name="a_email"]').value;
+    sessionStorage.setItem('adminEmail', email);
   });
 
   // Function to restore email and clear password on error
   function restoreEmailOnError() {
-    // Restore manager email if exists
-    const managerEmail = sessionStorage.getItem('managerEmail');
-    if (managerEmail) {
-      document.querySelector('input[name="m_email"]').value = managerEmail;
-      sessionStorage.removeItem('managerEmail');
+    // Restore admin email if exists
+    const adminEmail = sessionStorage.getItem('adminEmail');
+    if (adminEmail) {
+      document.querySelector('input[name="a_email"]').value = adminEmail;
+      sessionStorage.removeItem('adminEmail');
     }
     
     // Clear password field
-    document.getElementById('managerPassword').value = '';
+    document.getElementById('adminPassword').value = '';
   }
 
   // Call this function when page loads to restore email if there was an error
   document.addEventListener('DOMContentLoaded', function() {
+    // Clear any existing session storage data
+    sessionStorage.clear();
+    localStorage.removeItem('sidebar-collapsed');
+    
     restoreEmailOnError();
   });
 </script>
@@ -150,3 +154,4 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php
 require_once views_path("partials/footer");
 ?>
+
