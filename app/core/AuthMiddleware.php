@@ -141,6 +141,8 @@ function applyAuthMiddleware($controllerName) {
         // Public controllers (no auth required)
         'login1' => [],
         'login_admin' => [],
+        'reset-password' => [],
+        'forgot-password' => [],
         'register' => [],
         'register_manager' => [],
         'logout1' => [],

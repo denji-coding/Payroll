@@ -2,7 +2,7 @@
 $currentPage = $_GET['payroll'] ?? basename($_SERVER['PHP_SELF']);
 require_once views_path("partials/header");
 
-$employeePages = ['employees', 'delete_history', 'approvals_request'];
+$employeePages = ['employees', 'delete_history', 'approvals_request', 'leave_credits'];
 $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 ?>
 
@@ -20,16 +20,19 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 /* Smooth transition container */
 .dropdown-container {
     overflow: hidden;
-    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.25s ease;
     max-height: 0;
     opacity: 0;
     pointer-events: none;
+    margin: 0;
+    will-change: max-height, opacity, margin;
 }
 
 .dropdown-container.open {
-    max-height: 300px; /* enough height for 3 items */
+    max-height: 600px; /* allow smooth expand; should exceed content height */
     opacity: 1;
     pointer-events: auto;
+    margin: 0.25rem 0; /* tighter spacing when open */
 }
 
 .dropdown-header-btn {
@@ -42,7 +45,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 }
 
 .dropdown-arrow {
-    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.32s ease;
     transform: rotate(0deg);
 }
 .dropdown-arrow.open {
@@ -67,6 +70,41 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
   #adminSidebar {
     scrollbar-width: thin;              /* "auto" or "thin" */
     scrollbar-color: #1a7f3c #0b5125;   /* thumb and track */
+  }
+
+  /* Employee dropdown specific styling */
+  #employeeDropdown {
+    max-height: 350px;
+    overflow-y: auto;
+  }
+
+  #employeeDropdown::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  #employeeDropdown::-webkit-scrollbar-track {
+    background: #0b5125;
+  }
+
+  #employeeDropdown::-webkit-scrollbar-thumb {
+    background-color: #1a7f3c;
+    border-radius: 3px;
+  }
+
+  /* Ensure proper spacing between sections */
+  .dropdown-container:not(.open) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Fix spacing for section buttons */
+  .dropdown-header-btn {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Employees wrapper: no extra bottom gap */
+  #employeeWrapper { 
+    margin-bottom: 0 !important; 
   }
 </style>
 
@@ -99,7 +137,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
         </button>
         <div id="employeeSectionDropdown" class="dropdown-container ml-0 mt-0 mb-2.5">
             <!-- Employees Dropdown (existing) -->
-            <div class="w-full mb-2.5">
+            <div id="employeeWrapper" class="w-full">
                 <button id="btn-employeeDropdown" onclick="toggleEmployeeDropdown()" 
                     class="dropdown-button w-full flex justify-between items-center font-semibold text-white text-sm p-2 px-4 rounded <?= $isEmployeeDropdownOpen ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                     <span class="text-sm"><i class="bi bi-people"></i> Employees</span>
@@ -107,34 +145,41 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
                         <path d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
-                <div id="employeeDropdown" class="dropdown-container <?= $isEmployeeDropdownOpen ? 'open' : '' ?> ml-5 mt-2 -mb-3">
+                <div id="employeeDropdown" class="dropdown-container <?= $isEmployeeDropdownOpen ? 'open' : '' ?> ml-5 mt-2">
                     <a href="index.php?payroll=employees" prefetch={false} 
-                    class="block font-semibold py-2 px-3 text-xs text-white rounded <?= $currentPage == 'employees' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+                    class="block font-semibold ml-4 py-2 px-3 text-xs text-white rounded <?= $currentPage == 'employees' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                         <i class="bi bi-person-gear"></i> Manage Employees
                     </a>
                     <a href="index.php?payroll=approvals_request" 
-                    class="block py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'approvals_request' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">                    
+                    class="block ml-4 py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'approvals_request' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">                    
                         <i class="bi bi-check-circle"></i> Approvals by Manager
                     </a>
                     <a href="index.php?payroll=delete_history" 
-                    class="block py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'delete_history' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+                    class="block ml-4 py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'delete_history' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                         <i class="bi bi-trash"></i> Delete History
                     </a>
                 </div>
+                <a href="index.php?payroll=schedules"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'schedules') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-clock"></i> Schedules
+        </a>
+        <a href="index.php?payroll=leave_credits"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'leave_credits') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-calendar-plus"></i> Leave Credits
+        </a>
+        <a href="index.php?payroll=leave_history"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'leave_history') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-calendar-check"></i> Leave History
+        </a>
+        <a href="index.php?payroll=managers_account"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'managers_account') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-person-badge"></i> Managers
+        </a>
             </div>
-            <a href="index.php?payroll=schedules"
-                class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'schedules') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
-                <i class="bi bi-clock"></i> Schedules
-            </a>
-            <a href="index.php?payroll=leave_history"
-                class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'leave_history') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
-                <i class="bi bi-calendar-check"></i> Leave History
-            </a>
-            <a href="index.php?payroll=managers_account"
-                class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'managers_account') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
-                <i class="bi bi-person-badge"></i> Managers
-            </a>
         </div>
+        
+        <!-- Individual buttons outside dropdown for better spacing control -->
+        
     </div>
 
     <!-- Section: Payroll Management -->
@@ -146,7 +191,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
             </svg>
         </button>
-        <div id="payrollSectionDropdown" class="dropdown-container ml-0 mt-0 mb-2.5">
+        <div id="payrollSectionDropdown" class="dropdown-container ml-0 mt-0">
             <a href="index.php?payroll=timerecords"
                 class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'timerecords') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                 <i class="bi bi-calendar2-week"></i> Time Records
@@ -170,18 +215,78 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 </div>
 
 <script>
+// Slide helpers: animate height/opacity and hide on close
+function slideDown(element, duration = 320, easing = 'ease') {
+    if (!element) return Promise.resolve();
+    return new Promise(resolve => {
+        element.style.removeProperty('display');
+        const computed = window.getComputedStyle(element);
+        if (computed.display === 'none') element.style.display = 'block';
+        const targetHeight = element.scrollHeight;
+        element.style.overflow = 'hidden';
+        element.style.maxHeight = '0px';
+        element.style.opacity = '0';
+        element.offsetHeight; // reflow
+        element.style.transition = `max-height ${duration}ms ${easing}, opacity ${duration}ms ${easing}`;
+        element.style.maxHeight = targetHeight + 'px';
+        element.style.opacity = '1';
+        const onEnd = (e) => {
+            if (e.propertyName === 'max-height') {
+                element.style.transition = '';
+                element.style.maxHeight = '';
+                element.style.overflow = '';
+                element.removeEventListener('transitionend', onEnd);
+                resolve();
+            }
+        };
+        element.addEventListener('transitionend', onEnd);
+    });
+}
+
+function slideUp(element, duration = 320, easing = 'ease') {
+    if (!element) return Promise.resolve();
+    return new Promise(resolve => {
+        const currentHeight = element.scrollHeight;
+        element.style.overflow = 'hidden';
+        element.style.maxHeight = currentHeight + 'px';
+        element.style.opacity = '1';
+        element.offsetHeight; // reflow
+        element.style.transition = `max-height ${duration}ms ${easing}, opacity ${duration}ms ${easing}`;
+        element.style.maxHeight = '0px';
+        element.style.opacity = '0';
+        const onEnd = (e) => {
+            if (e.propertyName === 'max-height') {
+                element.style.transition = '';
+                element.style.maxHeight = '';
+                element.style.overflow = '';
+                element.style.display = 'none';
+                element.removeEventListener('transitionend', onEnd);
+                resolve();
+            }
+        };
+        element.addEventListener('transitionend', onEnd);
+    });
+}
+
 function toggleEmployeeDropdown() {
     const dropdown = document.getElementById('employeeDropdown');
     const arrow = document.getElementById('arrow-employeeDropdown');
     const button = document.getElementById('btn-employeeDropdown');
-    dropdown.classList.toggle('open');
-    arrow.classList.toggle('open', dropdown.classList.contains('open'));
-    if (dropdown.classList.contains('open')) {
+    const wrapper = document.getElementById('employeeWrapper');
+    const willOpen = !dropdown.classList.contains('open');
+    if (willOpen) {
+        dropdown.classList.add('open');
         arrow.classList.add('open');
+        if (wrapper) wrapper.classList.add('open');
         button.classList.add('bg-[#206037]', 'border-l-4', 'border-white');
+        slideDown(dropdown, 320, 'ease').then(() => {
+            setTimeout(() => { scrollDropdownIntoView('employeeDropdown'); }, 50);
+        });
     } else {
         arrow.classList.remove('open');
+        if (wrapper) wrapper.classList.remove('open');
         button.classList.remove('bg-[#206037]', 'border-l-4', 'border-white');
+        slideUp(dropdown, 320, 'ease').then(() => dropdown.classList.remove('open'));
     }
 }
 
@@ -194,6 +299,16 @@ function scrollDropdownIntoView(dropdownId) {
         if (dropdownRect.bottom > sidebarRect.bottom || dropdownRect.top < sidebarRect.top) {
             dropdown.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
+        
+        // For employee dropdown, ensure all items are visible
+        if (dropdownId === 'employeeDropdown') {
+            setTimeout(() => {
+                const lastItem = dropdown.querySelector('a:last-child');
+                if (lastItem) {
+                    lastItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 100);
+        }
     }
 }
 
@@ -201,21 +316,24 @@ function toggleSectionDropdown(sectionId, arrowId, buttonId) {
     const section = document.getElementById(sectionId);
     const arrow = document.getElementById(arrowId);
     const button = document.getElementById(buttonId);
-    section.classList.toggle('open');
-    arrow.classList.toggle('open', section.classList.contains('open'));
-    if (section.classList.contains('open')) {
+    const willOpen = !section.classList.contains('open');
+    if (willOpen) {
+        section.classList.add('open');
+        arrow.classList.add('open');
         button.classList.add('bg-[#206037]', 'border-l-4', 'border-white');
-        scrollDropdownIntoView(sectionId);
+        slideDown(section, 320, 'ease').then(() => scrollDropdownIntoView(sectionId));
     } else {
+        arrow.classList.remove('open');
         button.classList.remove('bg-[#206037]', 'border-l-4', 'border-white');
+        slideUp(section, 320, 'ease').then(() => section.classList.remove('open'));
     }
     // Persist state
-    localStorage.setItem(sectionId + '_open', section.classList.contains('open'));
+    localStorage.setItem(sectionId + '_open', willOpen);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     // Define which pages belong to which dropdown
-    const employeeDropdownPages = ['employees', 'approvals_request', 'delete_history', 'schedules', 'leave_history', 'managers_account'];
+    const employeeDropdownPages = ['employees', 'approvals_request', 'delete_history', 'schedules', 'leave_history', 'managers_account', 'leave_credits'];
     const payrollDropdownPages = ['timerecords', 'benefit_rates', 'payslips', 'reports'];
     // Get current page
     const currentPage = (typeof window !== 'undefined' && (new URLSearchParams(window.location.search)).get('payroll')) || (typeof window !== 'undefined' && window.location.pathname.split('/').pop());
@@ -233,16 +351,19 @@ document.addEventListener("DOMContentLoaded", () => {
             arrow.classList.add('open');
             button.classList.add('bg-[#206037]', 'border-l-4', 'border-white');
             localStorage.setItem(sectionId + '_open', 'true');
+            section.style.display = 'block';
         } else {
             const isOpen = localStorage.getItem(sectionId + '_open') === 'true';
             if (isOpen) {
                 section.classList.add('open');
                 arrow.classList.add('open');
                 button.classList.add('bg-[#206037]', 'border-l-4', 'border-white');
+                section.style.display = 'block';
             } else {
                 section.classList.remove('open');
                 arrow.classList.remove('open');
                 button.classList.remove('bg-[#206037]', 'border-l-4', 'border-white');
+                section.style.display = 'none';
             }
         }
     });
@@ -250,12 +371,32 @@ document.addEventListener("DOMContentLoaded", () => {
     // Sync Employees dropdown arrow with its open state on page load
     const empDropdown = document.getElementById('employeeDropdown');
     const empArrow = document.getElementById('arrow-employeeDropdown');
+    const empWrapper = document.getElementById('employeeWrapper');
     if (empDropdown && empArrow) {
         if (empDropdown.classList.contains('open')) {
             empArrow.classList.add('open');
+            if (empWrapper) empWrapper.classList.add('open');
+            empDropdown.style.display = 'block';
         } else {
             empArrow.classList.remove('open');
+            if (empWrapper) empWrapper.classList.remove('open');
+            empDropdown.style.display = 'none';
         }
+    }
+    
+    // Mobile close button functionality
+    const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+    if (mobileCloseBtn) {
+        mobileCloseBtn.addEventListener('click', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const backdrop = document.getElementById('mobileBackdrop');
+            if (sidebar) {
+                sidebar.classList.remove('show');
+                if (backdrop) {
+                    backdrop.classList.remove('show');
+                }
+            }
+        });
     }
 });
 </script>

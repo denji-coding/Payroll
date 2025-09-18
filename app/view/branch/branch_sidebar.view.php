@@ -312,13 +312,13 @@ main#mainContent {
         <!-- Profile Section -->
         <div class="text-center mb-6">
             <!-- Sidebar Toggle Button -->
-            <div style="display: flex; justify-content: center; align-items: center;">
+            <!-- <div style="display: flex; justify-content: center; align-items: center;">
                 <button id="sidebarToggle"  title="Close sidebar"
                         class="mb-4 bg-green-600 hover:bg-green-700 text-white flex items-center justify-center rounded" 
                         style="width: 40px; height: 40px; padding: 0;">
                     <i class="bi bi-layout-sidebar-inset"></i>
                 </button>
-            </div>
+            </div> -->
 
             <!-- <img src="../public/assets/image/logo2.png" alt="Organization Logo"  class="mx-auto w-100 h-20 mb-3 rounded-md object-cover" /> -->
             <div id="portalLabel" class="text-white text-lg font-extrabold tracking-wide uppercase relative inline-block pb-2">

@@ -65,22 +65,59 @@ try {
             $empId = $leave['employee_id'];
             $type = $leave['leave_type'];
 
-            // ✅ Check leave credits
-            $creditStmt = $conn->prepare("SELECT allowed, taken FROM leave_credits 
-                                          WHERE employee_id = :eid AND leave_type = :type");
+            // ✅ Get leave duration
+            $durationStmt = $conn->prepare("SELECT duration FROM leaves WHERE id = :leave_id");
+            $durationStmt->execute([':leave_id' => $leaveId]);
+            $duration = $durationStmt->fetchColumn();
+
+            // ✅ Map leave type to leave_type_id
+            $leaveTypeMapping = [
+                'Sick Leave' => 1,
+                'Emergency Leave' => 2,
+                'Vacation Leave' => 3,
+                'Personal Leave' => 4,
+                'Maternity/Paternity Leave' => 5
+            ];
+            $leaveTypeId = $leaveTypeMapping[$type] ?? null;
+
+            if (!$leaveTypeId) {
+                throw new Exception("Invalid leave type.");
+            }
+
+            // ✅ Check leave credits using new structure
+            $creditStmt = $conn->prepare("
+                SELECT lc.taken, lt.default_allowed 
+                FROM leave_credits lc
+                JOIN leave_types lt ON lc.leave_type_id = lt.id
+                WHERE lc.employee_id = :eid AND lc.leave_type_id = :type_id
+            ");
             $creditStmt->execute([
                 ':eid' => $empId,
-                ':type' => $type
+                ':type_id' => $leaveTypeId
             ]);
             $credit = $creditStmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$credit) {
-                throw new Exception("Leave credit record not found.");
+                // Create leave credits record if it doesn't exist
+                $insertStmt = $conn->prepare("
+                    INSERT INTO leave_credits (employee_id, leave_type_id, taken) 
+                    VALUES (:eid, :type_id, 0)
+                ");
+                $insertStmt->execute([
+                    ':eid' => $empId,
+                    ':type_id' => $leaveTypeId
+                ]);
+                $credit = ['taken' => 0, 'default_allowed' => 0];
+                
+                // Get the default allowed from leave_types
+                $defaultStmt = $conn->prepare("SELECT default_allowed FROM leave_types WHERE id = :type_id");
+                $defaultStmt->execute([':type_id' => $leaveTypeId]);
+                $credit['default_allowed'] = $defaultStmt->fetchColumn();
             }
 
-            $available = $credit['allowed'] - $credit['taken'];
-            if ($available < 1) {
-                throw new Exception("The employee has insufficient leave credits for this leave type.");
+            $available = $credit['default_allowed'] - $credit['taken'];
+            if ($available < $duration) {
+                throw new Exception("The employee has insufficient leave credits. Available: {$available} days, Requested: {$duration} days.");
             }
 
             // ✅ Approve leave
@@ -92,13 +129,14 @@ try {
                     ':manager_id' => $managerId
                 ]);
 
-            // ✅ Deduct 1 leave credit only
+            // ✅ Deduct leave credits based on duration
             $conn->prepare("UPDATE leave_credits 
-                            SET taken = taken + 1 
-                            WHERE employee_id = :eid AND leave_type = :type")
+                            SET taken = taken + :duration, updated_at = CURRENT_TIMESTAMP
+                            WHERE employee_id = :eid AND leave_type_id = :type_id")
                 ->execute([
                     ':eid' => $empId,
-                    ':type' => $type
+                    ':type_id' => $leaveTypeId,
+                    ':duration' => $duration
                 ]);
 
             $conn->commit();
@@ -181,6 +219,33 @@ try {
 }
 .fade-in-slide {
   animation: fadeInSlide 0.4s ease-out;
+}
+
+/* Ensure close button is visible */
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
 }
 </style>
 
@@ -521,7 +586,6 @@ if (clearBtn && searchInput) {
     });
 </script>
 <?php endif; ?>
-
 
 
 

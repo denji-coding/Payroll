@@ -781,6 +781,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
+<!-- Duplicate block start (commented out)
             icon: result.icon,
 
             timer: 1000,

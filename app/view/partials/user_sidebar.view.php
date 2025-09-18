@@ -6,9 +6,13 @@ require_once views_path("partials/header");
 $username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Unknown Employee';
 $email = $_SESSION['email'] ?? 'no-email@example.com';
 
+$gender = strtolower($_SESSION['gender'] ?? $_SESSION['sex'] ?? '');
+$defaultImage = in_array($gender, ['male', 'm'])
+    ? '../public/assets/image/default_men.png'
+    : '../public/assets/image/default_women.png';
 $imagePath = (!empty($_SESSION['photo_path']))
     ? '../public/upload/' . basename($_SESSION['photo_path'])
-    : '../public/assets/image/default_user_image.svg';
+    : $defaultImage;
 ?>
 
 <style>
@@ -138,7 +142,7 @@ a {
 #sidebar #portalLabel .underline {
     position: absolute;
     bottom: 0;
-    left: 50%;
+    left: 0;
     transform: translateX(-50%);
     width: 100%;
     height: 4px;
@@ -168,7 +172,9 @@ main#mainContent {
     <button id="mobileMenuBtn" class="text-white text-2xl z-10">
         <i id="menuIcon" class="bi bi-list"></i>
     </button>
+    
     <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
+        
         <div class="font-bold text-lg">Employee Portal</div>
     </div>
 </header>
@@ -222,7 +228,7 @@ main#mainContent {
                 title="Profile Picture" 
                 alt="Profile Picture" 
                 class="w-10 h-10 rounded-full object-cover border border-gray-300 flex-shrink-0" 
-                onerror="this.onerror=null;this.src='public/uploads/employees/default.png';"
+                onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>';"
             />
             <div class="max-w-[150px] overflow-hidden truncate transition-all duration-300 sidebar-expanded:block sidebar-collapsed:hidden">
     <div class="text-sm font-medium text-gray-100 whitespace-normal">

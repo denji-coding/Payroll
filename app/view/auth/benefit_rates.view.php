@@ -30,6 +30,33 @@ $latest = $rates[0] ?? ['sss_rate' => '', 'pagibig_rate' => '', 'philhealth_rate
 .fade-in-slide {
   animation: fadeInSlide 0.4s ease-out;
 }
+
+/* Ensure close button is visible */
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
 .flatpickr-calendar .flatpickr-prev-month,
 .flatpickr-calendar .flatpickr-next-month {
     color: white;

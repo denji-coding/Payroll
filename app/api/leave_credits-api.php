@@ -8,7 +8,8 @@ require_once __DIR__ . '/../core/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-$employee_id = $_SESSION['employee_id'] ?? null;
+// Support both employee_id (PK) and employee_no fallback if used elsewhere
+$employee_id = $_SESSION['employee_id'] ?? ($_SESSION['employee_no'] ?? null);
 
 if (!$employee_id) {
     http_response_code(403);
@@ -23,9 +24,19 @@ if ($method === 'OPTIONS') {
     exit;
 }
 
-// ✅ GET: Return HTML leave summary for frontend
+// ✅ GET: Return HTML leave summary for frontend (normalized schema)
 if ($method === 'GET') {
-    $query = $conn->prepare("SELECT leave_type, allowed, taken FROM leave_credits WHERE employee_id = ?");
+    $query = $conn->prepare(
+        "SELECT 
+            lt.name AS leave_type,
+            lt.default_allowed AS allowed,
+            COALESCE(lc.taken, 0) AS taken
+         FROM leave_types lt
+         LEFT JOIN leave_credits lc
+           ON lc.leave_type_id = lt.id AND lc.employee_id = ?
+         WHERE lt.is_active = TRUE
+         ORDER BY lt.name"
+    );
     $query->execute([$employee_id]);
     $credits = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -63,39 +74,27 @@ if ($method === 'GET') {
     exit;
 }
 
-// ✅ POST: Initialize leave credits (admin use)
+// ✅ POST: Initialize leave credits (admin use) for all active leave types
 if ($method === 'POST') {
-    $employee_id = $_POST['employee_id'] ?? null;
-    if (!$employee_id) {
+    $empIdForInit = $_POST['employee_id'] ?? null;
+    if (!$empIdForInit) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Employee ID is required']);
         exit;
     }
 
-    $defaults = [
-        ['Sick Leave', 10],
-        ['Emergency Leave', 5],
-        ['Vacation Leave', 5],
-        ['Personal Leave', 5],
-        ['Maternity/Paternity Leave', 8],
-    ];
+    // Insert missing leave_credits rows for each active leave type
+    $typesStmt = $conn->prepare("SELECT id FROM leave_types WHERE is_active = TRUE");
+    $typesStmt->execute();
+    $types = $typesStmt->fetchAll(PDO::FETCH_COLUMN, 0);
 
     $ok = true;
-    foreach ($defaults as [$type, $allowed]) {
-        $exists = $db->query("SELECT 1 FROM leave_credits WHERE employee_id = :eid AND leave_type = :lt", [
-            ':eid' => $employee_id,
-            ':lt' => $type
-        ]);
-
-        if (!$exists) {
-            $ok = $ok && $db->query(
-                "INSERT INTO leave_credits (employee_id, leave_type, allowed, taken) VALUES (:eid, :lt, :alw, 0)",
-                [
-                    ':eid' => $employee_id,
-                    ':lt' => $type,
-                    ':alw' => $allowed
-                ]
-            );
+    foreach ($types as $typeId) {
+        $existsStmt = $conn->prepare("SELECT 1 FROM leave_credits WHERE employee_id = ? AND leave_type_id = ?");
+        $existsStmt->execute([$empIdForInit, $typeId]);
+        if (!$existsStmt->fetchColumn()) {
+            $ins = $conn->prepare("INSERT INTO leave_credits (employee_id, leave_type_id, taken) VALUES (?, ?, 0)");
+            $ok = $ok && $ins->execute([$empIdForInit, $typeId]);
         }
     }
 
@@ -106,40 +105,60 @@ if ($method === 'POST') {
     exit;
 }
 
-// ✅ PATCH: Deduct 1 leave credit per leave application
+// ✅ PATCH: Deduct leave credits (supports leave_type name or leave_type_id)
 if ($method === 'PATCH') {
     parse_str(file_get_contents("php://input"), $data);
-    $employee_id = $data['employee_id'] ?? null;
-    $type = $data['leave_type'] ?? null;
+    $emp = $data['employee_id'] ?? null;
+    $leaveTypeName = $data['leave_type'] ?? null;
+    $leaveTypeId = $data['leave_type_id'] ?? null;
+    $duration = isset($data['duration']) ? max(0, (int)$data['duration']) : 1;
 
-    if (!$employee_id || !$type) {
+    if (!$emp || (!$leaveTypeName && !$leaveTypeId) || $duration <= 0) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Missing required data']);
         exit;
     }
 
-    $duration = 1; // ✅ Always deduct only 1 credit per leave application
+    // Resolve leave_type_id
+    if (!$leaveTypeId && $leaveTypeName) {
+        $ltStmt = $conn->prepare("SELECT id FROM leave_types WHERE name = ? AND is_active = TRUE");
+        $ltStmt->execute([$leaveTypeName]);
+        $leaveTypeId = $ltStmt->fetchColumn();
+        if (!$leaveTypeId) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid leave type']);
+            exit;
+        }
+    }
 
-    $credit = $db->query("SELECT allowed, taken FROM leave_credits WHERE employee_id = :eid AND leave_type = :lt", [
-        ':eid' => $employee_id,
-        ':lt' => $type
-    ]);
+    // Ensure a leave_credits row exists
+    $existsStmt = $conn->prepare("SELECT taken FROM leave_credits WHERE employee_id = ? AND leave_type_id = ?");
+    $existsStmt->execute([$emp, $leaveTypeId]);
+    $credit = $existsStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$credit) {
+        $ins = $conn->prepare("INSERT INTO leave_credits (employee_id, leave_type_id, taken) VALUES (?, ?, 0)");
+        $ins->execute([$emp, $leaveTypeId]);
+        $credit = ['taken' => 0];
+    }
 
-    if (!$credit || $credit[0]['allowed'] - $credit[0]['taken'] < $duration) {
+    // Get default allowed for the type
+    $allowedStmt = $conn->prepare("SELECT default_allowed FROM leave_types WHERE id = ?");
+    $allowedStmt->execute([$leaveTypeId]);
+    $defaultAllowed = (int)$allowedStmt->fetchColumn();
+
+    $available = $defaultAllowed - (int)$credit['taken'];
+    if ($available < $duration) {
         http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Insufficient leave credits']);
+        echo json_encode(['status' => 'error', 'message' => "Insufficient leave credits. Available: {$available}, Requested: {$duration}"]);
         exit;
     }
 
-    $update = $db->query("UPDATE leave_credits SET taken = taken + :dur WHERE employee_id = :eid AND leave_type = :lt", [
-        ':dur' => $duration,
-        ':eid' => $employee_id,
-        ':lt' => $type
-    ]);
+    $upd = $conn->prepare("UPDATE leave_credits SET taken = taken + ? WHERE employee_id = ? AND leave_type_id = ?");
+    $ok = $upd->execute([$duration, $emp, $leaveTypeId]);
 
     echo json_encode([
-        'status' => $update ? 'success' : 'error',
-        'message' => $update ? 'Leave credit deducted' : 'Failed to deduct credit'
+        'status' => $ok ? 'success' : 'error',
+        'message' => $ok ? 'Leave credit deducted' : 'Failed to deduct credit'
     ]);
     exit;
 }

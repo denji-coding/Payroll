@@ -133,6 +133,68 @@ if ($method === 'POST') {
 
     $duration = (new DateTime($start_date))->diff(new DateTime($end_date))->days + 1;
 
+    // ✅ Check leave credits before allowing submission
+    $leaveTypeMapping = [
+        'Sick Leave' => 1,
+        'Emergency Leave' => 2,
+        'Vacation Leave' => 3,
+        'Personal Leave' => 4,
+        'Maternity/Paternity Leave' => 5
+    ];
+    $leaveTypeId = $leaveTypeMapping[$leave_type] ?? null;
+    
+    if ($leaveTypeId) {
+        $creditStmt = $db->getConnection()->prepare("
+            SELECT 
+                lc.taken, 
+                lt.default_allowed 
+            FROM leave_credits lc
+            JOIN leave_types lt ON lc.leave_type_id = lt.id
+            WHERE lc.employee_id = :eid AND lc.leave_type_id = :type_id
+        ");
+        $creditStmt->execute([
+            ':eid' => $employee_id,
+            ':type_id' => $leaveTypeId
+        ]);
+        $credit = $creditStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($credit) {
+            $available = $credit['default_allowed'] - $credit['taken'];
+            if ($available < $duration) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error', 
+                    'message' => "Insufficient leave credits. Available: {$available} days, Requested: {$duration} days."
+                ]);
+                exit;
+            }
+        } else {
+            // Create leave credits record if it doesn't exist
+            $insertStmt = $db->getConnection()->prepare("
+                INSERT INTO leave_credits (employee_id, leave_type_id, taken) 
+                VALUES (:eid, :type_id, 0)
+            ");
+            $insertStmt->execute([
+                ':eid' => $employee_id,
+                ':type_id' => $leaveTypeId
+            ]);
+            
+            // Get default allowed from leave_types
+            $defaultStmt = $db->getConnection()->prepare("SELECT default_allowed FROM leave_types WHERE id = :type_id");
+            $defaultStmt->execute([':type_id' => $leaveTypeId]);
+            $defaultAllowed = $defaultStmt->fetchColumn();
+            
+            if ($defaultAllowed < $duration) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error', 
+                    'message' => "Insufficient leave credits. Available: {$defaultAllowed} days, Requested: {$duration} days."
+                ]);
+                exit;
+            }
+        }
+    }
+
     // 🩺 Medical Certificate Required
     if ($leave_type === 'Sick Leave' && $duration >= 3) {
         if (!isset($_FILES['med_cert']) || $_FILES['med_cert']['error'] !== UPLOAD_ERR_OK) {

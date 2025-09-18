@@ -94,7 +94,7 @@ if (isset($_SESSION['manager_id'])) {
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">Full Name</label>
-                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex items-center justify-between group">
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 flex items-center justify-between group">
                                     <p id="fullNameDisplay" class="text-gray-800 font-medium" data-original="<?= htmlspecialchars($managers['name'] ?? 'N/A') ?>"><?= htmlspecialchars($managers['name'] ?? 'N/A') ?></p>
                                     <input type="text" id="fullNameInput" value="<?= htmlspecialchars($managers['name'] ?? 'N/A') ?>" 
                                            class="hidden w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -118,7 +118,7 @@ if (isset($_SESSION['manager_id'])) {
 
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">Email Address</label>
-                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex items-center justify-between group">
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 flex items-center justify-between group">
                                     <p id="emailDisplay" class="text-gray-800" data-original="<?= htmlspecialchars($managers['email'] ?? 'N/A') ?>"><?= htmlspecialchars($managers['email'] ?? 'N/A') ?></p>
                                     <input type="email" id="emailInput" value="<?= htmlspecialchars($managers['email'] ?? 'N/A') ?>" 
                                            class="hidden w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -142,7 +142,7 @@ if (isset($_SESSION['manager_id'])) {
 
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">Branch Assignment</label>
-                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
                                     <p class="text-gray-800 font-medium"><?= htmlspecialchars(ucwords($managers['branch'] ?? 'N/A')) ?></p>
                                 </div>
                             </div>
@@ -156,7 +156,7 @@ if (isset($_SESSION['manager_id'])) {
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">Account Status</label>
-                                <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                <div class="bg-green-50 p-2 rounded-lg border border-green-200">
                                     <span class="inline-flex items-center text-green-800">
                                         <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                                         Active
@@ -166,14 +166,14 @@ if (isset($_SESSION['manager_id'])) {
 
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">Member Since</label>
-                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
                                     <p class="text-gray-800"><?= isset($managers['created_at']) ? htmlspecialchars(date("F d, Y", strtotime($managers['created_at']))) : 'N/A' ?></p>
                                 </div>
                             </div>
 
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">Last Updated</label>
-                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
                                     <p class="text-gray-800"><?= isset($managers['updated_at']) ? htmlspecialchars(date("F d, Y", strtotime($managers['updated_at']))) : 'N/A' ?></p>
                                 </div>
                             </div>

@@ -163,25 +163,36 @@ class SecureAuth {
     /**
      * Authenticate employee
      */
-    public function authenticateEmployee($email, $employeeNo) {
+    public function authenticateEmployee($email, $password) {
         // Check login attempts
         if (!$this->checkLoginAttempts($email, 'employee')) {
             return ['success' => false, 'message' => 'Too many login attempts. Please try again later.'];
         }
         
         try {
-            $stmt = $this->db->query("SELECT * FROM employees WHERE email = ? AND employee_no = ?", [$email, $employeeNo]);
+            // First try to authenticate with password field (new method)
+            $stmt = $this->db->query("SELECT * FROM employees WHERE email = ? AND password IS NOT NULL", [$email]);
             $employee = $stmt ? $stmt[0] : null;
             
-            if (!$employee) {
-                $this->recordLoginAttempt($email, 'employee', false);
-                return ['success' => false, 'message' => 'Invalid email or employee number.'];
+            if ($employee && $this->verifyPassword($password, $employee['password'])) {
+                // Password authentication successful
+                $this->recordLoginAttempt($email, 'employee', true);
+                secureLogin($employee, 'employee');
+                return ['success' => true, 'user' => $employee, 'redirect' => 'index.php?payroll=user_dashboard'];
             }
             
-            $this->recordLoginAttempt($email, 'employee', true);
-            secureLogin($employee, 'employee');
+            // Fallback to employee_no authentication (old method)
+            $stmt = $this->db->query("SELECT * FROM employees WHERE email = ? AND employee_no = ? AND password IS NULL", [$email, $password]);
+            $employee = $stmt ? $stmt[0] : null;
             
-            return ['success' => true, 'user' => $employee, 'redirect' => 'index.php?payroll=user_dashboard'];
+            if ($employee) {
+                $this->recordLoginAttempt($email, 'employee', true);
+                secureLogin($employee, 'employee');
+                return ['success' => true, 'user' => $employee, 'redirect' => 'index.php?payroll=user_dashboard'];
+            }
+            
+            $this->recordLoginAttempt($email, 'employee', false);
+            return ['success' => false, 'message' => 'Invalid email or password.'];
             
         } catch (Exception $e) {
             error_log("Employee authentication error: " . $e->getMessage());
