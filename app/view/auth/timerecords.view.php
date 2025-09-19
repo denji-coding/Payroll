@@ -139,7 +139,11 @@ require_once views_path("partials/nav");
                                 <?php if (!empty($attendanceRecords)): ?>
                                     <?php foreach ($attendanceRecords as $index => $rec): ?>
                                         <?php 
-                                            $photo = !empty($rec['photo_path']) ? $rec['photo_path'] : '../public/assets/image/default_user_image.svg';
+                                            $gender = strtolower($rec['sex'] ?? $rec['gender'] ?? '');
+                                            $defaultImage = in_array($gender, ['male', 'm'])
+                                                ? '../public/assets/image/default_men.png'
+                                                : '../public/assets/image/default_women.png';
+                                            $photo = !empty($rec['photo_path']) ? $rec['photo_path'] : $defaultImage;
                                             $name  = ucwords(strtolower($rec['full_name']));
                                             $pos   = $rec['position'] ?? '';
                                             $date  = date('Y-m-d', strtotime($rec['date']));
@@ -156,7 +160,7 @@ require_once views_path("partials/nav");
                                             <td class="p-2 align-middle font-medium"><?= $index + 1 ?></td>
                                     <td class="p-2 align-middle font-medium">
                                         <span class="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8">
-                                                    <img class="aspect-square h-full w-full" src="<?= htmlspecialchars($photo) ?>" alt="">
+                                                    <img class="aspect-square h-full w-full" src="<?= htmlspecialchars($photo) ?>" alt="" onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>';">
                                         </span>
                                     </td>
                                     <td class="p-2 align-middle font-medium">
@@ -329,7 +333,7 @@ require_once views_path("partials/nav");
                     <label class="block text-sm font-medium mb-2 text-gray-700">Select Month and Year</label>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <select id="exportMonth" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:border-transparent">
+                            <select id="exportMonth" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:border-transparent">
                                 <option value="01">January</option>
                                 <option value="02">February</option>
                                 <option value="03">March</option>
@@ -345,7 +349,7 @@ require_once views_path("partials/nav");
                             </select>
                         </div>
                         <div>
-                            <select id="exportYear" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:border-transparent">
+                            <select id="exportYear" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:border-transparent">
                                 <?php for ($year = date('Y'); $year >= 2020; $year--): ?>
                                     <option value="<?= $year ?>" <?= $year == date('Y') ? 'selected' : '' ?>><?= $year ?></option>
                                 <?php endfor; ?>

@@ -13,6 +13,23 @@ $pdo->exec("SET time_zone = '+08:00'");
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Ensure attendance table supports manager logs as well
+if (!function_exists('ensureManagerAttendanceSupport')) {
+    function ensureManagerAttendanceSupport(PDO $pdo): void {
+        try {
+            $res = $pdo->query("SHOW COLUMNS FROM attendance LIKE 'manager_id'");
+            if ($res && $res->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE attendance ADD COLUMN manager_id INT(11) NULL AFTER employee_id");
+                // Index creation may not support IF NOT EXISTS across all MySQL versions; wrap in try
+                try { $pdo->exec("CREATE INDEX idx_attendance_manager_id ON attendance(manager_id)"); } catch (Throwable $e) {}
+            }
+        } catch (Throwable $e) {
+            // ignore if cannot alter; manager attendance will be disabled silently
+        }
+    }
+}
+ensureManagerAttendanceSupport($pdo);
+
 if ($method === 'GET') {
     $filterDate = $_GET['date'] ?? date('Y-m-d');
 

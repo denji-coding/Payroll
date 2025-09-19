@@ -331,7 +331,7 @@ function filterTableByMonth(monthStr) {
   const rows = Array.from(tbody.querySelectorAll("tr:not(#noDataRow)"));
   let hasVisibleRow = false;
 
-  rows.forEach(row => {
+  rows.forEach((row, index) => {
     const dateCell = row.querySelector("td:nth-child(5)");
     const dateText = dateCell?.textContent || "";
     let rowMonth = "";
@@ -343,7 +343,10 @@ function filterTableByMonth(monthStr) {
       }
     }
 
-    const show = !monthStr || rowMonth === monthStr;
+    // Always show the latest/current rate (first row) even when filtering by month
+    const isLatestRow = index === 0;
+    const matchesMonth = !monthStr || rowMonth === monthStr;
+    const show = isLatestRow || matchesMonth;
     row.style.display = show ? "" : "none";
     if (show) hasVisibleRow = true;
   });

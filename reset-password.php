@@ -13,9 +13,19 @@ $userType = $valid ? $valid['user_type'] : null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Reset Password</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
+    <script>
+    // Fallback: if local SweetAlert2 failed to load, load from CDN
+    (function ensureSwal(){
+        if (typeof Swal === 'undefined') {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+            document.head.appendChild(s);
+        }
+    })();
+    </script>
 </head>
 <body class="relative min-h-screen flex items-center justify-center bg-center bg-no-repeat bg-cover px-4" style="background-image: url('public/assets/image/image_bg.jpg');">
     <!-- Soft light blur overlay -->

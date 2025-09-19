@@ -49,9 +49,32 @@ try {
     $stmt->execute();
     $leaveRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Aggregate counts
+    // Total Employees (fallback safe)
+    try {
+        $totalEmployees = (int)$conn->query("SELECT COUNT(*) FROM employees")->fetchColumn();
+    } catch (Throwable $e) {
+        $totalEmployees = 0;
+    }
+
+    // Total Managers: try managers table; fallback to employees with position like manager
+    try {
+        $totalManagers = (int)$conn->query("SELECT COUNT(*) FROM managers")->fetchColumn();
+    } catch (Throwable $e) {
+        try {
+            $stmtMgr = $conn->prepare("SELECT COUNT(*) FROM employees WHERE LOWER(position) LIKE '%manager%'");
+            $stmtMgr->execute();
+            $totalManagers = (int)$stmtMgr->fetchColumn();
+        } catch (Throwable $e2) {
+            $totalManagers = 0;
+        }
+    }
+
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
     $leaveRequests = [];
+    $totalEmployees = $totalEmployees ?? 0;
+    $totalManagers = $totalManagers ?? 0;
 }
 ?>
 
@@ -75,17 +98,29 @@ try {
 
             
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 -mt-2 mb-6 w-full" >
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-2 -mt-2 mb-6 w-full" >
+                <div class="bg-white border-2 border-green-200 rounded-lg p-3 w-full h-24"
+                        data-aos="fade-in" 
+                        data-aos-delay="<?= $index * 50 ?>"
+                        data-aos-duration="500">
+                    <div class="-mt-3">
+                        <span class="text-sm -mt-12 font-medium text-[#396A39]">Total Employees</span>
+                        <p class="text-2xl font-bold mt-2"><?php echo $totalEmployees; ?></p>
+                        <span class="text-xs text-gray-500">Active staff members</span>
+                    </div>
+                    <i class="bi bi-people absolute top-2 right-3 text-green-600"></i>                
+                </div>
+                
                 <div class="bg-white border-2 border-green-200 rounded-lg p-3 w-full h-24"
                     data-aos="fade-in" 
                     data-aos-delay="<?= $index * 50 ?>"
                     data-aos-duration="500">
                 <div class="-mt-3">
-                    <span class="text-sm -mt-12 font-medium text-[#396A39]">Total Employees</span>
-                    <p class="text-2xl font-bold mt-2"><?php echo $totalEmployees; ?></p>
-                    <span class="text-xs text-gray-500">Active staff members</span>
+                    <span class="text-sm -mt-12 font-medium text-[#396A39]">Total Managers</span>
+                    <p class="text-2xl font-bold mt-2"><?php echo $totalManagers; ?></p>
+                    <span class="text-xs text-gray-500">Active managers</span>
                 </div>
-                <i class="bi bi-people absolute top-2 right-3 text-green-600"></i>                
+                <i class="bi bi-person-gear absolute top-2 right-3 text-green-600"></i>                
             </div>
 
 
@@ -106,7 +141,7 @@ try {
                     data-aos-delay="<?= $index * 30 ?>"
                     data-aos-duration="500">
                 <div class="-mt-3">
-                    <span class="text-sm -mt-2 font-medium text-[#396A39]">Late Today</>
+                    <span class="text-sm -mt-2 font-medium text-[#396A39]">Late Today</span>
                     <p class="text-2xl font-bold mt-2">0</p>
                     <span class="text-xs text-gray-500">0% of employees</span>
                 </div>

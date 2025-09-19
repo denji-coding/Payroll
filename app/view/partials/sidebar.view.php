@@ -159,8 +159,8 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
                         <i class="bi bi-trash"></i> Delete History
                     </a>
                 </div>
-                <a href="index.php?payroll=schedules"
-            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'schedules') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+        <a href="index.php?payroll=schedules"
+            class="sidebar-item w-full flex items-center font-semibold text-white mt-2.5 text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'schedules') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-clock"></i> Schedules
         </a>
         <a href="index.php?payroll=leave_credits"

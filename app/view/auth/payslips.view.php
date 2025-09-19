@@ -87,7 +87,7 @@ require_once views_path("partials/nav");
             <table class="min-w-full table-auto caption-bottom text-xs md:text-sm">
             <thead class="[&_tr]:border-b bg-white sticky top-0 z-10">
                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">#</th>
+                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">No.</th>
                 <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Employee Name</th>
                 <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Payroll Period</th>
                 <th class="h-10 md:h-12 px-2 md:px-4 text-center align-middle font-bold text-[#478547]">Actions</th>

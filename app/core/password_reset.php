@@ -111,7 +111,7 @@ function pr_find_user_by_email(string $userType, string $email) {
     if ($userType === 'employee') {
         $stmt = $pdo->prepare('SELECT id, email FROM employees WHERE email = ? LIMIT 1');
     } else {
-        $stmt = $pdo->prepare('SELECT id, email FROM managers WHERE email = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT id, m_email FROM managers WHERE m_email = ? LIMIT 1');
     }
     $stmt->execute([$email]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;

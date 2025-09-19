@@ -698,50 +698,7 @@ async function verifyCode(){
         </div>
 
     </div>
-
-
-
-    <!-- Forgot password link -->
-
-    <div class="forgot-password" data-aos="fade-up" data-aos-delay="90">
-
-        <a href="forgot-password.php?type=employee">Forgot Password?</a>
-
-    </div>
-
-
-
-    <!-- Login button -->
-
-       <button type="submit" name="submit" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.01] transition-all duration-100 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50">
-        <svg id="employeeSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
-
-        </svg>
-
-         <span id="employeeLoginText" class="text-md font-medium">Employee Login</span>
-        <span id="employeeLoggingInText" class="hidden">Logging in...</span>
-
-    </button>
-
 </form>
-
-
-
-
-
-<!-- Link to registration page -->
-
-<!-- <div class="register-text" data-aos="fade-up" data-aos-delay="110">
-
-    Don't have an account? <a href="index.php?payroll=register" class="text-decoration-none">Register</a>
-
-</div> -->
-
-
 
 </div>
 
