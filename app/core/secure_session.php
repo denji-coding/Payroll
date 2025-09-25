@@ -173,6 +173,9 @@ function secureLogin($userData, $userType) {
             $_SESSION['SESSION_EMAIL'] = $userData['email'];
             $_SESSION['SESSION_USER_ID'] = $userData['id'];
             $_SESSION['USERNAME'] = $userData['name'];
+            if (isset($userData['photo_path']) && $userData['photo_path'] !== '') {
+                $_SESSION['photo_path'] = $userData['photo_path'];
+            }
             break;
             
         case 'manager':
