@@ -56,8 +56,8 @@ foreach ($nameParts as $part) {
                     </div>
                     <hr class="my-2">
                     <ul class="space-y-2 text-sm text-[#403E43]">
-                        <li><a href="#" class="bi bi-person-fill block hover:text-green-700"> Profile</a></li>
-                        <li><a href="#" class="bi bi-gear block hover:text-green-700"> Settings</a></li>
+                        <li><a href="index.php?payroll=admin_profile" class="bi bi-person-fill block hover:text-green-700"> Profile</a></li>
+                        <!-- <li><a href="#" class="bi bi-gear block hover:text-green-700"> Settings</a></li> -->
                         <hr>
                         <li><a href="index.php?payroll=logout1" onclick="confirmLogout(event)" class="bi bi-box-arrow-right block hover:text-green-700"> Logout</a></li>
                     </ul>

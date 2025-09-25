@@ -339,8 +339,8 @@ body {
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
             <div>
-                <span class="text-2xl font-bold tracking-tight text-[#133913]">Leave Credits Management</span>
-                <p class="text-[#478547]">Manage employee leave credits and allocations.</p>
+                <span class="text-2xl ml-2 font-bold tracking-tight text-[#133913]">Leave Credits Management</span>
+                <p class="text-[#478547] ml-2">Manage employee leave credits and allocations.</p>
             </div>
                 <button type="button" class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " data-bs-toggle="modal" data-bs-target="#addLeaveTypeModal">
                     <i class="bi bi-plus-circle me-2"></i>
