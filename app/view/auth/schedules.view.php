@@ -58,15 +58,27 @@ require_once views_path("partials/nav");
         <p class="text-[#478547]">Manage employee schedules.</p>
       </div>
 
-      <!-- Add Schedule Button -->
-      <button type="button" 
-              class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2"
-              style="min-width: 106px;"
-              data-bs-toggle="modal" 
-              data-bs-target="#addScheduleModal">
-        <i class="fas fa-plus me-2"></i>
-        <span class="d-none d-sm-inline font-semibold">Add schedule</span>
-      </button>
+      <!-- Right Side Buttons -->
+      <div class="flex gap-2">
+        <!-- Toggle Managers Button -->
+        <button type="button" 
+                id="toggleManagersBtn"
+                class="btn btn-outline-success d-inline-flex align-items-center h-10 px-4 py-2"
+                style="min-width: 120px;">
+          <i class="fas fa-users me-2"></i>
+          <span class="d-none d-sm-inline font-semibold">Show Managers</span>
+        </button>
+
+        <!-- Add Schedule Button -->
+        <button type="button" 
+                class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2"
+                style="min-width: 106px;"
+                data-bs-toggle="modal" 
+                data-bs-target="#addScheduleModal">
+          <i class="fas fa-plus me-2"></i>
+          <span class="d-none d-sm-inline font-semibold">Add schedule</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -144,7 +156,7 @@ require_once views_path("partials/nav");
               $i = 1;
               while ($row = $result->fetch(PDO::FETCH_ASSOC)):
           ?>
-          <tr class="fade-in-slide border-b-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+            <tr class="fade-in-slide border-b-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]" data-record-type="<?= htmlspecialchars($row['record_type']) ?>">
             <td class="px-3 md:px-6 text-center py-2"><?= $i++ ?></td>
             <td class="px-2 md:px-6 py-2"><?= htmlspecialchars(ucwords(strtolower($row['display_name']))) ?></td>
             <td class="px-2 md:px-6 text-center py-2"><?= date("g:i A", strtotime($row['sched_morning_in'])) ?></td>
@@ -708,6 +720,57 @@ window.refreshEmployeeSelect = async () => {
       recordTypeInput.value = recordType;
     });
   }
+
+  // === TOGGLE MANAGERS FILTER ===
+  window.showingManagersOnly = false;
+  const toggleManagersBtn = document.getElementById('toggleManagersBtn');
+  
+  if (toggleManagersBtn) {
+    toggleManagersBtn.addEventListener('click', function() {
+      window.showingManagersOnly = !window.showingManagersOnly;
+      
+      // Update button text and style
+      const icon = this.querySelector('i');
+      const text = this.querySelector('span');
+      
+      if (window.showingManagersOnly) {
+        this.classList.remove('btn-outline-success');
+        this.classList.add('btn-success');
+        icon.className = 'fas fa-users me-2';
+        text.textContent = 'Show All';
+      } else {
+        this.classList.remove('btn-success');
+        this.classList.add('btn-outline-success');
+        icon.className = 'fas fa-users me-2';
+        text.textContent = 'Show Managers';
+      }
+      
+      // Filter table rows
+      filterTableByType();
+    });
+  }
+
+  // Filter table by record type (employee/manager)
+  function filterTableByType() {
+    const rows = document.querySelectorAll('#scheduleTableBody tr');
+    
+    rows.forEach(row => {
+      if (row.id === 'noResultRow') return;
+      
+      const recordType = row.getAttribute('data-record-type');
+      
+      if (window.showingManagersOnly) {
+        // Show only managers
+        row.style.display = recordType === 'manager' ? '' : 'none';
+      } else {
+        // Show all (employees and managers)
+        row.style.display = '';
+      }
+    });
+    
+    // Update row numbers after filtering
+    updateScheduleRowNumbers();
+  }
 });
 </script>
 
@@ -748,14 +811,16 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!nameCell || row.id === "noResultRow") return;
 
       const nameText = nameCell.textContent.trim().toLowerCase();
+      const recordType = row.getAttribute('data-record-type');
 
       // Split by space and check each word or initial
       const words = nameText.split(/\s+/); // e.g., ["juan", "d.", "cruz"]
-      const match = words.some(word => word.startsWith(searchTerm));
+      const searchMatch = searchTerm === "" || words.some(word => word.startsWith(searchTerm));
+      const managerFilter = window.showingManagersOnly ? recordType === 'manager' : true;
+      
+      row.style.display = (searchMatch && managerFilter) ? "" : "none";
 
-      row.style.display = match || searchTerm === "" ? "" : "none";
-
-      if (match) visibleCount++;
+      if (searchMatch && managerFilter) visibleCount++;
     });
 
     // Handle no result

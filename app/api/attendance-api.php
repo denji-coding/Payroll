@@ -44,16 +44,35 @@ if ($method === 'GET') {
                 a.morning_out,
                 a.afternoon_in,
                 a.afternoon_out,
-                a.date
+                a.date,
+                'employee' as user_type
             FROM attendance a
             INNER JOIN employees e ON a.employee_id = e.id
-            WHERE DATE(a.date) = :filterDate
+            WHERE DATE(a.date) = :filterDate AND a.employee_id IS NOT NULL
+            
+            UNION ALL
+            
+            SELECT 
+                m.m_photo_path,
+                m.manager_id as employee_no,
+                CONCAT(m.m_first_name, ' ', LEFT(m.m_middle_name, 1), '. ', m.m_last_name) AS full_name,
+                'Manager' as position,
+                a.morning_in,
+                a.morning_out,
+                a.afternoon_in,
+                a.afternoon_out,
+                a.date,
+                'manager' as user_type
+            FROM attendance a
+            INNER JOIN managers m ON a.manager_id = m.id
+            WHERE DATE(a.date) = :filterDate AND a.manager_id IS NOT NULL
+            
             ORDER BY 
                 GREATEST(
-                    IFNULL(TIME_TO_SEC(a.afternoon_out), 0),
-                    IFNULL(TIME_TO_SEC(a.afternoon_in), 0),
-                    IFNULL(TIME_TO_SEC(a.morning_out), 0),
-                    IFNULL(TIME_TO_SEC(a.morning_in), 0)
+                    IFNULL(TIME_TO_SEC(afternoon_out), 0),
+                    IFNULL(TIME_TO_SEC(afternoon_in), 0),
+                    IFNULL(TIME_TO_SEC(morning_out), 0),
+                    IFNULL(TIME_TO_SEC(morning_in), 0)
                 ) DESC
         ");
         $stmt->bindParam(':filterDate', $filterDate);
@@ -68,7 +87,17 @@ if ($method === 'GET') {
                 <tr class="fade-in-slide">
                     <td class="py-3 px-4 text-center"><?= $index + 1?></td>
                     <td class="py-3 px-4">
-                        <img src="<?= htmlspecialchars($record['photo_path'] ?: 'assets/image/default_user_image.svg') ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" />
+                        <?php 
+                        $defaultImage = 'assets/image/default_user_image.svg';
+                        if (!empty($record['photo_path'])) {
+                            $imageSrc = $record['photo_path'];
+                        } else {
+                            // Use gender-based default images if available
+                            $defaultImage = 'assets/image/default_user_image.svg';
+                            $imageSrc = $defaultImage;
+                        }
+                        ?>
+                        <img src="<?= htmlspecialchars($imageSrc) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>';" />
                     </td>
                     <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td>
                     <td class="py-3 text-sm px-4"><?= htmlspecialchars(ucwords(strtolower($record['full_name']))) ?></td>
@@ -103,43 +132,86 @@ if ($method === 'GET') {
         $employee_id_manual = $input['employee_id'] ?? null;
         $manual_type = $input['manual_type'] ?? null;
 
-        // Find employee
+        // Find employee or manager
+        $user = null;
+        $user_type = null;
+        
         if ($rfid) {
-            $stmt = $pdo->prepare("SELECT * FROM employees WHERE rfid_number = ?");
+            // Check employees first
+            $stmt = $pdo->prepare("SELECT *, 'employee' as user_type FROM employees WHERE rfid_number = ?");
             $stmt->execute([$rfid]);
+            $user = $stmt->fetch();
+            
+            // If not found in employees, check managers
+            if (!$user) {
+                $stmt = $pdo->prepare("SELECT *, 'manager' as user_type FROM managers WHERE m_rfid_number = ?");
+                $stmt->execute([$rfid]);
+                $user = $stmt->fetch();
+            }
         } elseif ($employee_id_manual) {
-            $stmt = $pdo->prepare("SELECT * FROM employees WHERE employee_no = ?");
+            // Check employees first
+            $stmt = $pdo->prepare("SELECT *, 'employee' as user_type FROM employees WHERE employee_no = ?");
             $stmt->execute([$employee_id_manual]);
+            $user = $stmt->fetch();
+            
+            // If not found in employees, check managers
+            if (!$user) {
+                $stmt = $pdo->prepare("SELECT *, 'manager' as user_type FROM managers WHERE m_employee_id = ?");
+                $stmt->execute([$employee_id_manual]);
+                $user = $stmt->fetch();
+            }
         } else {
-            echo json_encode(["status" => "error", "message" => "RFID or Employee ID is required."]);
+            echo json_encode(["status" => "error", "message" => "RFID or Employee/Manager ID is required."]);
             exit;
         }
 
-        $employee = $stmt->fetch();
-        if (!$employee) {
-            echo json_encode(["status" => "error", "message" => "Employee not found."]);
+        if (!$user) {
+            echo json_encode(["status" => "error", "message" => "Employee or Manager not found."]);
             exit;
         }
 
-        $employee_id = $employee['id'];
-        $middle_initial = !empty($employee['middle_name']) ? strtoupper($employee['middle_name'][0]) . '. ' : '';
-        $name = $employee['first_name'] . ' ' . $middle_initial . $employee['last_name'];
-        $image_path = $employee['photo_path'] ?? 'assets/image/default_user_image.svg';
+        $user_type = $user['user_type'];
+        $user_id = $user['id'];
+        
+        // Format name based on user type
+        if ($user_type === 'employee') {
+            $middle_initial = !empty($user['middle_name']) ? strtoupper($user['middle_name'][0]) . '. ' : '';
+            $name = $user['first_name'] . ' ' . $middle_initial . $user['last_name'];
+        } else {
+            $middle_initial = !empty($user['m_middle_name']) ? strtoupper($user['m_middle_name'][0]) . '. ' : '';
+            $name = $user['m_first_name'] . ' ' . $middle_initial . $user['m_last_name'];
+        }
+        
+        $image_path = $user['photo_path'] ?? 'assets/image/default_user_image.svg';
         $today = date('Y-m-d');
         $now = date('H:i:s');
 
-        // Check if employee has a schedule
-        $stmt = $pdo->prepare("
-            SELECT s.* 
-            FROM schedules s 
-            INNER JOIN employee_schedules es ON s.id = es.schedule_id 
-            WHERE es.employee_id = ?
-        ");
-        $stmt->execute([$employee_id]);
-        $schedule = $stmt->fetch();
+        // Check if user has a schedule (employee or manager)
+        $schedule = null;
+        
+        if ($user_type === 'employee') {
+            $stmt = $pdo->prepare("
+                SELECT s.* 
+                FROM schedules s 
+                INNER JOIN employee_schedules es ON s.id = es.schedule_id 
+                WHERE es.employee_id = ?
+            ");
+            $stmt->execute([$user_id]);
+            $schedule = $stmt->fetch();
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT s.* 
+                FROM schedules s 
+                INNER JOIN manager_schedules ms ON s.id = ms.schedule_id 
+                WHERE ms.manager_id = ?
+            ");
+            $stmt->execute([$user_id]);
+            $schedule = $stmt->fetch();
+        }
 
         if (!$schedule) {
-            echo json_encode(["status" => "error", "message" => "No schedule assigned to this employee. Please contact your administrator."]);
+            $user_type_text = $user_type === 'employee' ? 'employee' : 'manager';
+            echo json_encode(["status" => "error", "message" => "No schedule assigned to this $user_type_text. Please contact your administrator."]);
             exit;
         }
 
@@ -194,15 +266,28 @@ if ($method === 'GET') {
         }
 
         // Check or create today's attendance
-        $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employee_id = ? AND date = ?");
-        $stmt->execute([$employee_id, $today]);
-        $attendance = $stmt->fetch();
-
-        if (!$attendance) {
-            $pdo->prepare("INSERT INTO attendance (employee_id, date) VALUES (?, ?)")->execute([$employee_id, $today]);
+        if ($user_type === 'employee') {
             $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employee_id = ? AND date = ?");
-            $stmt->execute([$employee_id, $today]);
+            $stmt->execute([$user_id, $today]);
             $attendance = $stmt->fetch();
+
+            if (!$attendance) {
+                $pdo->prepare("INSERT INTO attendance (employee_id, manager_id, date) VALUES (?, NULL, ?)")->execute([$user_id, $today]);
+                $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employee_id = ? AND date = ?");
+                $stmt->execute([$user_id, $today]);
+                $attendance = $stmt->fetch();
+            }
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM attendance WHERE manager_id = ? AND date = ?");
+            $stmt->execute([$user_id, $today]);
+            $attendance = $stmt->fetch();
+
+            if (!$attendance) {
+                $pdo->prepare("INSERT INTO attendance (employee_id, manager_id, date) VALUES (NULL, ?, ?)")->execute([$user_id, $today]);
+                $stmt = $pdo->prepare("SELECT * FROM attendance WHERE manager_id = ? AND date = ?");
+                $stmt->execute([$user_id, $today]);
+                $attendance = $stmt->fetch();
+            }
         }
 
         $attendance_id = $attendance['id'];
@@ -267,7 +352,8 @@ if ($method === 'GET') {
         echo json_encode([
             "status" => "success",
             "message" => "Successfully logged $type.",
-            "employee_id" => $employee_id,
+            "user_id" => $user_id,
+            "user_type" => $user_type,
             "image_url" => $image_path,
             "name" => $name,
             "timestamp" => $now,

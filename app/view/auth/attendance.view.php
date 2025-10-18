@@ -36,8 +36,8 @@ require_once views_path("partials/header");
         
         <!-- Logo & Company Info -->
         <div class="text-center">
-            <img src="../public/assets/image/logo.png" alt="Company Logo" 
-                class="mx-auto w-28 h-28 rounded-full border-4 border-white/10 bg-white shadow">
+            <img src="../public/assets/image/test_logo.png" alt="Company Logo" 
+                class="mx-auto rounded-full ">
             <span class="font-extrabold text-xl md:text-2xl leading-tight block mt-2">
                 Migrants Venture Corporation
             </span>
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterBtn = document.getElementById("filterBtn");
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const fp = flatpickr(dateInput, {
+  window.fp = flatpickr(dateInput, {
   altInput: true,
   altFormat: "F j, Y",
   dateFormat: "Y-m-d",
@@ -429,6 +429,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const employeeIdInput = document.getElementById('employeeIdInput');
   const timeInBtn = document.getElementById('manualTimeInBtn');
   const timeOutBtn = document.getElementById('manualTimeOutBtn');
+
+  // Auto-refresh at midnight (12:00 AM)
+  const scheduleMidnightRefresh = () => {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0); // Next midnight
+    
+    const timeUntilMidnight = midnight.getTime() - now.getTime();
+    
+    setTimeout(() => {
+      // Refresh the table for the new day
+      refreshAttendanceTable();
+      
+      // Update the date input to today
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('date');
+      if (dateInput) {
+        dateInput.value = today;
+        // Trigger flatpickr update if it exists
+        if (window.fp) {
+          window.fp.setDate(today, true);
+        }
+      }
+      
+      // Schedule the next midnight refresh
+      scheduleMidnightRefresh();
+    }, timeUntilMidnight);
+  };
+
+  // Start the midnight refresh scheduler
+  scheduleMidnightRefresh();
 
   const showSimpleAlert = (type, title, text) => {
     Swal.fire({ icon: type, title, text, timer: 2500, showConfirmButton: false });

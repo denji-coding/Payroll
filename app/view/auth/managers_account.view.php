@@ -257,7 +257,7 @@ require_once views_path("partials/nav");
                                                     <div class="flex gap-2">
                                                         <!-- View -->
                                                         <button type="button"
-                                                        class="viewManagerBtn"
+                                                        class="viewManagerBtn inline-flex h-8 w-8 items-center justify-center rounded-md font-medium transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white"
                                                         data-manager='<?= json_encode($manager, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>'
                                                         data-manager-id="<?= $manager['id'] ?>"
                                                         data-bs-toggle="modal"
@@ -331,10 +331,10 @@ require_once views_path("partials/nav");
                                 <div class="flex flex-col items-center md:col-span-1">
                                     <div
                                         class="relative w-32 h-32 mb-2 mt-1 flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#16a249] transition-all duration-200">
-                                        <input type="file" id="employeePhoto" name="photo_path" accept="image/*"
+                                        <input type="file" id="managerPhoto" name="photo_path" accept="image/*"
                                             class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                            onchange="previewEmployeePhoto(event); displayFileName(this);">
-                                        <img id="employeePhotoPreview" alt="Employee Photo"
+                                            onchange="previewManagerPhoto(event); displayFileName(this);">
+                                        <img id="managersPhotoPreview" alt="Manager Photo"
                                             class="w-full h-full object-cover rounded-lg absolute top-0 left-0 z-0"
                                             style="display:none;">
                                         <span id="photoPlaceholder" class="flex flex-col items-center justify-center text-gray-400 z-0">
@@ -386,15 +386,23 @@ require_once views_path("partials/nav");
                                                 <span id="branchDropdownSelected" class="dropdown-button-text">Select a branch</span>
                                                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                                             </button>
-                                            <div id="branchDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
-                                                <div class="custom-dropdown-option" data-value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</div>
-                                                <div class="custom-dropdown-option" data-value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</div>
-                                                <div class="custom-dropdown-option" data-value="Branch-Tagum-2">Branch-Tagum-2</div>
+                                            <div id="branchDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-sm mt-1 max-h-60 overflow-y-auto hidden">
+                                                <!-- Options will be loaded dynamically from branches API -->
                                             </div>
+                                            <style>
+                                                /* Styles for dynamic branch dropdown options */
+                                                #branchDropdownList .custom-dropdown-option { padding: 0.5rem 0.75rem; cursor: pointer; transition: background-color 0.2s;}
+                                                #branchDropdownList .custom-dropdown-option:hover { background-color: #f3f4f6; }
+                                                #branchDropdownList .custom-dropdown-option.active { background-color: #16a249; color: white; font-weight: 600; }
+                                                #branchDropdownList .custom-dropdown-option.selected { background-color: #16a249; color: white;}
+                                                #branchDropdownList .custom-dropdown-option.selected:hover { background-color: #15803d;}
+
+                                            </style>
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>   
+                                    
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
                                         <div class="relative" id="position-dropdown-container">
@@ -739,15 +747,176 @@ require_once views_path("partials/nav");
                                                 <span id="editBranchDropdownSelected" class="dropdown-button-text">Select a branch</span>
                                                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                                             </button>
-                                            <div id="editBranchDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
-                                                <div class="custom-dropdown-option" data-value="LMG Co., Ltd - Tagum">LMG Co., Ltd - Tagum</div>
-                                                <div class="custom-dropdown-option" data-value="Global Marketing Alliance - Panabo">Global Marketing Alliance - Panabo</div>
-                                                <div class="custom-dropdown-option" data-value="Branch-Tagum-2">Branch-Tagum-2</div>
+                                            <div id="editBranchDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-sm mt-1 max-h-60 overflow-y-auto hidden">
+                                                <!-- Options will be loaded dynamically from branches API -->
                                             </div>
+                                            <style>
+                                                /* Match styles with add branch dropdown */
+                                                #editBranchDropdownList .custom-dropdown-option { padding: 0.5rem 0.75rem; cursor: pointer; transition: background-color 0.2s; }
+                                                #editBranchDropdownList .custom-dropdown-option:hover { background-color: #f3f4f6; }
+                                                #editBranchDropdownList .custom-dropdown-option.active { background-color: #16a249; color: white; font-weight: 600; }
+                                                #editBranchDropdownList .custom-dropdown-option.selected { background-color: #16a249; color: white; }
+                                                #editBranchDropdownList .custom-dropdown-option.selected:hover { background-color: #15803d; }
+                                            </style>
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
+
+                                    <script>
+                                    (function(){
+                                        var editListEl = document.getElementById('editBranchDropdownList');
+                                        var editToggleBtn = document.getElementById('editBranchDropdownBtn');
+                                        var editContainer = document.getElementById('edit-branch-dropdown-container');
+                                        var editSelectedSpan = document.getElementById('editBranchDropdownSelected');
+                                        var editHiddenInput = document.getElementById('m_edit_branchManager');
+
+                                        function computeBranchesApiUrl(){
+                                            try {
+                                                var scriptName = '<?= addslashes($_SERVER['SCRIPT_NAME'] ?? '') ?>';
+                                                var baseDir = scriptName.substring(0, scriptName.lastIndexOf('/'));
+                                                if (/\/public$/.test(baseDir)) { baseDir = baseDir.replace(/\/public$/, ''); }
+                                                return (window.location.origin || '') + baseDir + '/app/api/branches-api.php';
+                                            } catch (_) {
+                                                return (window.location.origin || '') + '/app/api/branches-api.php';
+                                            }
+                                        }
+                                        var editApiUrl = computeBranchesApiUrl();
+
+                                        function sanitize(text){ return (text || '').replace(/</g, '&lt;'); }
+
+    function renderEditBranches(rows){
+                                            if (!editListEl) return;
+                                            editListEl.innerHTML = '';
+                                            if (!rows || rows.length === 0) {
+                                                var empty = document.createElement('div');
+                                                empty.className = 'px-3 py-2 text-gray-500 text-sm';
+                                                empty.textContent = 'No branches found';
+                                                editListEl.appendChild(empty);
+                                                return;
+                                            }
+        var currentValue = editHiddenInput ? (editHiddenInput.value || '') : '';
+                                            rows.forEach(function(row){
+                                                var label = sanitize(row.name) + (row.address ? ' - ' + sanitize(row.address) : '');
+                                                var div = document.createElement('div');
+                                                div.className = 'custom-dropdown-option';
+            // Store branch id as value and show label as text
+            div.setAttribute('data-value', String(row.id || ''));
+            div.setAttribute('data-label', label);
+            div.textContent = label;
+            if (currentValue && currentValue === label) { div.classList.add('active'); }
+                                                editListEl.appendChild(div);
+                                            });
+        // Ensure selected label reflects current hidden value
+        try {
+            var currId = editHiddenInput ? (editHiddenInput.value || '') : '';
+            if (currId && editSelectedSpan) {
+                var selectedOpt = Array.from(editListEl.querySelectorAll('.custom-dropdown-option')).find(function(el){
+                  return (el.getAttribute('data-label') || el.textContent) === currId;
+                });
+                if (selectedOpt) { editSelectedSpan.textContent = selectedOpt.getAttribute('data-label') || selectedOpt.textContent || 'Select a branch'; }
+            }
+        } catch(_) {}
+                                        }
+
+    function fetchEditBranches(){
+                                            try {
+                                                fetch(editApiUrl, { credentials: 'same-origin' })
+                                                  .then(function(r){ return r.json(); })
+                                                  .then(function(res){
+                                                      if (res && res.status === 'success' && Array.isArray(res.data)) {
+                      renderEditBranches(res.data);
+                      // After render, sync selection if we already have an ID
+                      try {
+                          var currId = editHiddenInput ? (editHiddenInput.value || '') : '';
+                          if (currId && editSelectedSpan) {
+                              var selectedOpt = editListEl.querySelector('[data-value="' + currId + '"]');
+                              if (selectedOpt) {
+                                  editSelectedSpan.textContent = selectedOpt.getAttribute('data-label') || selectedOpt.textContent || 'Select a branch';
+                              }
+                          }
+                      } catch(_) {}
+                                                      } else {
+                                                          if (window.Swal) { Swal.fire({ icon: 'error', title: 'Failed to load branches', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' }); }
+                                                      }
+                                                  })
+                                                  .catch(function(){
+                                                      if (window.Swal) { Swal.fire({ icon: 'error', title: 'Failed to load branches', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' }); }
+                                                  });
+                                            } catch(_) {}
+                                        }
+
+                                        function openEditBranchDropdown(){
+                                            if (!editListEl) return;
+                                            editListEl.classList.remove('hidden');
+                                            editListEl.style.display = 'block';
+                                            try { editListEl.style.minWidth = editToggleBtn.getBoundingClientRect().width + 'px'; } catch(_) {}
+                                            editListEl.dataset.open = '1';
+                                            if (!editListEl.querySelector('.custom-dropdown-option')) {
+                                                editListEl.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">Loading...</div>';
+                                                fetchEditBranches();
+                                            }
+        try {
+            var curr = editHiddenInput ? (editHiddenInput.value || '') : '';
+            editListEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){
+                var lab = el.getAttribute('data-label') || el.textContent || '';
+                el.classList.toggle('active', curr && curr === lab);
+            });
+        } catch(_) {}
+                                        }
+
+                                        function closeEditBranchDropdown(){
+                                            if (!editListEl) return;
+                                            editListEl.classList.add('hidden');
+                                            editListEl.style.display = 'none';
+                                            editListEl.dataset.open = '0';
+                                        }
+
+                                        // Option click: set value, mark active, close
+                                        if (editContainer) {
+                                            editContainer.addEventListener('click', function(ev){
+                                                var opt = ev.target.closest('.custom-dropdown-option');
+                                                if (!opt) return;
+            var value = opt.getAttribute('data-value') || '';
+            var label = opt.getAttribute('data-label') || opt.textContent || '';
+            if (editHiddenInput) editHiddenInput.value = label; // store label (name - address)
+            if (editSelectedSpan) editSelectedSpan.textContent = label || 'Select a branch';
+                                                try {
+                                                    editListEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){ el.classList.remove('active'); });
+                                                    opt.classList.add('active');
+                                                } catch(_) {}
+                                                closeEditBranchDropdown();
+                                            });
+                                        }
+
+                                        // Toggle open/close on same button
+                                        if (editToggleBtn && editListEl) {
+                                            editToggleBtn.addEventListener('click', function(e){
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                var isOpen = editListEl.dataset.open === '1';
+                                                if (isOpen) {
+                                                    closeEditBranchDropdown();
+                                                } else {
+                                                    openEditBranchDropdown();
+                                                }
+                                            });
+                                            document.addEventListener('click', function(ev){
+                                                if (!editContainer.contains(ev.target)) {
+                                                    closeEditBranchDropdown();
+                                                }
+                                            });
+                                        }
+                                        // Ensure branches load on first page load
+                                        try {
+                                            if (document.readyState === 'loading') {
+                                                document.addEventListener('DOMContentLoaded', fetchEditBranches);
+                                            } else {
+                                                fetchEditBranches();
+                                            }
+                                        } catch(_) {}
+                                    })();
+                                    </script>
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
@@ -1260,17 +1429,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Branch select - update dropdown display
     const branchSpan = document.getElementById("editBranchDropdownSelected");
-    const branchValue = manager.m_branch || manager.branch_id || '';
-    if (branchSpan && branchValue) {
-      // Find the option text for this value
+    const hiddenBranchInput = document.getElementById("m_edit_branchManager");
+    let branchId = manager.branch_id || manager.m_branch_id || '';
+    if (hiddenBranchInput) hiddenBranchInput.value = branchId;
+    if (branchSpan) {
+      if (manager.branch_name) {
+        branchSpan.textContent = manager.branch_name + (manager.branch_address ? (' - ' + manager.branch_address) : '');
+      } else {
+        // Try to resolve from current dropdown options
       const branchList = document.getElementById("editBranchDropdownList");
       if (branchList) {
-        const option = branchList.querySelector(`[data-value="${branchValue}"]`);
-        if (option) {
-          branchSpan.textContent = option.textContent;
-          // Also update the hidden input
-          const hiddenInput = document.getElementById("m_edit_branchManager");
-          if (hiddenInput) hiddenInput.value = branchValue;
+          if (branchId) {
+            const optionById = branchList.querySelector(`[data-value="${branchId}"]`);
+            if (optionById) branchSpan.textContent = optionById.getAttribute('data-label') || optionById.textContent;
+          } else if (manager.m_branch) {
+            // Fallback: match by label text if only label is available
+            const desiredLabel = manager.m_branch;
+            const match = Array.from(branchList.querySelectorAll('.custom-dropdown-option')).find(function(el){
+              return (el.getAttribute('data-label') || el.textContent) === desiredLabel;
+            });
+            if (match) {
+              const id = match.getAttribute('data-value') || '';
+              branchSpan.textContent = match.getAttribute('data-label') || match.textContent;
+              if (hiddenBranchInput) hiddenBranchInput.value = id;
+              branchId = id;
+            } else {
+              branchSpan.textContent = 'Select a branch';
+            }
+          }
         }
       }
     }
@@ -1419,8 +1605,29 @@ document.addEventListener("DOMContentLoaded", () => {
               document.getElementById("managerEmail").textContent = manager.m_email || 'N/A';
               document.getElementById("managerPhone").textContent = manager.m_contact_number || 'N/A';
               document.getElementById("managerPlaceOfBirth").textContent = capitalize(manager.m_place_of_birth) || 'N/A';
-              document.getElementById("managerBranch").textContent = manager.branch_name
-                ? `${manager.branch_name} - ${manager.branch_address}` : manager.m_branch || 'N/A';
+              // Resolve branch label
+              (function(){
+                function getBranchLabelById(id){
+                  if (!id) return '';
+                  try {
+                    var lists = [document.getElementById('branchDropdownList'), document.getElementById('editBranchDropdownList')];
+                    for (var i=0;i<lists.length;i++){
+                      var list = lists[i];
+                      if (!list) continue;
+                      var opt = list.querySelector('[data-value="'+ String(id) +'"]');
+                      if (opt) return opt.getAttribute('data-label') || opt.textContent || '';
+                    }
+                  } catch(_) {}
+                  return '';
+                }
+                var branchLabel = '';
+                if (manager.branch_name) {
+                  branchLabel = manager.branch_name + (manager.branch_address ? (' - ' + manager.branch_address) : '');
+                } else if (manager.branch_id) {
+                  branchLabel = getBranchLabelById(manager.branch_id);
+                }
+                document.getElementById('managerBranch').textContent = branchLabel || manager.m_branch || 'N/A';
+              })();
               document.getElementById("managerSalary").textContent = parseFloat(manager.m_base_salary || 0).toFixed(2);
               document.getElementById("managerSSS").textContent = formatSSS(manager.m_sss_number);
               document.getElementById("managerPagibig").textContent = formatPagibig(manager.m_pagibig_number);
@@ -1546,10 +1753,119 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Add file input handling for add modal
+  function previewManagerPhoto(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+      // No file selected; hide preview and show placeholder
+      const preview = document.getElementById('managersPhotoPreview');
+      const placeholder = document.getElementById('photoPlaceholder');
+      if (preview) preview.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'flex';
+      return;
+    }
+    try {
+      const objectUrl = URL.createObjectURL(file);
+      const preview = document.getElementById('managersPhotoPreview');
+      const placeholder = document.getElementById('photoPlaceholder');
+      try { console.debug('previewManagerPhoto: file', file && file.type, file && file.name); } catch(_) {}
+      if (preview) {
+        // If blob load fails (CSP or type), fallback to FileReader data URL
+        preview.onerror = function(){
+          try { URL.revokeObjectURL(objectUrl); } catch(_) {}
+          const fr = new FileReader();
+          fr.onload = function(ev){
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+            try { console.debug('Preview (add) fallback via FileReader'); } catch(_) {}
+          };
+          try { fr.readAsDataURL(file); } catch(_) {}
+        };
+        preview.onload = function(){ try { URL.revokeObjectURL(objectUrl); } catch(_) {} };
+        // Reset then assign to ensure refresh
+        try { preview.removeAttribute('src'); } catch(_) {}
+        preview.src = objectUrl;
+        preview.style.display = 'block';
+        try {
+          preview.style.position = 'absolute';
+          preview.style.top = '0';
+          preview.style.left = '0';
+          preview.style.width = '100%';
+          preview.style.height = '100%';
+          preview.style.objectFit = 'cover';
+          preview.style.zIndex = '1';
+        } catch (_) {}
+      }
+      if (placeholder) placeholder.style.display = 'none';
+      try { console.debug('Preview (add) set via ObjectURL'); } catch(_) {}
+    } catch (_) {
+      // Fallback to FileReader if ObjectURL creation throws
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('managersPhotoPreview');
+        const placeholder = document.getElementById('photoPlaceholder');
+        if (preview) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function displayFileName(input) {
+    try {
+      const fileNameLabel = document.getElementById('photoFileName');
+      if (fileNameLabel) fileNameLabel.textContent = (input.files && input.files[0] && input.files[0].name) || '';
+    } catch (_) {}
+  }
+
+  // Expose to inline handlers
+  try { window.previewManagerPhoto = previewManagerPhoto; } catch(_) {}
+  try { window.displayFileName = displayFileName; } catch(_) {}
+
   // Add file input handling for edit modal
   function editpreviewManagerPhoto(event) {
     const file = event.target.files[0];
     if (file) {
+      try {
+        const objectUrl = URL.createObjectURL(file);
+        const preview = document.getElementById('edit_managerPhotoPreview');
+        const placeholder = document.getElementById('edit_photoPlaceholder');
+        try { console.debug('editpreviewManagerPhoto: file', file && file.type, file && file.name); } catch(_) {}
+        if (preview) {
+          preview.onerror = function(){
+            try { URL.revokeObjectURL(objectUrl); } catch(_) {}
+            const fr = new FileReader();
+            fr.onload = function(ev){
+              preview.src = ev.target.result;
+              preview.style.display = 'block';
+              if (placeholder) placeholder.style.display = 'none';
+              try { console.debug('Preview (edit) fallback via FileReader'); } catch(_) {}
+            };
+            try { fr.readAsDataURL(file); } catch(_) {}
+          };
+          preview.onload = function(){ try { URL.revokeObjectURL(objectUrl); } catch(_) {} };
+          try { preview.removeAttribute('src'); } catch(_) {}
+          preview.src = objectUrl;
+          preview.style.display = 'block';
+          try {
+            preview.style.position = 'absolute';
+            preview.style.top = '0';
+            preview.style.left = '0';
+            preview.style.width = '100%';
+            preview.style.height = '100%';
+            preview.style.objectFit = 'cover';
+            preview.style.zIndex = '1';
+          } catch (_) {}
+        }
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
+        try { console.debug('Preview (edit) set via ObjectURL'); } catch(_) {}
+      } catch(_) {
       const reader = new FileReader();
       reader.onload = function(e) {
         const preview = document.getElementById('edit_managerPhotoPreview');
@@ -1563,6 +1879,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       };
       reader.readAsDataURL(file);
+      }
     }
   }
 
@@ -1956,8 +2273,29 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("managerEmail").textContent = data.m_email || 'N/A';
           document.getElementById("managerPhone").textContent = data.m_contact_number || 'N/A';
           document.getElementById("managerPlaceOfBirth").textContent = capitalize(data.m_place_of_birth) || 'N/A';
-          document.getElementById("managerBranch").textContent = data.branch_name
-            ? `${data.branch_name} - ${data.branch_address}` : data.m_branch || 'N/A';
+          // Resolve branch label for cached row data too
+          (function(){
+            function getBranchLabelById(id){
+              if (!id) return '';
+              try {
+                var lists = [document.getElementById('branchDropdownList'), document.getElementById('editBranchDropdownList')];
+                for (var i=0;i<lists.length;i++){
+                  var list = lists[i];
+                  if (!list) continue;
+                  var opt = list.querySelector('[data-value="'+ String(id) +'"]');
+                  if (opt) return opt.getAttribute('data-label') || opt.textContent || '';
+                }
+              } catch(_) {}
+              return '';
+            }
+            var branchLabel = '';
+            if (data.branch_name) {
+              branchLabel = data.branch_name + (data.branch_address ? (' - ' + data.branch_address) : '');
+            } else if (data.branch_id) {
+              branchLabel = getBranchLabelById(data.branch_id);
+            }
+            document.getElementById('managerBranch').textContent = branchLabel || data.m_branch || 'N/A';
+          })();
           document.getElementById("managerSalary").textContent = parseFloat(data.m_base_salary || 0).toFixed(2);
           document.getElementById("managerSSS").textContent = formatSSS(data.m_sss_number);
           document.getElementById("managerPagibig").textContent = formatPagibig(data.m_pagibig_number);
@@ -2166,13 +2504,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Reset file input
-    const fileInput = document.getElementById('employeePhoto');
+    const fileInput = document.getElementById('managerPhoto');
     if (fileInput) {
         fileInput.value = '';
     }
 
     // Reset photo preview
-    const photoPreview = document.getElementById('employeePhotoPreview');
+    const photoPreview = document.getElementById('managersPhotoPreview');
     const photoPlaceholder = document.getElementById('photoPlaceholder');
     const photoFileName = document.getElementById('photoFileName');
     if (photoPreview) photoPreview.style.display = 'none';
@@ -2680,8 +3018,144 @@ function validateManagerForm(form) {
   return valid;
 }
 
+(function(){
+                                        function computeBranchesApiUrl(){
+                                            try {
+                                                var scriptName = '<?= addslashes($_SERVER['SCRIPT_NAME'] ?? '') ?>';
+                                                var baseDir = scriptName.substring(0, scriptName.lastIndexOf('/'));
+                                                if (/\/public$/.test(baseDir)) { baseDir = baseDir.replace(/\/public$/, ''); }
+                                                return (window.location.origin || '') + baseDir + '/app/api/branches-api.php';
+                                            } catch (_) {
+                                                return (window.location.origin || '') + '/app/api/branches-api.php';
+                                            }
+                                        }
 
+                                        var apiUrl = computeBranchesApiUrl();
+                                        var listEl = document.getElementById('branchDropdownList');
+                                        var hiddenInput = document.getElementById('branchManager');
+                                        var selectedSpan = document.getElementById('branchDropdownSelected');
+                                        var container = document.getElementById('branch-dropdown-container');
+
+                                        function sanitize(text){ return (text || '').replace(/</g, '&lt;'); }
+
+                                        function renderBranches(rows){
+                                            if (!listEl) return;
+                                            listEl.innerHTML = '';
+                                            if (!rows || rows.length === 0) {
+                                                var empty = document.createElement('div');
+                                                empty.className = 'px-3 py-2 text-gray-500 text-sm';
+                                                empty.textContent = 'No branches found';
+                                                listEl.appendChild(empty);
+                                                return;
+                                            }
+                                            var currentValue = hiddenInput ? (hiddenInput.value || '') : '';
+                                            rows.forEach(function(row){
+                                                var label = sanitize(row.name) + (row.address ? ' - ' + sanitize(row.address) : '');
+                                                var div = document.createElement('div');
+                                                div.className = 'custom-dropdown-option';
+                                                div.setAttribute('data-value', label);
+                                                div.textContent = label;
+                                                if (currentValue && currentValue === label) { div.classList.add('active'); }
+                                                listEl.appendChild(div);
+                                            });
+                                        }
+
+                                        function fetchBranches(){
+                                            try {
+                                                // Ensure session cookies are sent
+                                                fetch(apiUrl, { credentials: 'same-origin' })
+                                                  .then(function(r){ return r.json(); })
+                                                  .then(function(res){
+                                                      if (res && res.status === 'success' && Array.isArray(res.data)) {
+                                                          renderBranches(res.data);
+                                                      } else {
+                                                          console.error('Branches API error', res);
+                                                          if (window.Swal) { Swal.fire({ icon: 'error', title: 'Failed to load branches', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' }); }
+                                                      }
+                                                  })
+                                                  .catch(function(err){
+                                                      console.error('Branches API request failed', err);
+                                                      if (window.Swal) { Swal.fire({ icon: 'error', title: 'Failed to load branches', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' }); }
+                                                  });
+                                            } catch(err) {
+                                                console.error('Branches fetch error', err);
+                                            }
+                                        }
+
+                                        function openBranchDropdown(){
+                                            if (!listEl) return;
+                                            listEl.classList.remove('hidden');
+                                            listEl.style.display = 'block';
+                                            try { listEl.style.minWidth = toggleBtn.getBoundingClientRect().width + 'px'; } catch(_) {}
+                                            listEl.dataset.open = '1';
+                                            if (!listEl.querySelector('.custom-dropdown-option')) {
+                                                listEl.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">Loading...</div>';
+                                                fetchBranches();
+                                            }
+                                            try {
+                                                var current = hiddenInput ? (hiddenInput.value || '') : '';
+                                                listEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){
+                                                    var val = el.getAttribute('data-value') || '';
+                                                    el.classList.toggle('active', current && current === val);
+                                                });
+                                            } catch(_) {}
+                                        }
+
+                                        function closeBranchDropdown(){
+                                            if (!listEl) return;
+                                            listEl.classList.add('hidden');
+                                            listEl.style.display = 'none';
+                                            listEl.dataset.open = '0';
+                                        }
+
+                                        // Delegate option click
+                                        if (container) {
+                                            container.addEventListener('click', function(ev){
+                                                var opt = ev.target.closest('.custom-dropdown-option');
+                                                if (!opt) return;
+                                                var value = opt.getAttribute('data-value') || '';
+                                                if (hiddenInput) hiddenInput.value = value;
+                                                if (selectedSpan) selectedSpan.textContent = value || 'Select a branch';
+                                                // set active state
+                                                try {
+                                                    listEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){ el.classList.remove('active'); });
+                                                    opt.classList.add('active');
+                                                } catch(_) {}
+                                                // hide list
+                                                closeBranchDropdown();
+                                            });
+                                        }
+
+                                        // Toggle dropdown visibility
+                                        var toggleBtn = document.getElementById('branchDropdownBtn');
+                                        if (toggleBtn && listEl) {
+                                            toggleBtn.addEventListener('click', function(e){
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                var isOpen = listEl.dataset.open === '1';
+                                                if (isOpen) {
+                                                    closeBranchDropdown();
+                                                } else {
+                                                    openBranchDropdown();
+                                                }
+                                            });
+                                            // Close when clicking outside
+                                            document.addEventListener('click', function(ev){
+                                                if (!container.contains(ev.target)) {
+                                                    closeBranchDropdown();
+                                                }
+                                            });
+                                        }
+
+                                        if (document.readyState === 'loading') {
+                                            document.addEventListener('DOMContentLoaded', fetchBranches);
+                                        } else {
+                                            fetchBranches();
+                                        }
+                                    })();
 
 // ... existing code ...
 </script>
+
+
 

@@ -32,6 +32,13 @@ function isManagerLoggedIn() {
 }
 
 /**
+ * Check if user is logged in as owner
+ */
+function isOwnerLoggedIn() {
+    return isset($_SESSION['owner_id']) && !empty($_SESSION['owner_id']);
+}
+
+/**
  * Get current user type
  */
 function getCurrentUserType() {
@@ -49,6 +56,11 @@ function getCurrentUserType() {
     if (isEmployeeLoggedIn()) {
         return 'employee';
     }
+
+    // Check for owner
+    if (isOwnerLoggedIn()) {
+        return 'owner';
+    }
     
     // If no valid session, return guest
     return 'guest';
@@ -64,6 +76,8 @@ function getCurrentUserId() {
         return $_SESSION['manager_id'];
     } elseif (isEmployeeLoggedIn()) {
         return $_SESSION['employee_id'] ?? $_SESSION['employee_no'];
+    } elseif (isOwnerLoggedIn()) {
+        return $_SESSION['owner_id'];
     }
     return null;
 }
@@ -78,6 +92,8 @@ function getCurrentUserName() {
         return $_SESSION['manager_name'] ?? 'Manager';
     } elseif (isEmployeeLoggedIn()) {
         return $_SESSION['name'] ?? 'Employee';
+    } elseif (isOwnerLoggedIn()) {
+        return $_SESSION['owner_name'] ?? 'Owner';
     }
     return 'Guest';
 }
@@ -116,6 +132,17 @@ function requireEmployeeAuth() {
 }
 
 /**
+ * Require owner authentication
+ */
+function requireOwnerAuth() {
+    if (!isOwnerLoggedIn()) {
+        http_response_code(403);
+        require_once __DIR__ . '/../Error/unauthorized.php';
+        exit;
+    }
+}
+
+/**
  * Require any authenticated user (admin, manager, or employee)
  */
 function requireAnyAuth() {
@@ -141,6 +168,9 @@ function redirectToLogin() {
             break;
         case 'employee':
             header('Location: index.php?payroll=login1&type=employee');
+            break;
+        case 'owner':
+            header('Location: index.php?payroll=owner_login');
             break;
         default:
             header('Location: index.php?payroll=login1');

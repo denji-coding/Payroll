@@ -111,7 +111,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 <div id="adminSidebar" class="w-40"
     style="background-color: #0b5125; color: white; max-height: 100vh; overflow-y: auto; padding: 1.5rem;">
 
-    <img src="../public/assets/image/logo.png" alt="Company Logo" class="mx-auto w-24 h-24 mb-3 rounded-full border border-[#fff8] bg-white shadow">
+    <img src="../public/assets/image/test_logo.png" alt="Company Logo" class="mx-auto  rounded-full ">
     <span class="block text-center font-extrabold text-white text-xl md:text-lg mb-2">Migrants Venture Corporation</span>
     <div class="border-b border-white-500 mb-4"></div>
 

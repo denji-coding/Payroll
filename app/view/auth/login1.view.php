@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php endif; ?>
 
         <style>
-
+            
     #managerLoginForm,
     #employeeLoginForm {
         display: none;
@@ -106,8 +106,8 @@ document.addEventListener('DOMContentLoaded', function () {
       <i class="bi bi-person-circle" style="color: green; font-size: 2.9rem;"></i>
       <!-- Title -->
       <div class="text-center mt-3">
-        <span class="text-xl font-semibold">Migrants Venture</span>
-        <p>HRM & Payroll Management System</p>
+        <span class="text-xl font-semibold">Migrants Venture Corporation</span>
+        <p>Manager and Employee Login Page</p>
             </div>
         </div>
         <hr>

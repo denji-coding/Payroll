@@ -149,6 +149,8 @@ function applyAuthMiddleware($controllerName) {
         'admin_logout' => [],
         'employee_logout' => [],
         'manager_logout' => [],
+        'owner_login' => [],
+        'owner_logout' => [],
     ];
     
     // Get required roles for this controller
