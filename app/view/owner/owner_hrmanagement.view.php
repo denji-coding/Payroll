@@ -117,8 +117,9 @@ try {
     text-align: left;
 }
 
-/* Dropdown visibility */
-.hidden {
+/* Dropdown visibility - only apply to dropdown-related elements */
+.custom-dropdown-list.hidden,
+[id$="dropdown-container"] .hidden {
     display: none !important;
 }
 
@@ -149,7 +150,7 @@ try {
 }
 </style>
 
-<main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] min-h-screen bg-[#f8fbf8]">
+<main id="mainContent" class="ml-[256px] p-4 md:p-6 bg-[#f8fbf8] min-h-screen">
     <div class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>

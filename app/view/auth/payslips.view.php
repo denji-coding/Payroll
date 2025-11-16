@@ -421,12 +421,16 @@ document.addEventListener('DOMContentLoaded', () => {
     payslipContent.innerHTML = `
       <div class="space-y-6">
         <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <span class="text-2xl font-bold">Migrants Venture Corporation</span>
-            <p class="text-[#478547]">Lapu-Lapu St. Tagum City, Davao Del Norte</p>
+          <div class="d-flex align-items-start gap-3">
+            <div class="flex-shrink-0 mt-[-6px]">
+              <img src="../public/assets/image/test_logo_cropted.png" alt="Company Logo" style="width: 70px; height: auto; object-fit: contain;">
+            </div>
+            <div>
+              <span class="text-2xl font-bold">Migrants Venture Corporation</span>
+              <p class="text-[#478547]">Lapu-Lapu St. Tagum City, Davao Del Norte</p>
+            </div>
           </div>
           <div class="text-end">
-            <span class="font-bold">PAYSLIP</span>
           </div>
         </div>
 

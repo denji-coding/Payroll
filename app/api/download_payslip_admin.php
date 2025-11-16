@@ -76,26 +76,80 @@ if (!$payroll_id) {
 }
 
 try {
-    // Get payslip information - admin can access any payslip
+    // Get payslip information - admin can access any payslip (employee, manager, or HR)
+    // Try employee first
     $query = "
         SELECT 
             ps.ps_pdf_file_path, 
             p.employee_id as payroll_employee_id,
+            p.manager_id,
+            p.hr_id,
             e.employee_no,
             e.first_name,
             e.last_name,
             p.pay_period_start,
-            p.pay_period_end
+            p.pay_period_end,
+            'employee' AS user_type
         FROM payslips ps
         JOIN payroll p ON ps.payroll_id = p.id
-        JOIN employees e ON p.employee_id = e.id
-        WHERE ps.payroll_id = :payroll_id
+        LEFT JOIN employees e ON p.employee_id = e.id
+        WHERE ps.payroll_id = :payroll_id AND p.employee_id IS NOT NULL
         LIMIT 1
     ";
 
     $stmt = $conn->prepare($query);
     $stmt->execute(['payroll_id' => $payroll_id]);
     $payslip = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // If not found, try manager
+    if (!$payslip) {
+        $query = "
+            SELECT 
+                ps.ps_pdf_file_path, 
+                p.employee_id as payroll_employee_id,
+                p.manager_id,
+                p.hr_id,
+                m.m_employee_id AS employee_no,
+                m.m_first_name AS first_name,
+                m.m_last_name AS last_name,
+                p.pay_period_start,
+                p.pay_period_end,
+                'manager' AS user_type
+            FROM payslips ps
+            JOIN payroll p ON ps.payroll_id = p.id
+            LEFT JOIN managers m ON p.manager_id = m.id
+            WHERE ps.payroll_id = :payroll_id AND p.manager_id IS NOT NULL
+            LIMIT 1
+        ";
+        $stmt = $conn->prepare($query);
+        $stmt->execute(['payroll_id' => $payroll_id]);
+        $payslip = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // If still not found, try HR
+    if (!$payslip) {
+        $query = "
+            SELECT 
+                ps.ps_pdf_file_path, 
+                p.employee_id as payroll_employee_id,
+                p.manager_id,
+                p.hr_id,
+                admin.hr_employee_id AS employee_no,
+                admin.hr_first_name AS first_name,
+                admin.hr_last_name AS last_name,
+                p.pay_period_start,
+                p.pay_period_end,
+                'hr' AS user_type
+            FROM payslips ps
+            JOIN payroll p ON ps.payroll_id = p.id
+            LEFT JOIN admins admin ON p.hr_id = admin.id
+            WHERE ps.payroll_id = :payroll_id AND p.hr_id IS NOT NULL AND admin.deleted_at IS NULL
+            LIMIT 1
+        ";
+        $stmt = $conn->prepare($query);
+        $stmt->execute(['payroll_id' => $payroll_id]);
+        $payslip = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
     if (!$payslip || !$payslip['ps_pdf_file_path']) {
         error_log("Admin Download API - Payslip not found or no PDF path for payroll_id: " . $payroll_id);
