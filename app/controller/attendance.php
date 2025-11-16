@@ -110,7 +110,7 @@ try {
                 IFNULL(TIME_TO_SEC(morning_out), 0),
                 IFNULL(TIME_TO_SEC(morning_in), 0)
             ) DESC
-        ");
+    ");
     // Bind the date parameter three times (once for each UNION part)
     $stmt->bindValue(1, $filterDate, PDO::PARAM_STR);
     $stmt->bindValue(2, $filterDate, PDO::PARAM_STR);

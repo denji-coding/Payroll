@@ -17,11 +17,183 @@ function isAdminLoggedIn() {
 }
 
 /**
+ * Get user role from database
+ */
+function getUserRole($userId, $userType) {
+    require_once __DIR__ . '/database.php';
+    $db = new Database();
+    $pdo = $db->getConnection();
+    
+    try {
+        $table = '';
+        $idColumn = '';
+        
+        switch ($userType) {
+            case 'employee':
+                $table = 'employees';
+                $idColumn = 'id';
+                break;
+            case 'manager':
+                $table = 'managers';
+                $idColumn = 'id';
+                break;
+            case 'admin':
+                $table = 'admins';
+                $idColumn = 'id';
+                break;
+            default:
+                return null;
+        }
+        
+        $stmt = $pdo->prepare("SELECT role_id FROM $table WHERE $idColumn = ?");
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result['role_id'] ?? null;
+    } catch (Exception $e) {
+        error_log("Error getting user role: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Get role permissions
+ */
+function getRolePermissions($roleId) {
+    if (!$roleId) return null;
+    
+    require_once __DIR__ . '/database.php';
+    $db = new Database();
+    $pdo = $db->getConnection();
+    
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM roles WHERE id = ? AND is_active = 1");
+        $stmt->execute([$roleId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Error getting role permissions: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Check if user can access employee portal
+ */
+function canAccessEmployeePortal($userId = null, $userType = null) {
+    error_log("=== canAccessEmployeePortal() DEBUG ===");
+    error_log("Parameters: userId=" . ($userId ?? 'NULL') . ", userType=" . ($userType ?? 'NULL'));
+    
+    // If already in session, use session data
+    if (isset($_SESSION['can_access_employee_portal'])) {
+        $result = $_SESSION['can_access_employee_portal'] == 1;
+        error_log("Using session data: " . ($result ? 'TRUE' : 'FALSE'));
+        return $result;
+    }
+    
+    error_log("Session data not available, checking database...");
+    // Otherwise check from database
+    if ($userId && $userType) {
+        $roleId = getUserRole($userId, $userType);
+        if ($roleId) {
+            $role = getRolePermissions($roleId);
+            return $role && $role['can_access_employee_portal'] == 1;
+        }
+    }
+    
+    // Fallback: check current session
+    $currentUserType = getCurrentUserType();
+    $currentUserId = getCurrentUserId();
+    
+    if ($currentUserId) {
+        $roleId = getUserRole($currentUserId, $currentUserType);
+        if ($roleId) {
+            $role = getRolePermissions($roleId);
+            return $role && $role['can_access_employee_portal'] == 1;
+        }
+    }
+    
+    return false;
+}
+
+/**
  * Check if user is logged in as employee
  */
 function isEmployeeLoggedIn() {
-    return (isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id'])) || 
-           (isset($_SESSION['employee_no']) && !empty($_SESSION['employee_no']));
+    // Ensure session is started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    error_log("=== isEmployeeLoggedIn() DEBUG ===");
+    error_log("Session status: " . session_status());
+    error_log("Session ID: " . session_id());
+    
+    // Regular employees
+    if ((isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id'])) || 
+        (isset($_SESSION['employee_no']) && !empty($_SESSION['employee_no']))) {
+        error_log("isEmployeeLoggedIn: TRUE (regular employee)");
+        return true;
+    }
+    
+    // Managers with employee portal access
+    // SIMPLIFIED CHECK: If manager_id exists AND can_access_employee_portal is truthy, allow access
+    if (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
+        error_log("Manager ID found: " . $_SESSION['manager_id']);
+        
+        // Simple truthy check - if can_access_employee_portal exists and is truthy (1, '1', true), allow access
+        if (isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal']) {
+            // Convert to int to ensure we're checking the numeric value
+            $portalAccess = intval($_SESSION['can_access_employee_portal']);
+            error_log("can_access_employee_portal value (as int): " . $portalAccess);
+            
+            if ($portalAccess == 1) {
+                error_log("SUCCESS: Manager has employee portal access - returning TRUE");
+                return true;
+            } else {
+                error_log("WARNING: can_access_employee_portal is not 1. Value: " . var_export($_SESSION['can_access_employee_portal'], true));
+            }
+        } else {
+            error_log("can_access_employee_portal NOT SET or is falsy");
+        }
+        
+        // Fallback to database check
+        error_log("Falling back to database check...");
+        $canAccess = canAccessEmployeePortal($_SESSION['manager_id'], 'manager');
+        error_log("isEmployeeLoggedIn: Manager check using database - " . ($canAccess ? 'TRUE' : 'FALSE'));
+        return $canAccess;
+    }
+    
+    // HR/Admin with employee portal access
+    // SIMPLIFIED CHECK: If SESSION_USER_ID exists AND can_access_employee_portal is truthy, allow access
+    if (isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID'])) {
+        error_log("HR/Admin ID found: " . $_SESSION['SESSION_USER_ID']);
+        
+        // Simple truthy check - if can_access_employee_portal exists and is truthy (1, '1', true), allow access
+        if (isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal']) {
+            // Convert to int to ensure we're checking the numeric value
+            $portalAccess = intval($_SESSION['can_access_employee_portal']);
+            error_log("can_access_employee_portal value (as int): " . $portalAccess);
+            
+            if ($portalAccess == 1) {
+                error_log("SUCCESS: HR/Admin has employee portal access - returning TRUE");
+                return true;
+            } else {
+                error_log("WARNING: can_access_employee_portal is not 1. Value: " . var_export($_SESSION['can_access_employee_portal'], true));
+            }
+        } else {
+            error_log("can_access_employee_portal NOT SET or is falsy");
+        }
+        
+        // Fallback to database check
+        error_log("Falling back to database check...");
+        $canAccess = canAccessEmployeePortal($_SESSION['SESSION_USER_ID'], 'admin');
+        error_log("isEmployeeLoggedIn: HR/Admin check using database - " . ($canAccess ? 'TRUE' : 'FALSE'));
+        return $canAccess;
+    }
+    
+    error_log("isEmployeeLoggedIn: FALSE (no matching condition)");
+    error_log("Available session keys: " . implode(', ', array_keys($_SESSION ?? [])));
+    return false;
 }
 
 /**
@@ -40,9 +212,23 @@ function isOwnerLoggedIn() {
 
 /**
  * Get current user type
+ * Returns the user type based on their role and portal access permissions
  */
 function getCurrentUserType() {
-    // Check for admin first (most restrictive)
+    // Check for owner first (highest level)
+    if (isOwnerLoggedIn()) {
+        return 'owner';
+    }
+    
+    // Check if user is accessing employee portal (has employee portal access)
+    // This takes priority because a user can have multiple portal access permissions
+    if (isEmployeeLoggedIn()) {
+        // If user has employee portal access, return 'employee' regardless of their base role
+        // This allows managers/HR with employee portal access to access employee pages
+        return 'employee';
+    }
+    
+    // Check for admin (HR)
     if (isAdminLoggedIn()) {
         return 'admin';
     }
@@ -50,16 +236,6 @@ function getCurrentUserType() {
     // Check for manager
     if (isManagerLoggedIn()) {
         return 'manager';
-    }
-    
-    // Check for employee
-    if (isEmployeeLoggedIn()) {
-        return 'employee';
-    }
-
-    // Check for owner
-    if (isOwnerLoggedIn()) {
-        return 'owner';
     }
     
     // If no valid session, return guest
@@ -124,11 +300,86 @@ function requireManagerAuth() {
  * Require employee authentication
  */
 function requireEmployeeAuth() {
-    if (!isEmployeeLoggedIn()) {
+    // Ensure session is started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    error_log("=== requireEmployeeAuth() CALLED ===");
+    error_log("Session ID: " . session_id());
+    error_log("Session status: " . session_status());
+    
+    // ULTRA-SIMPLE DIRECT CHECK: Just check if the values exist and are truthy
+    // Check for regular employees first
+    if ((isset($_SESSION['employee_id']) && !empty($_SESSION['employee_id'])) || 
+        (isset($_SESSION['employee_no']) && !empty($_SESSION['employee_no']))) {
+        error_log("✅ requireEmployeeAuth: Regular employee - ACCESS GRANTED");
+        return;
+    }
+    
+    // Check for managers with employee portal access
+    if (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
+        // Check can_access_employee_portal - handle both int and string values
+        $portalAccess = $_SESSION['can_access_employee_portal'] ?? null;
+        $portalAccessInt = isset($portalAccess) ? intval($portalAccess) : 0;
+        
+        if ($portalAccessInt == 1) {
+            error_log("✅ requireEmployeeAuth: Manager with employee portal access - ACCESS GRANTED");
+            error_log("  manager_id: " . $_SESSION['manager_id']);
+            error_log("  can_access_employee_portal: " . $portalAccessInt);
+            return;
+        } else {
+            error_log("❌ Manager Portal access check FAILED - value is: " . var_export($portalAccess, true) . " (as int: " . $portalAccessInt . ")");
+        }
+    }
+    
+    // Check for HR/Admin with employee portal access
+    if (isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID'])) {
+        error_log("HR/Admin ID check: PASSED - SESSION_USER_ID = " . $_SESSION['SESSION_USER_ID']);
+        
+        // Check can_access_employee_portal - handle both int and string values
+        $portalAccess = $_SESSION['can_access_employee_portal'] ?? null;
+        error_log("  can_access_employee_portal raw value: " . var_export($portalAccess, true));
+        error_log("  can_access_employee_portal type: " . (isset($portalAccess) ? gettype($portalAccess) : 'NOT SET'));
+        
+        // Convert to int for comparison (handles '1', 1, true, etc.)
+        $portalAccessInt = isset($portalAccess) ? intval($portalAccess) : 0;
+        error_log("  can_access_employee_portal as int: " . $portalAccessInt);
+        
+        if ($portalAccessInt == 1) {
+            error_log("✅ requireEmployeeAuth: HR/Admin with employee portal access - ACCESS GRANTED");
+            error_log("  SESSION_USER_ID: " . $_SESSION['SESSION_USER_ID']);
+            error_log("  can_access_employee_portal: " . $portalAccessInt);
+            return;
+        } else {
+            error_log("❌ HR Portal access check FAILED - value is: " . var_export($portalAccess, true) . " (as int: " . $portalAccessInt . ")");
+        }
+    } else {
+        error_log("❌ HR/Admin ID check FAILED - SESSION_USER_ID is: " . var_export($_SESSION['SESSION_USER_ID'] ?? 'NOT SET', true));
+    }
+    
+    // If we get here, the direct checks failed - log why and use fallback
+    error_log("❌ requireEmployeeAuth: Direct checks failed");
+    error_log("Session data available:");
+    error_log("  employee_id: " . ($_SESSION['employee_id'] ?? 'NOT SET'));
+    error_log("  employee_no: " . ($_SESSION['employee_no'] ?? 'NOT SET'));
+    error_log("  manager_id: " . ($_SESSION['manager_id'] ?? 'NOT SET'));
+    error_log("  SESSION_USER_ID: " . ($_SESSION['SESSION_USER_ID'] ?? 'NOT SET'));
+    error_log("  can_access_employee_portal: " . ($_SESSION['can_access_employee_portal'] ?? 'NOT SET'));
+    error_log("  can_access_employee_portal type: " . (isset($_SESSION['can_access_employee_portal']) ? gettype($_SESSION['can_access_employee_portal']) : 'NOT SET'));
+    
+    // Fallback: use isEmployeeLoggedIn()
+    error_log("⚠️ Using isEmployeeLoggedIn() as fallback...");
+    $isLoggedIn = isEmployeeLoggedIn();
+    error_log("requireEmployeeAuth: isEmployeeLoggedIn() = " . ($isLoggedIn ? 'TRUE' : 'FALSE'));
+    
+    if (!$isLoggedIn) {
+        error_log("❌ requireEmployeeAuth: All checks failed - Redirecting to unauthorized_employee.php");
         http_response_code(403);
-        require_once __DIR__ . '/../Error/unauthorized.php';
+        require_once __DIR__ . '/../Error/unauthorized_employee.php';
         exit;
     }
+    error_log("✅ requireEmployeeAuth: Access granted via isEmployeeLoggedIn()");
 }
 
 /**
@@ -239,6 +490,12 @@ function clearAllSessions() {
     unset($_SESSION['ip_address']);
     unset($_SESSION['user_agent']);
     unset($_SESSION['login_success']);
+    unset($_SESSION['role_id']);
+    unset($_SESSION['role_name']);
+    unset($_SESSION['can_access_employee_portal']);
+    unset($_SESSION['can_access_manager_portal']);
+    unset($_SESSION['can_access_hr_portal']);
+    unset($_SESSION['can_access_owner_portal']);
     
     // Don't set logged_out here - it should only be set during actual logout
 }

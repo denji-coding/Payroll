@@ -177,7 +177,9 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
     <div class="modal-content bg-[#f8fbf8] border">
       <div class="modal-header border-b">
         <h5 class="modal-title text-lg font-semibold" id="payslip-title">Payslip Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body p-6">
         <div id="payslip-content">

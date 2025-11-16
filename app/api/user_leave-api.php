@@ -6,10 +6,25 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 session_start();
 require_once __DIR__ . '/../core/database.php';
 $db = new Database();
-// Fix session variable handling
-$employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
 
-if (!$employee_id) {
+// Support employees, managers, and HR
+$employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
+$manager_id = $_SESSION['manager_id'] ?? null;
+$hr_id = $_SESSION['SESSION_USER_ID'] ?? null;
+
+// Determine user type and ID
+$user_type = 'employee';
+$user_id = $employee_id;
+
+if ($hr_id) {
+    $user_type = 'hr';
+    $user_id = $hr_id;
+} elseif ($manager_id) {
+    $user_type = 'manager';
+    $user_id = $manager_id;
+}
+
+if (!$user_id) {
     http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
@@ -24,8 +39,19 @@ if ($method === 'OPTIONS') {
 
 // ✅ GET: Return HTML leave rows
 if ($method === 'GET') {
-    $sql = "SELECT * FROM leaves WHERE employee_id = :eid ORDER BY created_at DESC";
-    $leaves = $db->query($sql, [':eid' => $employee_id]) ?: [];
+    // Build query based on user type
+    if ($user_type === 'employee') {
+        $sql = "SELECT * FROM leaves WHERE employee_id = :user_id AND applicant_type = 'employee' ORDER BY created_at DESC";
+        $params = [':user_id' => $user_id];
+    } elseif ($user_type === 'manager') {
+        $sql = "SELECT * FROM leaves WHERE applicant_manager_id = :user_id AND applicant_type = 'manager' ORDER BY created_at DESC";
+        $params = [':user_id' => $user_id];
+    } elseif ($user_type === 'hr') {
+        $sql = "SELECT * FROM leaves WHERE applicant_hr_id = :user_id AND applicant_type = 'hr' ORDER BY created_at DESC";
+        $params = [':user_id' => $user_id];
+    }
+    
+    $leaves = $db->query($sql, $params) ?: [];
 
     ob_start(); // capture HTML
     if ($leaves):
@@ -91,6 +117,22 @@ if ($method === 'GET') {
                     <span class="badge <?= $status === 'Approved' ? 'bg-success' : ($status === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark') ?>">
                         <?= $status ?>
                     </span>
+                    <?php
+                    // Display approver info if approved/rejected
+                    if ($status !== 'Pending') {
+                        $approverName = $leave['approver_name'] ?? null;
+                        $approverType = $leave['approver_type'] ?? null;
+                        if ($approverName) {
+                            echo '<br><small class="text-muted">By: ' . htmlspecialchars($approverName) . '</small>';
+                        } elseif ($approverType === 'manager' && isset($leave['manager_id'])) {
+                            echo '<br><small class="text-muted">By: Manager</small>';
+                        } elseif ($approverType === 'hr' && isset($leave['approver_hr_id'])) {
+                            echo '<br><small class="text-muted">By: HR</small>';
+                        } elseif ($approverType === 'owner' && isset($leave['approver_owner_id'])) {
+                            echo '<br><small class="text-muted">By: Owner</small>';
+                        }
+                    }
+                    ?>
                 </td>
                 <td class="text-center">
                     <?php if ($status === 'Pending'): ?>
@@ -144,18 +186,48 @@ if ($method === 'POST') {
     $leaveTypeId = $leaveTypeMapping[$leave_type] ?? null;
     
     if ($leaveTypeId) {
-        $creditStmt = $db->getConnection()->prepare("
-            SELECT 
-                lc.taken, 
-                lt.default_allowed 
-            FROM leave_credits lc
-            JOIN leave_types lt ON lc.leave_type_id = lt.id
-            WHERE lc.employee_id = :eid AND lc.leave_type_id = :type_id
-        ");
-        $creditStmt->execute([
-            ':eid' => $employee_id,
-            ':type_id' => $leaveTypeId
-        ]);
+        // Build credit check query based on user type
+        if ($user_type === 'employee') {
+            $creditStmt = $db->getConnection()->prepare("
+                SELECT 
+                    lc.taken, 
+                    lt.default_allowed 
+                FROM leave_credits lc
+                JOIN leave_types lt ON lc.leave_type_id = lt.id
+                WHERE lc.employee_id = :user_id AND lc.leave_type_id = :type_id AND lc.user_type = 'employee'
+            ");
+            $creditStmt->execute([
+                ':user_id' => $user_id,
+                ':type_id' => $leaveTypeId
+            ]);
+        } elseif ($user_type === 'manager') {
+            $creditStmt = $db->getConnection()->prepare("
+                SELECT 
+                    lc.taken, 
+                    lt.default_allowed 
+                FROM leave_credits lc
+                JOIN leave_types lt ON lc.leave_type_id = lt.id
+                WHERE lc.manager_id = :user_id AND lc.leave_type_id = :type_id AND lc.user_type = 'manager'
+            ");
+            $creditStmt->execute([
+                ':user_id' => $user_id,
+                ':type_id' => $leaveTypeId
+            ]);
+        } elseif ($user_type === 'hr') {
+            $creditStmt = $db->getConnection()->prepare("
+                SELECT 
+                    lc.taken, 
+                    lt.default_allowed 
+                FROM leave_credits lc
+                JOIN leave_types lt ON lc.leave_type_id = lt.id
+                WHERE lc.hr_id = :user_id AND lc.leave_type_id = :type_id AND lc.user_type = 'hr'
+            ");
+            $creditStmt->execute([
+                ':user_id' => $user_id,
+                ':type_id' => $leaveTypeId
+            ]);
+        }
+        
         $credit = $creditStmt->fetch(PDO::FETCH_ASSOC);
         
         if ($credit) {
@@ -170,14 +242,36 @@ if ($method === 'POST') {
             }
         } else {
             // Create leave credits record if it doesn't exist
-            $insertStmt = $db->getConnection()->prepare("
-                INSERT INTO leave_credits (employee_id, leave_type_id, taken) 
-                VALUES (:eid, :type_id, 0)
-            ");
-            $insertStmt->execute([
-                ':eid' => $employee_id,
-                ':type_id' => $leaveTypeId
-            ]);
+            if ($user_type === 'employee') {
+                $insertStmt = $db->getConnection()->prepare("
+                    INSERT INTO leave_credits (employee_id, leave_type_id, taken, user_type) 
+                    VALUES (:user_id, :type_id, 0, 'employee')
+                ");
+                $insertStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            } elseif ($user_type === 'manager') {
+                // For managers: employee_id must be NULL, manager_id is set
+                $insertStmt = $db->getConnection()->prepare("
+                    INSERT INTO leave_credits (employee_id, manager_id, leave_type_id, taken, user_type) 
+                    VALUES (NULL, :user_id, :type_id, 0, 'manager')
+                ");
+                $insertStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            } elseif ($user_type === 'hr') {
+                // For HR: employee_id must be NULL, hr_id is set
+                $insertStmt = $db->getConnection()->prepare("
+                    INSERT INTO leave_credits (employee_id, hr_id, leave_type_id, taken, user_type) 
+                    VALUES (NULL, :user_id, :type_id, 0, 'hr')
+                ");
+                $insertStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            }
             
             // Get default allowed from leave_types
             $defaultStmt = $db->getConnection()->prepare("SELECT default_allowed FROM leave_types WHERE id = :type_id");
@@ -242,17 +336,46 @@ if ($method === 'POST') {
         }
     }
 
-    $sql = "INSERT INTO leaves (employee_id, leave_type, start_date, end_date, duration, reason, med_cert_path)
-            VALUES (:eid, :lt, :sd, :ed, :dur, :rs, :mp)";
-    $params = [
-        ':eid' => $employee_id,
-        ':lt' => $leave_type,
-        ':sd' => $start_date,
-        ':ed' => $end_date,
-        ':dur' => $duration,
-        ':rs' => $reason,
-        ':mp' => $med_cert_path
-    ];
+    // Build INSERT query based on user type
+    if ($user_type === 'employee') {
+        $sql = "INSERT INTO leaves (employee_id, applicant_type, leave_type, start_date, end_date, duration, reason, med_cert_path)
+                VALUES (:user_id, 'employee', :lt, :sd, :ed, :dur, :rs, :mp)";
+        $params = [
+            ':user_id' => $user_id,
+            ':lt' => $leave_type,
+            ':sd' => $start_date,
+            ':ed' => $end_date,
+            ':dur' => $duration,
+            ':rs' => $reason,
+            ':mp' => $med_cert_path
+        ];
+    } elseif ($user_type === 'manager') {
+        // For managers: employee_id must be NULL, applicant_manager_id is set
+        $sql = "INSERT INTO leaves (employee_id, applicant_manager_id, applicant_type, leave_type, start_date, end_date, duration, reason, med_cert_path)
+                VALUES (NULL, :user_id, 'manager', :lt, :sd, :ed, :dur, :rs, :mp)";
+        $params = [
+            ':user_id' => $user_id,
+            ':lt' => $leave_type,
+            ':sd' => $start_date,
+            ':ed' => $end_date,
+            ':dur' => $duration,
+            ':rs' => $reason,
+            ':mp' => $med_cert_path
+        ];
+    } elseif ($user_type === 'hr') {
+        // For HR: employee_id must be NULL, applicant_hr_id is set
+        $sql = "INSERT INTO leaves (employee_id, applicant_hr_id, applicant_type, leave_type, start_date, end_date, duration, reason, med_cert_path)
+                VALUES (NULL, :user_id, 'hr', :lt, :sd, :ed, :dur, :rs, :mp)";
+        $params = [
+            ':user_id' => $user_id,
+            ':lt' => $leave_type,
+            ':sd' => $start_date,
+            ':ed' => $end_date,
+            ':dur' => $duration,
+            ':rs' => $reason,
+            ':mp' => $med_cert_path
+        ];
+    }
 
     $ok = $db->query($sql, $params);
     echo json_encode([
@@ -273,9 +396,23 @@ if ($method === 'DELETE') {
         exit;
     }
 
-    $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND employee_id = :eid AND status = 'Pending'", [
-        ':id' => $id, ':eid' => $employee_id
-    ]);
+    // Build check query based on user type
+    if ($user_type === 'employee') {
+        $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND employee_id = :user_id AND applicant_type = 'employee' AND status = 'Pending'", [
+            ':id' => $id, ':user_id' => $user_id
+        ]);
+        $deleteQuery = "DELETE FROM leaves WHERE id = :id AND employee_id = :user_id";
+    } elseif ($user_type === 'manager') {
+        $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND applicant_manager_id = :user_id AND applicant_type = 'manager' AND status = 'Pending'", [
+            ':id' => $id, ':user_id' => $user_id
+        ]);
+        $deleteQuery = "DELETE FROM leaves WHERE id = :id AND applicant_manager_id = :user_id";
+    } elseif ($user_type === 'hr') {
+        $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND applicant_hr_id = :user_id AND applicant_type = 'hr' AND status = 'Pending'", [
+            ':id' => $id, ':user_id' => $user_id
+        ]);
+        $deleteQuery = "DELETE FROM leaves WHERE id = :id AND applicant_hr_id = :user_id";
+    }
 
     if (!$check) {
         http_response_code(400);
@@ -283,8 +420,8 @@ if ($method === 'DELETE') {
         exit;
     }
 
-    $delete = $db->query("DELETE FROM leaves WHERE id = :id AND employee_id = :eid", [
-        ':id' => $id, ':eid' => $employee_id
+    $delete = $db->query($deleteQuery, [
+        ':id' => $id, ':user_id' => $user_id
     ]);
 
     echo json_encode([

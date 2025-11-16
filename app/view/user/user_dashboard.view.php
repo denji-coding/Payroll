@@ -10,9 +10,20 @@ echo '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
 echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></script>';
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
-// Fix session variable handling
+// Fix session variable handling - support employees, managers, and HR
 $loginSuccess = $_SESSION['login_success'] ?? false;
-$username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Employee';
+
+// Get username based on user type
+if (isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID'])) {
+    // HR/Admin
+    $username = $_SESSION['USERNAME'] ?? $_SESSION['user_name'] ?? 'HR User';
+} elseif (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
+    // Manager
+    $username = $_SESSION['manager_name'] ?? 'Manager';
+} else {
+    // Regular Employee
+    $username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Employee';
+}
 
 if ($loginSuccess) {
     unset($_SESSION['login_success']); // So it only shows once

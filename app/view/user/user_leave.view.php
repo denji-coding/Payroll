@@ -14,7 +14,23 @@ echo '<script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>';
 require_once '../app/core/database.php'; // adjust path if needed
 $db = new Database();
 $conn = $db->getConnection();
-$employeeId = $_SESSION['employee_id']; // adjust based on your session setup
+
+// Get user ID - support employees, managers, and HR
+$employeeId = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
+$managerId = $_SESSION['manager_id'] ?? null;
+$hrId = $_SESSION['SESSION_USER_ID'] ?? null;
+
+// Determine user type and ID
+$userType = 'employee';
+$userId = $employeeId;
+
+if ($hrId) {
+    $userType = 'hr';
+    $userId = $hrId;
+} elseif ($managerId) {
+    $userType = 'manager';
+    $userId = $managerId;
+}
 
 // Function to return border color based on leave type
 if (!function_exists('getBorderColorClass')) {
@@ -31,34 +47,87 @@ function getBorderColorClass($type) {
 }
 
 // Auto-initialize leave credits if none exist using new structure
-$check = $conn->prepare("SELECT 1 FROM leave_credits WHERE employee_id = ?");
-$check->execute([$employeeId]);
-if (!$check->fetch()) {
-    // Get all leave types and create leave credits for this employee
-    $leaveTypesStmt = $conn->prepare("SELECT id, name, default_allowed FROM leave_types WHERE is_active = TRUE");
-    $leaveTypesStmt->execute();
-    $leaveTypes = $leaveTypesStmt->fetchAll(PDO::FETCH_ASSOC);
+if ($userId) {
+    // Build check query based on user type
+    if ($userType === 'employee') {
+        $check = $conn->prepare("SELECT 1 FROM leave_credits WHERE employee_id = ? AND user_type = 'employee'");
+        $check->execute([$userId]);
+        $insertQuery = "INSERT INTO leave_credits (employee_id, leave_type_id, taken, user_type) VALUES (?, ?, 0, 'employee')";
+        $insertParams = [$userId];
+    } elseif ($userType === 'manager') {
+        $check = $conn->prepare("SELECT 1 FROM leave_credits WHERE manager_id = ? AND user_type = 'manager'");
+        $check->execute([$userId]);
+        // For managers: employee_id must be NULL, manager_id is set
+        $insertQuery = "INSERT INTO leave_credits (employee_id, manager_id, leave_type_id, taken, user_type) VALUES (NULL, ?, ?, 0, 'manager')";
+        $insertParams = [$userId];
+    } elseif ($userType === 'hr') {
+        $check = $conn->prepare("SELECT 1 FROM leave_credits WHERE hr_id = ? AND user_type = 'hr'");
+        $check->execute([$userId]);
+        // For HR: employee_id must be NULL, hr_id is set
+        $insertQuery = "INSERT INTO leave_credits (employee_id, hr_id, leave_type_id, taken, user_type) VALUES (NULL, ?, ?, 0, 'hr')";
+        $insertParams = [$userId];
+    }
     
-    $insert = $conn->prepare("INSERT INTO leave_credits (employee_id, leave_type_id, taken) VALUES (?, ?, 0)");
-    foreach ($leaveTypes as $type) {
-        $insert->execute([$employeeId, $type['id']]);
+    if (!$check->fetch()) {
+        // Get all leave types and create leave credits for this user
+        $leaveTypesStmt = $conn->prepare("SELECT id, name, default_allowed FROM leave_types WHERE is_active = TRUE");
+        $leaveTypesStmt->execute();
+        $leaveTypes = $leaveTypesStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $insert = $conn->prepare($insertQuery);
+        foreach ($leaveTypes as $type) {
+            // For employee: [userId, typeId]
+            // For manager/HR: [userId, typeId] (employee_id is NULL in the query)
+            $insert->execute(array_merge($insertParams, [$type['id']]));
+        }
     }
 }
 
 // Fetch dynamic leave credits from DB using new structure
 $leaveSummary = [];
-$query = $conn->prepare("
-    SELECT 
-        lt.name as leave_type,
-        lt.default_allowed as allowed,
-        COALESCE(lc.taken, 0) as taken
-    FROM leave_types lt
-    LEFT JOIN leave_credits lc ON lt.id = lc.leave_type_id AND lc.employee_id = ?
-    WHERE lt.is_active = TRUE
-    ORDER BY lt.name
-");
-$query->execute([$employeeId]);
-$credits = $query->fetchAll(PDO::FETCH_ASSOC);
+if ($userId) {
+    // Build query based on user type
+    if ($userType === 'employee') {
+        $query = $conn->prepare("
+            SELECT 
+                lt.name as leave_type,
+                lt.default_allowed as allowed,
+                COALESCE(lc.taken, 0) as taken
+            FROM leave_types lt
+            LEFT JOIN leave_credits lc ON lt.id = lc.leave_type_id AND lc.employee_id = ? AND lc.user_type = 'employee'
+            WHERE lt.is_active = TRUE
+            ORDER BY lt.name
+        ");
+        $query->execute([$userId]);
+    } elseif ($userType === 'manager') {
+        $query = $conn->prepare("
+            SELECT 
+                lt.name as leave_type,
+                lt.default_allowed as allowed,
+                COALESCE(lc.taken, 0) as taken
+            FROM leave_types lt
+            LEFT JOIN leave_credits lc ON lt.id = lc.leave_type_id AND lc.manager_id = ? AND lc.user_type = 'manager'
+            WHERE lt.is_active = TRUE
+            ORDER BY lt.name
+        ");
+        $query->execute([$userId]);
+    } elseif ($userType === 'hr') {
+        $query = $conn->prepare("
+            SELECT 
+                lt.name as leave_type,
+                lt.default_allowed as allowed,
+                COALESCE(lc.taken, 0) as taken
+            FROM leave_types lt
+            LEFT JOIN leave_credits lc ON lt.id = lc.leave_type_id AND lc.hr_id = ? AND lc.user_type = 'hr'
+            WHERE lt.is_active = TRUE
+            ORDER BY lt.name
+        ");
+        $query->execute([$userId]);
+    }
+    $credits = $query->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $credits = [];
+}
 
 foreach ($credits as $row) {
     $type = $row['leave_type'];

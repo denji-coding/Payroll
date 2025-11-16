@@ -30,15 +30,29 @@ class SecureAuth {
     
     /**
      * Verify password
+     * Handles both hashed passwords and plain text passwords (for backward compatibility)
      */
     public function verifyPassword($password, $hash) {
+        // If the hash looks like a password hash (starts with $), use password_verify
+        if (strlen($hash) > 20 && (str_starts_with($hash, '$argon2id$') || str_starts_with($hash, '$2y$') || str_starts_with($hash, '$2a$'))) {
         return password_verify($password, $hash);
+        }
+        
+        // Otherwise, treat it as plain text (for backward compatibility with old accounts)
+        return $password === $hash;
     }
     
     /**
      * Check if password needs rehashing
+     * Returns true if password is plain text or needs rehashing
      */
     public function passwordNeedsRehash($hash) {
+        // If it's a plain text password (not a hash), it needs to be hashed
+        if (strlen($hash) <= 20 || (!str_starts_with($hash, '$argon2id$') && !str_starts_with($hash, '$2y$') && !str_starts_with($hash, '$2a$'))) {
+            return true;
+        }
+        
+        // Otherwise, check if the hash needs rehashing
         return password_needs_rehash($hash, PASSWORD_ARGON2ID, [
             'memory_cost' => 65536,
             'time_cost' => 4,
@@ -91,7 +105,13 @@ class SecureAuth {
         
         try {
             // Note: admins table uses hr_email and hr_password columns
-            $stmt = $this->db->query("SELECT * FROM admins WHERE hr_email = ?", [$email]);
+            // Include role information in query
+            $stmt = $this->db->query("
+                SELECT a.*, r.can_access_employee_portal, r.can_access_manager_portal, r.can_access_hr_portal, r.can_access_owner_portal 
+                FROM admins a 
+                LEFT JOIN roles r ON a.role_id = r.id 
+                WHERE a.hr_email = ?
+            ", [$email]);
             $admin = $stmt ? $stmt[0] : null;
             
             if (!$admin) {
@@ -131,7 +151,13 @@ class SecureAuth {
         }
         
         try {
-            $stmt = $this->db->query("SELECT * FROM managers WHERE m_email = ? AND deleted_at IS NULL", [$email]);
+            // Include role information in query
+            $stmt = $this->db->query("
+                SELECT m.*, r.can_access_employee_portal, r.can_access_manager_portal, r.can_access_hr_portal, r.can_access_owner_portal 
+                FROM managers m 
+                LEFT JOIN roles r ON m.role_id = r.id 
+                WHERE m.m_email = ? AND m.deleted_at IS NULL
+            ", [$email]);
             $manager = $stmt ? $stmt[0] : null;
             
             if (!$manager) {
@@ -139,19 +165,36 @@ class SecureAuth {
                 return ['success' => false, 'message' => 'Invalid email or password.'];
             }
             
+            error_log("=== MANAGER AUTH DEBUG ===");
+            error_log("Manager found: ID=" . $manager['id'] . ", Email=" . $manager['m_email']);
+            error_log("Password hash in DB: " . substr($manager['m_password'], 0, 20) . "...");
+            error_log("Password verification: " . ($this->verifyPassword($password, $manager['m_password']) ? 'SUCCESS' : 'FAILED'));
+            
             if (!$this->verifyPassword($password, $manager['m_password'])) {
+                error_log("Password verification FAILED");
                 $this->recordLoginAttempt($email, 'manager', false);
                 return ['success' => false, 'message' => 'Invalid email or password.'];
             }
+            
+            error_log("Password verification SUCCESS");
+            error_log("Manager role_id: " . ($manager['role_id'] ?? 'NULL'));
+            error_log("Manager can_access_employee_portal: " . ($manager['can_access_employee_portal'] ?? 'NULL'));
             
             // Check if password needs rehashing
             if ($this->passwordNeedsRehash($manager['m_password'])) {
                 $newHash = $this->hashPassword($password);
                 $this->db->query("UPDATE managers SET m_password = ? WHERE id = ?", [$newHash, $manager['id']]);
+                error_log("Password rehashed and updated in database");
             }
             
             $this->recordLoginAttempt($email, 'manager', true);
+            error_log("Calling secureLogin() for manager...");
             secureLogin($manager, 'manager');
+            error_log("secureLogin() completed. Session after login: " . json_encode([
+                'manager_id' => $_SESSION['manager_id'] ?? 'NOT SET',
+                'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
+                'role_id' => $_SESSION['role_id'] ?? 'NOT SET'
+            ]));
             
             return ['success' => true, 'user' => $manager, 'redirect' => 'index.php?payroll=manager_dashboard'];
             
@@ -172,7 +215,13 @@ class SecureAuth {
         
         try {
             // First try to authenticate with password field (new method)
-            $stmt = $this->db->query("SELECT * FROM employees WHERE email = ? AND password IS NOT NULL", [$email]);
+            // Include role information in query
+            $stmt = $this->db->query("
+                SELECT e.*, r.can_access_employee_portal, r.can_access_manager_portal, r.can_access_hr_portal, r.can_access_owner_portal 
+                FROM employees e 
+                LEFT JOIN roles r ON e.role_id = r.id 
+                WHERE e.email = ? AND e.password IS NOT NULL
+            ", [$email]);
             $employee = $stmt ? $stmt[0] : null;
             
             if ($employee && $this->verifyPassword($password, $employee['password'])) {
@@ -183,7 +232,13 @@ class SecureAuth {
             }
             
             // Fallback to employee_no authentication (old method)
-            $stmt = $this->db->query("SELECT * FROM employees WHERE email = ? AND employee_no = ? AND password IS NULL", [$email, $password]);
+            // Include role information in query
+            $stmt = $this->db->query("
+                SELECT e.*, r.can_access_employee_portal, r.can_access_manager_portal, r.can_access_hr_portal, r.can_access_owner_portal 
+                FROM employees e 
+                LEFT JOIN roles r ON e.role_id = r.id 
+                WHERE e.email = ? AND e.employee_no = ? AND e.password IS NULL
+            ", [$email, $password]);
             $employee = $stmt ? $stmt[0] : null;
             
             if ($employee) {

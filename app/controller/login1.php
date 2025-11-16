@@ -38,15 +38,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } elseif ($loginType === 'employee') {
-            // Employee login logic
+            // Employee login logic - try employee first, then manager, then HR
+            error_log("=== EMPLOYEE LOGIN DEBUG START ===");
+            error_log("Email: " . $email);
+            error_log("Login Type: " . $loginType);
+            
             $result = $auth->authenticateEmployee($email, $password);
+            error_log("Employee auth result: " . json_encode($result));
+            error_log("Session after employee auth: " . json_encode([
+                'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
+                'manager_id' => $_SESSION['manager_id'] ?? 'NOT SET',
+                'SESSION_USER_ID' => $_SESSION['SESSION_USER_ID'] ?? 'NOT SET',
+                'employee_id' => $_SESSION['employee_id'] ?? 'NOT SET',
+                'role_id' => $_SESSION['role_id'] ?? 'NOT SET'
+            ]));
             
             if ($result['success']) {
-                header("Location: " . $result['redirect']);
-                exit;
+                // Check if user has employee portal access
+                $canAccess = isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal'] == 1;
+                error_log("Employee auth success. can_access_employee_portal: " . ($canAccess ? 'YES' : 'NO'));
+                if ($canAccess) {
+                    error_log("Redirecting to user_dashboard");
+                    header("Location: index.php?payroll=user_dashboard");
+                    exit;
+                } else {
+                    error_log("ERROR: Employee authenticated but no employee portal access");
+                    $_SESSION['error'] = 'You do not have access to the employee portal.';
+                }
             } else {
-                $_SESSION['error'] = $result['message'];
+                error_log("Employee auth failed, trying manager...");
+                // If employee login fails, try manager login
+                $result = $auth->authenticateManager($email, $password);
+                error_log("Manager auth result: " . json_encode($result));
+                error_log("Session after manager auth: " . json_encode([
+                    'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
+                    'manager_id' => $_SESSION['manager_id'] ?? 'NOT SET',
+                    'role_id' => $_SESSION['role_id'] ?? 'NOT SET'
+                ]));
+                
+                if ($result['success']) {
+                    // Check if manager has employee portal access
+                    $canAccess = isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal'] == 1;
+                    error_log("Manager auth success. can_access_employee_portal: " . ($canAccess ? 'YES' : 'NO'));
+                    if ($canAccess) {
+                        error_log("Redirecting to user_dashboard");
+                        header("Location: index.php?payroll=user_dashboard");
+                        exit;
+                    } else {
+                        error_log("ERROR: Manager authenticated but no employee portal access");
+                        $_SESSION['error'] = 'You do not have access to the employee portal.';
+                    }
+                } else {
+                    error_log("Manager auth failed, trying HR/Admin...");
+                    // If manager login fails, try HR/Admin login
+                    $result = $auth->authenticateAdmin($email, $password);
+                    error_log("HR/Admin auth result: " . json_encode($result));
+                    error_log("Session after HR/Admin auth: " . json_encode([
+                        'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
+                        'SESSION_USER_ID' => $_SESSION['SESSION_USER_ID'] ?? 'NOT SET',
+                        'role_id' => $_SESSION['role_id'] ?? 'NOT SET'
+                    ]));
+                    
+                    if ($result['success']) {
+                        // Check if HR has employee portal access
+                        $canAccess = isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal'] == 1;
+                        error_log("HR/Admin auth success. can_access_employee_portal: " . ($canAccess ? 'YES' : 'NO'));
+                        if ($canAccess) {
+                            error_log("Redirecting to user_dashboard");
+                            header("Location: index.php?payroll=user_dashboard");
+                            exit;
+                        } else {
+                            error_log("ERROR: HR/Admin authenticated but no employee portal access");
+                            $_SESSION['error'] = 'You do not have access to the employee portal.';
+                        }
+                    } else {
+                        // All login attempts failed
+                        error_log("ERROR: All authentication attempts failed");
+                        $_SESSION['error'] = 'Invalid email or password.';
+                    }
+                }
             }
+            error_log("=== EMPLOYEE LOGIN DEBUG END ===");
 
         } else {
             $_SESSION['error'] = 'Invalid login type.';

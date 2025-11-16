@@ -15,36 +15,102 @@ function formatName($name) {
     return ucwords(strtolower(trim($name)));
 }
 
-// Fetch employee details
+// Fetch user details - support employees, managers, and HR
 $employee = [];
-if (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
-    $employeeNo = $_SESSION['employee_no'] ?? $_SESSION['employee_id'];
-    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, email, contact_number, position, address, dob, place_of_birth, sex, civil_status, citizenship, blood_type, photo_path, created_at, updated_at FROM employees WHERE employee_no = :employee_no OR id = :employee_id");
-    $stmt->execute([':employee_no' => $employeeNo, ':employee_id' => $employeeNo]);
-    $employeeData = $stmt->fetch(PDO::FETCH_ASSOC);
+$userType = 'employee';
+
+// Check if user is HR/Admin
+if (isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID'])) {
+    $hrId = $_SESSION['SESSION_USER_ID'];
+    $stmt = $pdo->prepare("SELECT hr_first_name, hr_middle_name, hr_last_name, hr_email, hr_contact_number, hr_position, hr_address, hr_dob, hr_place_of_birth, hr_sex, hr_civil_status, hr_citizenship, hr_blood_type, hr_photo_path, hr_created_at, hr_updated_at FROM admins WHERE id = :hr_id AND deleted_at IS NULL");
+    $stmt->execute([':hr_id' => $hrId]);
+    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($employeeData) {
-        // Format the name with proper capitalization
-        $firstName = formatName($employeeData['first_name'] ?? '');
-        $middleName = $employeeData['middle_name'] ?? '';
-        $lastName = formatName($employeeData['last_name'] ?? '');
+    if ($userData) {
+        $firstName = formatName($userData['hr_first_name'] ?? '');
+        $middleName = $userData['hr_middle_name'] ?? '';
+        $lastName = formatName($userData['hr_last_name'] ?? '');
         
         $employee = [
             'name' => trim($firstName . ' ' . ($middleName ? formatName($middleName)[0] . '. ' : '') . $lastName),
             'full_name' => trim($firstName . ' ' . ($middleName ? formatName($middleName) . ' ' : '') . $lastName),
-            'email' => $employeeData['email'] ?? '',
-            'contact_number' => $employeeData['contact_number'] ?? '',
-            'position' => $employeeData['position'] ?? '',
-            'address' => $employeeData['address'] ?? '',
-            'dob' => $employeeData['dob'] ?? '',
-            'place_of_birth' => $employeeData['place_of_birth'] ?? '',
-            'sex' => $employeeData['sex'] ?? '',
-            'civil_status' => $employeeData['civil_status'] ?? '',
-            'citizenship' => $employeeData['citizenship'] ?? '',
-            'blood_type' => $employeeData['blood_type'] ?? '',
-            'photo_path' => $employeeData['photo_path'] ?? '',
-            'created_at' => $employeeData['created_at'] ?? '',
-            'updated_at' => $employeeData['updated_at'] ?? ''
+            'email' => $userData['hr_email'] ?? '',
+            'contact_number' => $userData['hr_contact_number'] ?? '',
+            'position' => $userData['hr_position'] ?? '',
+            'address' => $userData['hr_address'] ?? '',
+            'dob' => $userData['hr_dob'] ?? '',
+            'place_of_birth' => $userData['hr_place_of_birth'] ?? '',
+            'sex' => $userData['hr_sex'] ?? '',
+            'civil_status' => $userData['hr_civil_status'] ?? '',
+            'citizenship' => $userData['hr_citizenship'] ?? '',
+            'blood_type' => $userData['hr_blood_type'] ?? '',
+            'photo_path' => $userData['hr_photo_path'] ?? '',
+            'created_at' => $userData['hr_created_at'] ?? '',
+            'updated_at' => $userData['hr_updated_at'] ?? ''
+        ];
+        $userType = 'hr';
+    }
+}
+// Check if user is Manager
+elseif (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
+    $managerId = $_SESSION['manager_id'];
+    $stmt = $pdo->prepare("SELECT m_first_name, m_middle_name, m_last_name, m_email, m_contact_number, m_position, m_address, m_dob, m_place_of_birth, m_sex, m_civil_status, m_citizenship, m_blood_type, m_photo_path, m_created_at, m_updated_at FROM managers WHERE id = :manager_id AND deleted_at IS NULL");
+    $stmt->execute([':manager_id' => $managerId]);
+    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($userData) {
+        $firstName = formatName($userData['m_first_name'] ?? '');
+        $middleName = $userData['m_middle_name'] ?? '';
+        $lastName = formatName($userData['m_last_name'] ?? '');
+        
+        $employee = [
+            'name' => trim($firstName . ' ' . ($middleName ? formatName($middleName)[0] . '. ' : '') . $lastName),
+            'full_name' => trim($firstName . ' ' . ($middleName ? formatName($middleName) . ' ' : '') . $lastName),
+            'email' => $userData['m_email'] ?? '',
+            'contact_number' => $userData['m_contact_number'] ?? '',
+            'position' => $userData['m_position'] ?? '',
+            'address' => $userData['m_address'] ?? '',
+            'dob' => $userData['m_dob'] ?? '',
+            'place_of_birth' => $userData['m_place_of_birth'] ?? '',
+            'sex' => $userData['m_sex'] ?? '',
+            'civil_status' => $userData['m_civil_status'] ?? '',
+            'citizenship' => $userData['m_citizenship'] ?? '',
+            'blood_type' => $userData['m_blood_type'] ?? '',
+            'photo_path' => $userData['m_photo_path'] ?? '',
+            'created_at' => $userData['m_created_at'] ?? '',
+            'updated_at' => $userData['m_updated_at'] ?? ''
+        ];
+        $userType = 'manager';
+    }
+}
+// Regular Employee
+elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
+    $employeeNo = $_SESSION['employee_no'] ?? $_SESSION['employee_id'];
+    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, email, contact_number, position, address, dob, place_of_birth, sex, civil_status, citizenship, blood_type, photo_path, created_at, updated_at FROM employees WHERE employee_no = :employee_no OR id = :employee_id");
+    $stmt->execute([':employee_no' => $employeeNo, ':employee_id' => $employeeNo]);
+    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($userData) {
+        $firstName = formatName($userData['first_name'] ?? '');
+        $middleName = $userData['middle_name'] ?? '';
+        $lastName = formatName($userData['last_name'] ?? '');
+        
+        $employee = [
+            'name' => trim($firstName . ' ' . ($middleName ? formatName($middleName)[0] . '. ' : '') . $lastName),
+            'full_name' => trim($firstName . ' ' . ($middleName ? formatName($middleName) . ' ' : '') . $lastName),
+            'email' => $userData['email'] ?? '',
+            'contact_number' => $userData['contact_number'] ?? '',
+            'position' => $userData['position'] ?? '',
+            'address' => $userData['address'] ?? '',
+            'dob' => $userData['dob'] ?? '',
+            'place_of_birth' => $userData['place_of_birth'] ?? '',
+            'sex' => $userData['sex'] ?? '',
+            'civil_status' => $userData['civil_status'] ?? '',
+            'citizenship' => $userData['citizenship'] ?? '',
+            'blood_type' => $userData['blood_type'] ?? '',
+            'photo_path' => $userData['photo_path'] ?? '',
+            'created_at' => $userData['created_at'] ?? '',
+            'updated_at' => $userData['updated_at'] ?? ''
         ];
     }
 }
@@ -67,10 +133,26 @@ if (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
                 <div class="flex flex-col items-center text-center space-y-4">
                     <!-- Profile Image -->
                     <div class="relative">
-                        <img src="<?= !empty($employee['photo_path']) ? '../public/upload/' . (strpos($employee['photo_path'], 'upload/') === 0 ? substr($employee['photo_path'], 7) : $employee['photo_path']) : ($employee['sex'] == 'Female' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png') ?>"
+                        <?php
+                        // Format photo path based on user type
+                        $photoSrc = '';
+                        if (!empty($employee['photo_path'])) {
+                            if ($userType === 'hr' || $userType === 'manager') {
+                                // HR/Manager photos are in public/upload or public/assets/image
+                                $photoSrc = '../public/' . ltrim($employee['photo_path'], '/');
+                            } else {
+                                // Employee photos are in public/upload
+                                $photoSrc = '../public/upload/' . (strpos($employee['photo_path'], 'upload/') === 0 ? substr($employee['photo_path'], 7) : $employee['photo_path']);
+                            }
+                        } else {
+                            $photoSrc = ($employee['sex'] == 'Female' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png');
+                        }
+                        $defaultPhoto = ($employee['sex'] == 'Female' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png');
+                        ?>
+                        <img src="<?= htmlspecialchars($photoSrc) ?>"
                      alt="Profile Photo"
                              class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
-                             onerror="this.onerror=null;this.src='<?= $employee['sex'] == 'Female' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png' ?>';">
+                             onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultPhoto) ?>';">
                         <div class="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-2 border-white"></div>
                     </div>
 
@@ -78,7 +160,7 @@ if (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
                     <div class="text-white">
                         <h1 class="text-2xl font-bold profile-header-name"><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></h1>
                         <p class="text-emerald-100 text-lg"><?= htmlspecialchars(ucwords($employee['position'] ?? 'N/A')) ?></p>
-                        <p class="text-emerald-100">Employee</p>
+                        <p class="text-emerald-100"><?= ucfirst($userType === 'hr' ? 'HR' : ($userType === 'manager' ? 'Manager' : 'Employee')) ?></p>
                     </div>
 
                     <!-- Action Buttons -->

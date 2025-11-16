@@ -102,7 +102,7 @@ require_once views_path("partials/nav");
         <option value="monthly">Monthly</option>
       </select>
     </div>
-  
+
   </div>
 
   <div class="text-right pt-1">
@@ -137,33 +137,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateSelectedSummary() {
-  const checkboxes = document.querySelectorAll('.employeeCheckbox:not(#selectAll)');
-  const checkedBoxes = document.querySelectorAll('.employeeCheckbox:checked:not(#selectAll)');
-  const selectedEmpEl = document.getElementById("selectedEmployees");
-  const estimatedGrossEl = document.getElementById("estimatedGross");
+    const checkboxes = document.querySelectorAll('.employeeCheckbox:not(#selectAll)');
+    const checkedBoxes = document.querySelectorAll('.employeeCheckbox:checked:not(#selectAll)');
+    const selectedEmpEl = document.getElementById("selectedEmployees");
+    const estimatedGrossEl = document.getElementById("estimatedGross");
 
-  let estimatedGross = 0;
-  let hasNewlyCalculated = false;
-  let selectedCount = 0;
+    let estimatedGross = 0;
+    let hasNewlyCalculated = false;
+    let selectedCount = 0;
 
-  checkedBoxes.forEach(cb => {
-    if (cb.getAttribute('data-processed') === '0') {
-      const row = cb.closest('tr');
+    checkedBoxes.forEach(cb => {
+      if (cb.getAttribute('data-processed') === '0') {
+        const row = cb.closest('tr');
       const grossText = row.querySelector('.gross')?.textContent?.replace(/,/g, '') || '0';
       const gross = isNaN(parseFloat(grossText)) || grossText === '--' ? 0 : parseFloat(grossText);
-      estimatedGross += gross;
-      selectedCount++;
-      hasNewlyCalculated = true;
-    }
-  });
+        estimatedGross += gross;
+        selectedCount++;
+        hasNewlyCalculated = true;
+      }
+    });
 
-  if (selectedEmpEl) selectedEmpEl.textContent = selectedCount;
-  if (estimatedGrossEl) {
-    estimatedGrossEl.textContent = "₱" + estimatedGross.toLocaleString(undefined, { minimumFractionDigits: 2 });
-  }
+    if (selectedEmpEl) selectedEmpEl.textContent = selectedCount;
+    if (estimatedGrossEl) {
+      estimatedGrossEl.textContent = "₱" + estimatedGross.toLocaleString(undefined, { minimumFractionDigits: 2 });
+    }
 
   // Enable/disable process button only if there's newly calculated payroll
-  if (processBtn) {
+    if (processBtn) {
     if (hasNewlyCalculated) {
       processBtn.disabled = false;
       processBtn.removeAttribute('disabled');
@@ -173,12 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Handle Select All checkbox state (only check if all unprocessed are checked)
-  if (selectAll) {
-    const eligible = [...checkboxes].filter(cb => cb.getAttribute('data-processed') === '0');
-    const allChecked = eligible.length > 0 && eligible.every(cb => cb.checked);
-    selectAll.checked = allChecked;
+    if (selectAll) {
+      const eligible = [...checkboxes].filter(cb => cb.getAttribute('data-processed') === '0');
+      const allChecked = eligible.length > 0 && eligible.every(cb => cb.checked);
+      selectAll.checked = allChecked;
+    }
   }
-}
 
 
   function inputsAreReady() {
@@ -239,40 +239,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="gross p-3 align-middle text-left font-medium">${showValue(gross)}</td>
                 <td class="net font-semibold text-green-700 p-3 align-middle text-left">${showValue(net)}</td>
                 <td>
-  <div class="flex flex-col gap-1 items-center">
-    ${isProcessed ? `
-      <span 
-        class="text-green-700 bg-green-100 border border-green-400 text-xs px-2 py-1 rounded font-semibold"
+                  <div class="flex flex-col gap-1 items-center">
+                    ${isProcessed ? `
+                      <span 
+                        class="text-green-700 bg-green-100 border border-green-400 text-xs px-2 py-1 rounded font-semibold"
         data-processed="1"
       >
-        Processed
-      </span>
-    ` : `
-      <button 
-        class="autoCalcBtn bg-emerald-600 text-white px-2 py-1 rounded text-xs"
+                        Processed
+                      </span>
+                    ` : `
+                      <button 
+                        class="autoCalcBtn bg-emerald-600 text-white px-2 py-1 rounded text-xs"
         title="Auto Calculate"
       >
-        <i class="bi bi-robot"></i>
-      </button>
-      <button 
-        type="button" 
-        class="manualCalcBtn bg-amber-500 text-white px-2 py-1 rounded text-xs"
-        data-bs-toggle="modal" 
-        data-bs-target="#calculatePayModal"
+                        <i class="bi bi-robot"></i>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="manualCalcBtn bg-amber-500 text-white px-2 py-1 rounded text-xs"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#calculatePayModal"
         title="Manual Calculate"
       >
-        <i class="bi bi-pencil-square"></i>
-      </button>
-      <button 
-        type="button"
-        class="cancelCalcBtn d-none bg-red-500 text-white px-2 py-1 rounded text-xs"
+                        <i class="bi bi-pencil-square"></i>
+                      </button>
+                      <button 
+                        type="button"
+                        class="cancelCalcBtn d-none bg-red-500 text-white px-2 py-1 rounded text-xs"
         title="Cancel Calculation"
       >
-        <i class="bi bi-x-lg"></i>
-      </button>
-    `}
-  </div>
-</td>
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    `}
+                  </div>
+                </td>
 
 
               </tr>`;
@@ -293,211 +293,211 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-function setupActions(data) {
+  function setupActions(data) {
   // Disable manual checking
-  document.querySelectorAll('.employeeCheckbox:not(#selectAll)').forEach(cb => {
-    cb.style.pointerEvents = 'none';
-  });
+    document.querySelectorAll('.employeeCheckbox:not(#selectAll)').forEach(cb => {
+      cb.style.pointerEvents = 'none';
+    });
 
   // AUTO CALCULATE
-document.querySelectorAll('.autoCalcBtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const row = btn.closest('tr');
-    const employeeNo = row.dataset.employee;
-    const emp = data.data.find(e => e.employee_no === employeeNo);
+    document.querySelectorAll('.autoCalcBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('tr');
+        const employeeNo = row.dataset.employee;
+        const emp = data.data.find(e => e.employee_no === employeeNo);
 
-    if (!emp) {
-      return Swal.fire('Error', 'Employee data not found.', 'error');
-    }
+        if (!emp) {
+          return Swal.fire('Error', 'Employee data not found.', 'error');
+        }
 
-    const gross = Number(emp.base_salary) * (Number(emp.total_hours) / 8);
-    const sss = gross * (data.benefit_rates?.sss || 0) / 100;
-    const pagibig = gross * (data.benefit_rates?.pagibig || 0) / 100;
-    const philhealth = gross * (data.benefit_rates?.philhealth || 0) / 100;
-    const benefit = sss + pagibig + philhealth;
+        const gross = Number(emp.base_salary) * (Number(emp.total_hours) / 8);
+        const sss = gross * (data.benefit_rates?.sss || 0) / 100;
+        const pagibig = gross * (data.benefit_rates?.pagibig || 0) / 100;
+        const philhealth = gross * (data.benefit_rates?.philhealth || 0) / 100;
+        const benefit = sss + pagibig + philhealth;
 
-    const leave = Number(emp.leave_days);
-    const leaveDeduction = (Number(emp.base_salary) / (data.day_count || 22)) * leave;
+        const leave = Number(emp.leave_days);
+        const leaveDeduction = (Number(emp.base_salary) / (data.day_count || 22)) * leave;
 
-    const totalDeductions = benefit + leaveDeduction;
-    const net = gross - totalDeductions;
+        const totalDeductions = benefit + leaveDeduction;
+        const net = gross - totalDeductions;
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Calculated!',
-      text: 'Payroll has been automatically calculated.',
-      showConfirmButton: false,
-      timer: 1200,
-      willClose: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Calculated!',
+          text: 'Payroll has been automatically calculated.',
+          showConfirmButton: false,
+          timer: 1200,
+          willClose: () => {
         // Update row UI
-        row.querySelector('.gross').textContent = gross.toFixed(2);
-        row.querySelector('.benefit').textContent = benefit.toFixed(2);
-        row.querySelector('.benefit').dataset.sss = sss.toFixed(2);
-        row.querySelector('.benefit').dataset.pagibig = pagibig.toFixed(2);
-        row.querySelector('.benefit').dataset.philhealth = philhealth.toFixed(2);
-        row.querySelector('.totalDeductions').textContent = leaveDeduction.toFixed(2);
-        row.querySelector('.net').textContent = net.toFixed(2);
+            row.querySelector('.gross').textContent = gross.toFixed(2);
+            row.querySelector('.benefit').textContent = benefit.toFixed(2);
+            row.querySelector('.benefit').dataset.sss = sss.toFixed(2);
+            row.querySelector('.benefit').dataset.pagibig = pagibig.toFixed(2);
+            row.querySelector('.benefit').dataset.philhealth = philhealth.toFixed(2);
+            row.querySelector('.totalDeductions').textContent = leaveDeduction.toFixed(2);
+            row.querySelector('.net').textContent = net.toFixed(2);
 
         // Mark checkbox
-        const cb = row.querySelector('.employeeCheckbox');
-        cb.checked = true;
-        cb.disabled = true;
-        cb.setAttribute('data-processed', '0');
+            const cb = row.querySelector('.employeeCheckbox');
+            cb.checked = true;
+            cb.disabled = true;
+            cb.setAttribute('data-processed', '0');
 
         // UI toggle
-        row.querySelector('.autoCalcBtn').classList.add('d-none');
-        row.querySelector('.manualCalcBtn').classList.add('d-none');
-        row.querySelector('.cancelCalcBtn').classList.remove('d-none');
+            row.querySelector('.autoCalcBtn').classList.add('d-none');
+            row.querySelector('.manualCalcBtn').classList.add('d-none');
+            row.querySelector('.cancelCalcBtn').classList.remove('d-none');
 
-        updateSelectedSummary();
-      }
+            updateSelectedSummary();
+          }
+        });
+      });
     });
-  });
-});
 
 
-  let calculatedManual = null;
+    let calculatedManual = null;
 
   // MANUAL CALCULATE
-  document.querySelectorAll('.manualCalcBtn').forEach((btn, index) => {
-    btn.addEventListener('click', () => {
-      const emp = data.data[index];
+    document.querySelectorAll('.manualCalcBtn').forEach((btn, index) => {
+      btn.addEventListener('click', () => {
+        const emp = data.data[index];
 
       // Fill summary
-      document.getElementById('employeeIdHidden').value = emp.employee_no;
-      document.getElementById('summaryFullname').textContent = emp.full_name || '';
-      document.getElementById('summaryPresent').textContent = emp.present_days ?? 0;
-      document.getElementById('summaryTotalHours').textContent = emp.total_hours ?? 0;
-      document.getElementById('summaryAbsent').textContent = emp.absent_days ?? 0;
-      document.getElementById('summaryLeave').textContent = emp.leave_days ?? 0;
-      document.getElementById('baseSalaryHidden').textContent = emp.base_salary ?? 0;
+        document.getElementById('employeeIdHidden').value = emp.employee_no;
+        document.getElementById('summaryFullname').textContent = emp.full_name || '';
+        document.getElementById('summaryPresent').textContent = emp.present_days ?? 0;
+        document.getElementById('summaryTotalHours').textContent = emp.total_hours ?? 0;
+        document.getElementById('summaryAbsent').textContent = emp.absent_days ?? 0;
+        document.getElementById('summaryLeave').textContent = emp.leave_days ?? 0;
+        document.getElementById('baseSalaryHidden').textContent = emp.base_salary ?? 0;
 
       // Clear inputs
-      document.getElementById('sssDeduct').value = '';
-      document.getElementById('pagibigDeduct').value = '';
-      document.getElementById('philhealthDeduct').value = '';
-      document.getElementById('grossPay').value = '';
-      document.getElementById('netPay').value = '';
-      document.getElementById('savePayBtn').disabled = true;
+        document.getElementById('sssDeduct').value = '';
+        document.getElementById('pagibigDeduct').value = '';
+        document.getElementById('philhealthDeduct').value = '';
+        document.getElementById('grossPay').value = '';
+        document.getElementById('netPay').value = '';
+        document.getElementById('savePayBtn').disabled = true;
 
-      calculatedManual = null;
-      document.getElementById('calculatePayForm').dataset.rowIndex = index;
+        calculatedManual = null;
+        document.getElementById('calculatePayForm').dataset.rowIndex = index;
+      });
     });
-  });
 
   // CANCEL CALCULATION
-  document.querySelectorAll('.cancelCalcBtn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('tr');
+    document.querySelectorAll('.cancelCalcBtn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('tr');
 
       // Reset all calculated fields
-      row.querySelector('.gross').textContent = '--';
-      row.querySelector('.net').textContent = '--';
-      row.querySelector('.benefit').textContent = '--';
-      row.querySelector('.benefit').dataset.sss = '0.00';
-      row.querySelector('.benefit').dataset.pagibig = '0.00';
-      row.querySelector('.benefit').dataset.philhealth = '0.00';
-      row.querySelector('.totalDeductions').textContent = '--';
+        row.querySelector('.gross').textContent = '--';
+        row.querySelector('.net').textContent = '--';
+        row.querySelector('.benefit').textContent = '--';
+        row.querySelector('.benefit').dataset.sss = '0.00';
+        row.querySelector('.benefit').dataset.pagibig = '0.00';
+        row.querySelector('.benefit').dataset.philhealth = '0.00';
+        row.querySelector('.totalDeductions').textContent = '--';
 
       // Re-enable buttons
-      row.querySelector('.autoCalcBtn').classList.remove('d-none');
-      row.querySelector('.manualCalcBtn').classList.remove('d-none');
-      row.querySelector('.cancelCalcBtn').classList.add('d-none');
+        row.querySelector('.autoCalcBtn').classList.remove('d-none');
+        row.querySelector('.manualCalcBtn').classList.remove('d-none');
+        row.querySelector('.cancelCalcBtn').classList.add('d-none');
 
       // Reset checkbox
-      const cb = row.querySelector('.employeeCheckbox');
-      cb.checked = false;
-      cb.disabled = true;
-      cb.removeAttribute('data-processed');
+        const cb = row.querySelector('.employeeCheckbox');
+        cb.checked = false;
+        cb.disabled = true;
+        cb.removeAttribute('data-processed');
 
-      updateSelectedSummary();
+        updateSelectedSummary();
+      });
     });
-  });
 
   // MANUAL CALCULATE → CALCULATE button
-  document.getElementById('calculatePayBtn').addEventListener('click', () => {
-    const totalHours = parseFloat(document.getElementById('daysWorked').value);
-    const leaveDays = parseFloat(document.getElementById('leaveDays').value) || 0;
-    const index = document.getElementById('calculatePayForm').dataset.rowIndex;
-    const emp = data.data[index];
-    const baseSalary = parseFloat(emp.base_salary ?? 0);
-    const dayCount = data.day_count || 22;
+    document.getElementById('calculatePayBtn').addEventListener('click', () => {
+      const totalHours = parseFloat(document.getElementById('daysWorked').value);
+      const leaveDays = parseFloat(document.getElementById('leaveDays').value) || 0;
+      const index = document.getElementById('calculatePayForm').dataset.rowIndex;
+      const emp = data.data[index];
+      const baseSalary = parseFloat(emp.base_salary ?? 0);
+      const dayCount = data.day_count || 22;
 
-    if (isNaN(totalHours) || totalHours < 0 || isNaN(baseSalary) || baseSalary <= 0) {
-      return Swal.fire('Invalid Input', 'Please enter a valid Total Hours and ensure Base Salary is available.', 'error');
-    }
+      if (isNaN(totalHours) || totalHours < 0 || isNaN(baseSalary) || baseSalary <= 0) {
+        return Swal.fire('Invalid Input', 'Please enter a valid Total Hours and ensure Base Salary is available.', 'error');
+      }
 
 
-    const gross = baseSalary * (totalHours / 8);
-    const sss = gross * (data.benefit_rates?.sss || 0) / 100;
-    const pagibig = gross * (data.benefit_rates?.pagibig || 0) / 100;
-    const philhealth = gross * (data.benefit_rates?.philhealth || 0) / 100;
-    const benefit = sss + pagibig + philhealth;
-    const leaveRate = baseSalary / dayCount;
-    const leaveDeduct = leaveDays * leaveRate;
-    const totalDeductions = benefit + leaveDeduct;
-    const net = gross - totalDeductions;
+      const gross = baseSalary * (totalHours / 8);
+      const sss = gross * (data.benefit_rates?.sss || 0) / 100;
+      const pagibig = gross * (data.benefit_rates?.pagibig || 0) / 100;
+      const philhealth = gross * (data.benefit_rates?.philhealth || 0) / 100;
+      const benefit = sss + pagibig + philhealth;
+      const leaveRate = baseSalary / dayCount;
+      const leaveDeduct = leaveDays * leaveRate;
+      const totalDeductions = benefit + leaveDeduct;
+      const net = gross - totalDeductions;
 
-    document.getElementById('grossPay').value = gross.toFixed(2);
-    document.getElementById('netPay').value = net.toFixed(2);
-    document.getElementById('sssDeduct').value = sss.toFixed(2);
-    document.getElementById('pagibigDeduct').value = pagibig.toFixed(2);
-    document.getElementById('philhealthDeduct').value = philhealth.toFixed(2);
+      document.getElementById('grossPay').value = gross.toFixed(2);
+      document.getElementById('netPay').value = net.toFixed(2);
+      document.getElementById('sssDeduct').value = sss.toFixed(2);
+      document.getElementById('pagibigDeduct').value = pagibig.toFixed(2);
+      document.getElementById('philhealthDeduct').value = philhealth.toFixed(2);
 
-    calculatedManual = { gross, net, sss, pagibig, philhealth, leaveDeduct, totalDeductions };
-    document.getElementById('savePayBtn').disabled = false;
+      calculatedManual = { gross, net, sss, pagibig, philhealth, leaveDeduct, totalDeductions };
+      document.getElementById('savePayBtn').disabled = false;
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Calculated',
-      text: 'Manual payroll successfully calculated.',
+      Swal.fire({
+        icon: 'success',
+        title: 'Calculated',
+        text: 'Manual payroll successfully calculated.',
       timer: 1000, // auto-close after 2 seconds
-      showConfirmButton: false
-    });
+        showConfirmButton: false
+      });
 
-  });
+    });
 
   // MANUAL CALCULATE → SAVE button
-  document.getElementById('savePayBtn').addEventListener('click', (e) => {
-    e.preventDefault();
+    document.getElementById('savePayBtn').addEventListener('click', (e) => {
+      e.preventDefault();
 
-    if (!calculatedManual) {
-      return Swal.fire('Error', 'Please calculate first before saving.', 'warning');
-    }
+      if (!calculatedManual) {
+        return Swal.fire('Error', 'Please calculate first before saving.', 'warning');
+      }
 
-    const index = document.getElementById('calculatePayForm').dataset.rowIndex;
-    const row = document.querySelectorAll('#payrollTable tr')[index];
-    const { gross, net, sss, pagibig, philhealth, leaveDeduct } = calculatedManual;
+      const index = document.getElementById('calculatePayForm').dataset.rowIndex;
+      const row = document.querySelectorAll('#payrollTable tr')[index];
+      const { gross, net, sss, pagibig, philhealth, leaveDeduct } = calculatedManual;
 
-    row.querySelector('.gross').textContent = gross.toFixed(2);
-    row.querySelector('.net').textContent = net.toFixed(2);
-    row.querySelector('.benefit').textContent = (sss + pagibig + philhealth).toFixed(2);
-    row.querySelector('.benefit').dataset.sss = sss.toFixed(2);
-    row.querySelector('.benefit').dataset.pagibig = pagibig.toFixed(2);
-    row.querySelector('.benefit').dataset.philhealth = philhealth.toFixed(2);
-    row.querySelector('.totalDeductions').textContent = leaveDeduct.toFixed(2);
+      row.querySelector('.gross').textContent = gross.toFixed(2);
+      row.querySelector('.net').textContent = net.toFixed(2);
+      row.querySelector('.benefit').textContent = (sss + pagibig + philhealth).toFixed(2);
+      row.querySelector('.benefit').dataset.sss = sss.toFixed(2);
+      row.querySelector('.benefit').dataset.pagibig = pagibig.toFixed(2);
+      row.querySelector('.benefit').dataset.philhealth = philhealth.toFixed(2);
+      row.querySelector('.totalDeductions').textContent = leaveDeduct.toFixed(2);
 
-    const cb = row.querySelector('.employeeCheckbox');
-    cb.checked = true;
-    cb.disabled = true;
-    cb.setAttribute('data-processed', '0');
+      const cb = row.querySelector('.employeeCheckbox');
+      cb.checked = true;
+      cb.disabled = true;
+      cb.setAttribute('data-processed', '0');
 
-    row.querySelector('.autoCalcBtn').classList.add('d-none');
-    row.querySelector('.manualCalcBtn').classList.add('d-none');
-    row.querySelector('.cancelCalcBtn').classList.remove('d-none');
+      row.querySelector('.autoCalcBtn').classList.add('d-none');
+      row.querySelector('.manualCalcBtn').classList.add('d-none');
+      row.querySelector('.cancelCalcBtn').classList.remove('d-none');
 
-    updateSelectedSummary();
-    bootstrap.Modal.getInstance(document.getElementById('calculatePayModal')).hide();
+      updateSelectedSummary();
+      bootstrap.Modal.getInstance(document.getElementById('calculatePayModal')).hide();
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Saved!',
-      text: 'Manual payroll saved successfully.',
-      timer: 1200,
-      showConfirmButton: false
+      Swal.fire({
+        icon: 'success',
+        title: 'Saved!',
+        text: 'Manual payroll saved successfully.',
+        timer: 1200,
+        showConfirmButton: false
+      });
     });
-  });
-}
+  }
 
 
 
@@ -653,7 +653,7 @@ document.querySelectorAll('.cancelCalcBtn').forEach((btn, i) => {
     btn.classList.add('d-none');
 
     updateSelectedSummary();
-  });
+    });
 });
 
 </script>

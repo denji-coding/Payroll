@@ -64,21 +64,44 @@ function startSecureSession() {
         
         session_start();
         
+        // Only regenerate and clear if this is a NEW session (no login data)
+        // Don't clear if user is already logged in
+        $hasLoginData = isset($_SESSION['user_id']) || 
+                        isset($_SESSION['employee_id']) || 
+                        isset($_SESSION['employee_no']) ||
+                        isset($_SESSION['manager_id']) || 
+                        isset($_SESSION['SESSION_USER_ID']);
+        
+        if (!$hasLoginData) {
         // Always regenerate session ID to prevent session conflicts
         // This ensures each login gets a fresh session
         session_regenerate_id(true);
         
         // Clear any existing session data to start fresh
         $_SESSION = [];
+        } else {
+            // User is already logged in, just ensure last_regeneration is set
+            if (!isset($_SESSION['last_regeneration'])) {
+                $_SESSION['last_regeneration'] = time();
+            }
+        }
     }
     
     // Regenerate session ID periodically to prevent session fixation
+    // Only regenerate if user is logged in (has login data)
+    $hasLoginData = isset($_SESSION['user_id']) || 
+                    isset($_SESSION['employee_id']) || 
+                    isset($_SESSION['employee_no']) ||
+                    isset($_SESSION['manager_id']) || 
+                    isset($_SESSION['SESSION_USER_ID']);
+    
+    if ($hasLoginData) {
     if (!isset($_SESSION['last_regeneration'])) {
-        session_regenerate_id(true);
         $_SESSION['last_regeneration'] = time();
     } elseif (time() - $_SESSION['last_regeneration'] > 300) { // 5 minutes
         session_regenerate_id(true);
         $_SESSION['last_regeneration'] = time();
+        }
     }
 }
 
@@ -168,6 +191,44 @@ function secureLogin($userData, $userType) {
     $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
     
+    // Get role information
+    error_log("=== secureLogin() ROLE PROCESSING ===");
+    error_log("UserType: " . $userType);
+    error_log("UserData keys: " . implode(', ', array_keys($userData)));
+    
+    $roleId = $userData['role_id'] ?? null;
+    error_log("Initial roleId from userData: " . ($roleId ?? 'NULL'));
+    
+    $role = null;
+    
+    if ($roleId) {
+        error_log("Fetching role permissions for roleId: " . $roleId);
+        $role = getRolePermissions($roleId);
+        error_log("Role fetched: " . ($role ? json_encode($role) : 'NULL'));
+    }
+    
+    // If no role found, set default based on user type
+    if (!$role && $roleId === null) {
+        error_log("No role found, setting default based on user type");
+        // Set default role_id based on user type
+        switch ($userType) {
+            case 'employee':
+                $roleId = 1; // Employee role
+                break;
+            case 'manager':
+                $roleId = 2; // Manager role
+                break;
+            case 'admin':
+                $roleId = 3; // HR role
+                break;
+        }
+        if ($roleId) {
+            error_log("Using default roleId: " . $roleId);
+            $role = getRolePermissions($roleId);
+            error_log("Default role fetched: " . ($role ? json_encode($role) : 'NULL'));
+        }
+    }
+    
     // Set role-specific session variables
     switch ($userType) {
         case 'admin':
@@ -180,14 +241,46 @@ function secureLogin($userData, $userType) {
             } elseif (!empty($userData['hr_photo_path'] ?? '')) {
                 $_SESSION['photo_path'] = $userData['hr_photo_path'];
             }
+            // Add role information
+            if ($role) {
+                $_SESSION['role_id'] = $roleId;
+                $_SESSION['role_name'] = $role['name'];
+                $_SESSION['can_access_employee_portal'] = $role['can_access_employee_portal'];
+                $_SESSION['can_access_manager_portal'] = $role['can_access_manager_portal'];
+                $_SESSION['can_access_hr_portal'] = $role['can_access_hr_portal'];
+                $_SESSION['can_access_owner_portal'] = $role['can_access_owner_portal'];
+            }
             break;
             
         case 'manager':
+            error_log("=== secureLogin() MANAGER CASE ===");
+            error_log("UserData role_id: " . ($userData['role_id'] ?? 'NULL'));
+            error_log("Role object: " . json_encode($role));
+            
             $_SESSION['manager_id'] = $userData['id'];
             $_SESSION['manager_name'] = $userData['m_full_name'] ?? 
                 trim($userData['m_first_name'] . ' ' . $userData['m_middle_name'] . ' ' . $userData['m_last_name']);
             $_SESSION['manager_email'] = $userData['m_email'];
             $_SESSION['manager_branch'] = $userData['m_branch'] ?? '';
+            
+            error_log("Session variables set: manager_id=" . $_SESSION['manager_id']);
+            
+            // Add role information
+            if ($role) {
+                $_SESSION['role_id'] = $roleId;
+                $_SESSION['role_name'] = $role['name'];
+                $_SESSION['can_access_employee_portal'] = $role['can_access_employee_portal'];
+                $_SESSION['can_access_manager_portal'] = $role['can_access_manager_portal'];
+                $_SESSION['can_access_hr_portal'] = $role['can_access_hr_portal'];
+                $_SESSION['can_access_owner_portal'] = $role['can_access_owner_portal'];
+                
+                error_log("Role session variables set:");
+                error_log("  role_id: " . $_SESSION['role_id']);
+                error_log("  role_name: " . $_SESSION['role_name']);
+                error_log("  can_access_employee_portal: " . $_SESSION['can_access_employee_portal']);
+            } else {
+                error_log("WARNING: Role is NULL or empty! roleId=" . ($roleId ?? 'NULL'));
+            }
             break;
             
         case 'employee':
@@ -197,6 +290,15 @@ function secureLogin($userData, $userType) {
             $_SESSION['name'] = $userData['first_name'] . ' ' . $userData['last_name'];
             $_SESSION['position'] = $userData['position'];
             $_SESSION['photo_path'] = $userData['photo_path'] ?? '';
+            // Add role information
+            if ($role) {
+                $_SESSION['role_id'] = $roleId;
+                $_SESSION['role_name'] = $role['name'];
+                $_SESSION['can_access_employee_portal'] = $role['can_access_employee_portal'];
+                $_SESSION['can_access_manager_portal'] = $role['can_access_manager_portal'];
+                $_SESSION['can_access_hr_portal'] = $role['can_access_hr_portal'];
+                $_SESSION['can_access_owner_portal'] = $role['can_access_owner_portal'];
+            }
             break;
     }
     

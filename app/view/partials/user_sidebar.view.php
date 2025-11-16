@@ -2,17 +2,68 @@
 $currentPage = $_GET['payroll'] ?? basename($_SERVER['PHP_SELF']);
 require_once views_path("partials/header");
 
-// Fix session variable inconsistencies
-$username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Unknown Employee';
-$email = $_SESSION['email'] ?? 'no-email@example.com';
+// Get user information - support employees, managers, and HR
+$username = 'Unknown User';
+$email = 'no-email@example.com';
+$gender = '';
+$photoPath = '';
 
-$gender = strtolower($_SESSION['gender'] ?? $_SESSION['sex'] ?? '');
-$defaultImage = in_array($gender, ['male', 'm'])
-    ? '../public/assets/image/default_men.png'
-    : '../public/assets/image/default_women.png';
-$imagePath = (!empty($_SESSION['photo_path']))
-    ? '../public/upload/' . basename($_SESSION['photo_path'])
-    : $defaultImage;
+// Check if user is HR/Admin
+if (isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID'])) {
+    $username = $_SESSION['USERNAME'] ?? $_SESSION['user_name'] ?? 'HR User';
+    $email = $_SESSION['SESSION_EMAIL'] ?? $_SESSION['user_email'] ?? 'no-email@example.com';
+    $gender = strtolower($_SESSION['gender'] ?? $_SESSION['hr_sex'] ?? '');
+    $photoPath = $_SESSION['photo_path'] ?? '';
+    
+    // Format photo path for HR
+    if (!empty($photoPath)) {
+        if (strpos($photoPath, 'public/') === 0 || strpos($photoPath, '../public/') === 0) {
+            $imagePath = $photoPath;
+        } else {
+            $imagePath = '../public/' . ltrim($photoPath, '/');
+        }
+    } else {
+        $defaultImage = in_array($gender, ['male', 'm', 'male'])
+            ? '../public/assets/image/default_men.png'
+            : '../public/assets/image/default_women.png';
+        $imagePath = $defaultImage;
+    }
+}
+// Check if user is Manager
+elseif (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
+    $username = $_SESSION['manager_name'] ?? 'Manager';
+    $email = $_SESSION['manager_email'] ?? 'no-email@example.com';
+    $gender = strtolower($_SESSION['gender'] ?? $_SESSION['m_sex'] ?? '');
+    $photoPath = $_SESSION['photo_path'] ?? '';
+    
+    // Format photo path for Manager
+    if (!empty($photoPath)) {
+        if (strpos($photoPath, 'public/') === 0 || strpos($photoPath, '../public/') === 0) {
+            $imagePath = $photoPath;
+        } else {
+            $imagePath = '../public/' . ltrim($photoPath, '/');
+        }
+    } else {
+        $defaultImage = in_array($gender, ['male', 'm', 'male'])
+            ? '../public/assets/image/default_men.png'
+            : '../public/assets/image/default_women.png';
+        $imagePath = $defaultImage;
+    }
+}
+// Regular Employee
+else {
+    $username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Unknown Employee';
+    $email = $_SESSION['email'] ?? 'no-email@example.com';
+    $gender = strtolower($_SESSION['gender'] ?? $_SESSION['sex'] ?? '');
+    $photoPath = $_SESSION['photo_path'] ?? '';
+    
+    $defaultImage = in_array($gender, ['male', 'm', 'male'])
+        ? '../public/assets/image/default_men.png'
+        : '../public/assets/image/default_women.png';
+    $imagePath = (!empty($photoPath))
+        ? '../public/upload/' . basename($photoPath)
+        : $defaultImage;
+}
 ?>
 
 <style>

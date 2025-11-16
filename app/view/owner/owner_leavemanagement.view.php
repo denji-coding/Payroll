@@ -256,7 +256,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 
         <div class="mt-6 -ml-1 bg-white shadow rounded-lg overflow-hidden">
             <div class="flex items-center justify-between p-4 border-b border-gray-200 relative">
-                <span class="text-lg font-semibold text-gray-800">HR's Leave Application</span>
+                <span class="text-lg font-semibold text-gray-800">HR Leave Applications</span>
                 <div class="relative max-w-sm w-full sm:w-auto">
                     <svg class="absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -265,7 +265,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                     <input
                         type="text"
                         id="leaveSearch"
-                        placeholder="Search employees..."
+                        placeholder="Search HR..."
                         class="flex h-10 w-full placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8 text-base placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
                     >
                     <button
@@ -285,178 +285,22 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 
                 <thead class="bg-emerald-600 sticky top-0 text-white text-[13.8px]">
                     <tr>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Name</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Branch</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">HR Name</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Employee ID</th>
                         <th class="px-3 py-3 text-left font-semibold tracking-wide">Leave Type</th>
                         <th class="px-3 py-3 text-center font-semibold tracking-wide">Start</th>
                         <th class="px-3 py-3 text-center font-semibold tracking-wide">End</th>
                         <th class="px-3 py-3 text-left font-semibold tracking-wide">Duration</th>
                         <th class="px-3 py-3 text-left font-semibold tracking-wide">Reason</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide ">Rejection Reason</th>
+                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Approver</th>
                         <th class="px-3 py-3 text-center font-semibold tracking-wide">Status</th>
                         <th class="px-3 py-3 text-center font-semibold tracking-wide">Created</th>
                         <th class="px-3 py-3 text-center font-semibold tracking-wide">Actions</th>
                     </tr>
                 </thead>
 
-                <tbody>
-                <?php if (!empty($leaveRequests)): ?>
-                    <?php foreach ($leaveRequests as $leaveRequest): ?>
-                        <tr class="text-sm border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-200">
-                            <td class="px-3 py-3 whitespace-nowrap"><?= htmlspecialchars($leaveRequest['employee_name']) ?></td>
-                            <td class="px-3 py-3 whitespace-nowrap"><?= htmlspecialchars($leaveRequest['branch_name']) ?></td>
-                            <td class="px-3 py-3 "><?= htmlspecialchars($leaveRequest['leave_type']) ?></td>
-                            <td class="px-3 py-3 text-center whitespace-nowrap"><?= htmlspecialchars($leaveRequest['start_date']) ?></td>
-                            <td class="px-3 py-3 text-center whitespace-nowrap"><?= htmlspecialchars($leaveRequest['end_date']) ?></td>
-                            <td class="px-3 py-3 text-center"><?= htmlspecialchars($leaveRequest['duration']) ?></td>
-                            <td class="text-center">
-                                        <?php
-                                            $hasReason = !empty($leaveRequest['reason']);
-                                            $hasMedCert = !empty($leaveRequest['med_cert_path']) && $leaveRequest['leave_type'] === 'Sick Leave' && (int)$leaveRequest['duration'] >= 3;
-                                            $alwaysShowModalTypes = ['Vacation Leave', 'Maternity/Paternity Leave'];
-
-                                            $showModal = $hasReason || $hasMedCert || in_array($leaveRequest['leave_type'], $alwaysShowModalTypes);
-                                        ?>
-
-                                        <?php if ($showModal): ?>
-                                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#reasonModal<?= $leaveRequest['id'] ?>">
-                                                <i class="bi bi-eye"></i> 
-                                            </button>
-
-                                            <div class="modal fade" id="reasonModal<?= $leaveRequest['id'] ?>" tabindex="-1">
-                                                <div class="modal-dialog modal-dialog-centered modal-lg ">
-                                                    <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
-                                                        <div class="modal-header bg-success text-white">
-                                                            <h5 class="modal-title">Leave Details</h5>
-                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                        </div>
-
-                                                        <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
-                                                            <!-- Leave Reason -->
-                                                            <?php if ($hasReason): ?>
-                                                                <div class="text-start">
-                                                                    <?= nl2br(htmlspecialchars($leaveRequest['reason'])) ?>
-                                                                </div>
-                                                            <?php endif; ?>
-
-                                                            <!-- Medical Certificate -->
-                                                            <?php if ($hasMedCert): ?>
-                                                                <div class="text-left">
-                                                                    <strong>Medical Certificate:</strong>
-                                                                    <div class="d-flex justify-content-center mt-2">
-                                                                        <img src="<?= htmlspecialchars($leaveRequest['med_cert_path']) ?>"
-                                                                            alt="Medical Certificate"
-                                                                            class="img-fluid rounded border"
-                                                                            style="max-height: 280px; max-width: 100%; width: auto; ">
-                                                                    </div>
-                                                                </div>
-                                                            <?php endif; ?>
-
-                                                            <!-- No content fallback -->
-                                                            <?php if (!$hasReason && !$hasMedCert && in_array($leaveRequest['leave_type'], $alwaysShowModalTypes)): ?>
-                                                                <div class="fst-italic text-muted">No reason or certificate needed.</div>
-                                                            <?php endif; ?>
-
-                                                            <!-- Footer -->
-                                                            <div class="pt-2">
-                                                                <hr class="w-100 m-0">
-                                                                <small class="text-muted">Leave type: <?= htmlspecialchars($leaveRequest['leave_type']) ?></small>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-muted fst-italic">N/A</span>
-                                        <?php endif; ?>
-                                    </td>
-
-                            <td class="px-3 py-4 text-center">
-                                <?php if ($leaveRequest['status'] === 'Rejected' && !empty($leaveRequest['rejection_reason'])): ?>
-                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectReasonModal<?= $leaveRequest['id'] ?>">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <div class="modal fade" id="rejectReasonModal<?= $leaveRequest['id'] ?>" tabindex="-1">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content" style="height: 70vh;">
-                                                <div class="modal-header bg-danger text-white">
-                                                    <h5 class="modal-title">Rejections Reason</h5>
-                                                    <button type="button" class="btn-close" style="filter: brightness(0) invert(1);" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body d-flex flex-column justify-content-between text-left">
-                                                    <?= nl2br(htmlspecialchars($leaveRequest['rejection_reason'])) ?>
-                                                    <?php if (!empty($leaveRequest['rejected_by'])): ?>
-                                                        <div>
-                                                            <hr class="w-100 m-0">
-                                                            <small class="text-muted">Rejected by: <?= htmlspecialchars($leaveRequest['rejected_by']) ?></small>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php else: ?>
-                                    <span class="text-muted fst-italic">—</span>
-                                <?php endif; ?>
-                            </td>
-
-                            <td class="px-3 py-4 text-center">
-                                <?php
-                                $badgeClass = match($leaveRequest['status']) {
-                                    'Approved' => 'bg-success',
-                                    'Rejected' => 'bg-danger',
-                                    default => 'bg-warning text-dark'
-                                };
-                                ?>
-                                <span class="badge <?= $badgeClass ?> rounded-pill px-3 py-1"><?= htmlspecialchars($leaveRequest['status']) ?></span>
-                            </td>
-                            <td class="px-3 py-4 text-center whitespace-nowrap"><?= date("M d, Y", strtotime($leaveRequest['created_at'])) ?></td>
-                            <td class="px-3 py-4">
-                                <?php if ($leaveRequest['status'] === 'Pending'): ?>
-                                    <div class="d-flex gap-2">
-                                        <form method="POST" class="approve-form">
-                                            <input type="hidden" name="leave_id" value="<?= $leaveRequest['id'] ?>">
-                                            <input type="hidden" name="action" value="approve">
-                                            <button type="submit" class="btn btn-sm btn-success">
-                                                <i class="bi bi-check2-circle"></i>
-                                            </button>
-                                        </form>
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<?= $leaveRequest['id'] ?>">
-                                            <i class="bi bi-x-circle"></i>
-                                        </button>
-                                        <div class="modal fade" id="rejectModal<?= $leaveRequest['id'] ?>" tabindex="-1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <form method="POST">
-                                                        <div class="modal-header bg-danger text-white">
-                                                            <h5 class="modal-title">Reject Leave</h5>
-                                                            <button type="button" class="btn-close" style="filter: brightness(0) invert(1);" data-bs-dismiss="modal"></button>
-
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <input type="hidden" name="leave_id" value="<?= $leaveRequest['id'] ?>">
-                                                            <input type="hidden" name="action" value="reject">
-                                                            <label class="form-label d-block text-start">Reason</label>
-                                                            <textarea name="rejection_reason" class="form-control" rows="4" required style="resize: none; overflow: auto;"></textarea>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="submit" class="btn btn-danger btn-sm">Submit Reject</button>
-                                                            <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php else: ?>
-                                    <span class="text-muted fst-italic d-block text-center">Done</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr id="noLeavesRow"><td colspan="11" class="text-center px-6 py-4 text-muted">No leave requests found.</td></tr>
-                <?php endif; ?>
+                <tbody id="hrLeaveTableBody">
+                    <tr id="noLeavesRow"><td colspan="11" class="text-center px-6 py-4 text-muted">Loading leave applications...</td></tr>
                 </tbody>
             </table>
             </div>
@@ -465,29 +309,215 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const approveForms = document.querySelectorAll('.approve-form');
-
-    approveForms.forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault(); // Stop normal form submission
-
-            Swal.fire({
-                title: 'Approve Leave?',
-                text: 'Are you sure you want to approve this leave request?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#198754',
-                cancelButtonColor: '#6c757d',
-                // cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, approve it!',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit(); // Only submit if user confirms
-                }
+// Fetch and display HR leave applications
+async function loadHrLeaves() {
+    try {
+        const response = await fetch('../app/api/owner_hr_leave_approval-api.php');
+        const result = await response.json();
+        
+        const tbody = document.getElementById('hrLeaveTableBody');
+        tbody.innerHTML = '';
+        
+        if (result.status === 'success' && result.data && result.data.length > 0) {
+            result.data.forEach(leave => {
+                const row = createLeaveRow(leave);
+                tbody.appendChild(row);
             });
-        });
+        } else {
+            tbody.innerHTML = '<tr id="noLeavesRow"><td colspan="11" class="text-center px-6 py-4 text-muted">No HR leave applications found.</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading HR leaves:', error);
+        document.getElementById('hrLeaveTableBody').innerHTML = 
+            '<tr><td colspan="11" class="text-center px-6 py-4 text-danger">Error loading leave applications.</td></tr>';
+    }
+}
+
+function createLeaveRow(leave) {
+    const tr = document.createElement('tr');
+    tr.className = 'text-sm border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-200 fade-in-slide';
+    tr.setAttribute('data-leave-id', leave.id);
+    
+    const hasReason = leave.reason && leave.reason.trim() !== '';
+    const hasMedCert = leave.med_cert_path && leave.leave_type === 'Sick Leave' && parseInt(leave.duration) >= 3;
+    const alwaysShowModalTypes = ['Vacation Leave', 'Maternity/Paternity Leave'];
+    const showModal = hasReason || hasMedCert || alwaysShowModalTypes.includes(leave.leave_type);
+    
+    const statusBadgeClass = leave.status === 'Approved' ? 'bg-success' : 
+                            leave.status === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark';
+    
+    const createdDate = new Date(leave.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    tr.innerHTML = `
+        <td class="px-3 py-3 whitespace-nowrap">${escapeHtml(leave.hr_name || 'N/A')}</td>
+        <td class="px-3 py-3 whitespace-nowrap">${escapeHtml(leave.hr_employee_id || 'N/A')}</td>
+        <td class="px-3 py-3">${escapeHtml(leave.leave_type)}</td>
+        <td class="px-3 py-3 text-center whitespace-nowrap">${escapeHtml(leave.start_date)}</td>
+        <td class="px-3 py-3 text-center whitespace-nowrap">${escapeHtml(leave.end_date)}</td>
+        <td class="px-3 py-3 text-center">${leave.duration} day(s)</td>
+        <td class="text-center">
+            ${showModal ? `
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#reasonModal${leave.id}">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <div class="modal fade" id="reasonModal${leave.id}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title">Leave Details</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
+                                ${hasReason ? `<div class="text-start">${escapeHtml(leave.reason).replace(/\n/g, '<br>')}</div>` : ''}
+                                ${hasMedCert ? `
+                                    <div class="text-left">
+                                        <strong>Medical Certificate:</strong>
+                                        <div class="d-flex justify-content-center mt-2">
+                                            <img src="../public/${leave.med_cert_path}" alt="Medical Certificate" class="img-fluid rounded border" style="max-height: 280px; max-width: 100%;">
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                ${!hasReason && !hasMedCert && alwaysShowModalTypes.includes(leave.leave_type) ? 
+                                    '<div class="fst-italic text-muted">No reason or certificate needed.</div>' : ''}
+                                <div class="pt-2">
+                                    <hr class="w-100 m-0">
+                                    <small class="text-muted">Leave type: ${escapeHtml(leave.leave_type)}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ` : '<span class="text-muted fst-italic">N/A</span>'}
+        </td>
+        <td class="px-3 py-4 text-center">
+            ${leave.approver_name ? `<small class="text-muted">${escapeHtml(leave.approver_name)}</small>` : '<span class="text-muted fst-italic">—</span>'}
+        </td>
+        <td class="px-3 py-4 text-center">
+            <span class="badge ${statusBadgeClass} rounded-pill px-3 py-1">${escapeHtml(leave.status)}</span>
+        </td>
+        <td class="px-3 py-4 text-center whitespace-nowrap">${createdDate}</td>
+        <td class="px-3 py-4">
+            ${leave.status === 'Pending' ? `
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-success approve-btn" data-leave-id="${leave.id}">
+                        <i class="bi bi-check2-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger reject-btn" data-leave-id="${leave.id}" data-bs-toggle="modal" data-bs-target="#rejectModal${leave.id}">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                    <div class="modal fade" id="rejectModal${leave.id}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Reject Leave</h5>
+                                    <button type="button" class="btn-close" style="filter: brightness(0) invert(1);" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <label class="form-label d-block text-start">Reason</label>
+                                    <textarea id="rejectReason${leave.id}" class="form-control" rows="4" required style="resize: none; overflow: auto;"></textarea>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-danger btn-sm confirm-reject-btn" data-leave-id="${leave.id}">Submit Reject</button>
+                                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ` : '<span class="text-muted fst-italic d-block text-center">Done</span>'}
+        </td>
+    `;
+    
+    // Add event listeners for approve/reject buttons
+    if (leave.status === 'Pending') {
+        const approveBtn = tr.querySelector('.approve-btn');
+        if (approveBtn) {
+            approveBtn.addEventListener('click', () => handleApprove(leave.id));
+        }
+        
+        const rejectBtn = tr.querySelector('.confirm-reject-btn');
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', () => {
+                const reason = document.getElementById(`rejectReason${leave.id}`).value.trim();
+                if (!reason) {
+                    Swal.fire('Error', 'Please provide a rejection reason.', 'error');
+                    return;
+                }
+                handleReject(leave.id, reason);
+            });
+        }
+    }
+    
+    return tr;
+}
+
+async function handleApprove(leaveId) {
+    const result = await Swal.fire({
+        title: 'Approve Leave?',
+        text: 'Are you sure you want to approve this leave request?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, approve it!',
     });
+    
+    if (result.isConfirmed) {
+        try {
+            const response = await fetch('../app/api/owner_hr_leave_approval-api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'approve', leave_id: leaveId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                Swal.fire('Success', data.message, 'success').then(() => loadHrLeaves());
+            } else {
+                Swal.fire('Error', data.message || 'Failed to approve leave', 'error');
+            }
+        } catch (error) {
+            console.error('Error approving leave:', error);
+            Swal.fire('Error', 'Failed to approve leave. Please try again.', 'error');
+        }
+    }
+}
+
+async function handleReject(leaveId, reason) {
+    try {
+        const response = await fetch('../app/api/owner_hr_leave_approval-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'reject', leave_id: leaveId, remarks: reason })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`rejectModal${leaveId}`));
+            if (modal) modal.hide();
+            
+            Swal.fire('Success', data.message, 'success').then(() => loadHrLeaves());
+        } else {
+            Swal.fire('Error', data.message || 'Failed to reject leave', 'error');
+        }
+    } catch (error) {
+        console.error('Error rejecting leave:', error);
+        Swal.fire('Error', 'Failed to reject leave. Please try again.', 'error');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load leaves on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadHrLeaves();
 });
 </script>
 
