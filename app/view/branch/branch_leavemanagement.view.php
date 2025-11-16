@@ -362,7 +362,9 @@ try {
                                                     <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
                                                         <div class="modal-header bg-success text-white">
                                                             <h5 class="modal-title">Leave Details</h5>
-                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
                                                         </div>
 
                                                         <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
@@ -415,7 +417,9 @@ try {
                                             <div class="modal-content" style="height: 70vh;">
                                                 <div class="modal-header bg-danger text-white">
                                                     <h5 class="modal-title">Rejections Reason</h5>
-                                                    <button type="button" class="btn-close" style="filter: brightness(0) invert(1);" data-bs-dismiss="modal"></button>
+                                                    <button type="button" class="btn-close" style="filter: brightness(0) invert(1);" data-bs-dismiss="modal">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
                                                 </div>
                                                 <div class="modal-body d-flex flex-column justify-content-between text-left">
                                                     <?= nl2br(htmlspecialchars($leaveRequest['rejection_reason'])) ?>

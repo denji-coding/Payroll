@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 13, 2025 at 05:39 PM
+-- Generation Time: Oct 26, 2025 at 09:08 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -29,18 +29,38 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `admins` (
   `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `hr_employee_id` varchar(50) NOT NULL,
+  `hr_first_name` varchar(100) NOT NULL,
+  `hr_middle_name` varchar(100) DEFAULT NULL,
+  `hr_last_name` varchar(100) NOT NULL,
+  `hr_email` varchar(100) NOT NULL,
+  `hr_position` varchar(100) NOT NULL DEFAULT 'Human Resources',
+  `hr_rfid_number` varchar(50) DEFAULT NULL,
+  `hr_dob` date DEFAULT NULL,
+  `hr_place_of_birth` varchar(100) DEFAULT NULL,
+  `hr_sex` varchar(10) DEFAULT NULL,
+  `hr_civil_status` varchar(20) DEFAULT NULL,
+  `hr_contact_number` varchar(15) DEFAULT NULL,
+  `hr_citizenship` varchar(50) DEFAULT NULL,
+  `hr_blood_type` varchar(5) DEFAULT NULL,
+  `hr_address` varchar(255) DEFAULT NULL,
+  `hr_base_salary` decimal(10,2) DEFAULT NULL,
+  `hr_sss_number` varchar(20) DEFAULT NULL,
+  `hr_pagibig_number` varchar(20) DEFAULT NULL,
+  `hr_philhealth_number` varchar(20) DEFAULT NULL,
+  `hr_photo_path` varchar(255) DEFAULT NULL,
+  `hr_password` varchar(255) NOT NULL,
+  `hr_created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `hr_updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `admins`
 --
 
-INSERT INTO `admins` (`id`, `name`, `email`, `password`, `created_at`) VALUES
-(5, 'Roy B. Nabesis', 'admin@example.com', '$argon2id$v=19$m=65536,t=4,p=3$L3RVLzl2UGY2cldjMDlaYw$MBNaSNBK6za6l5R6HpA9dpWA9G5RNcHL7edcKLmguyc', '2025-05-24 14:55:09');
+INSERT INTO `admins` (`id`, `hr_employee_id`, `hr_first_name`, `hr_middle_name`, `hr_last_name`, `hr_email`, `hr_position`, `hr_rfid_number`, `hr_dob`, `hr_place_of_birth`, `hr_sex`, `hr_civil_status`, `hr_contact_number`, `hr_citizenship`, `hr_blood_type`, `hr_address`, `hr_base_salary`, `hr_sss_number`, `hr_pagibig_number`, `hr_philhealth_number`, `hr_photo_path`, `hr_password`, `hr_created_at`, `hr_updated_at`, `deleted_at`) VALUES
+(5, '', 'Roy B. Nabesis', NULL, '', 'admin@example.com', 'Human Resources', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'upload/me-68d16ab0dfb1a3.65533688.jpg', '$argon2id$v=19$m=65536,t=4,p=3$L3RVLzl2UGY2cldjMDlaYw$MBNaSNBK6za6l5R6HpA9dpWA9G5RNcHL7edcKLmguyc', '2025-05-24 14:55:09', '2025-10-26 08:07:19', NULL);
 
 -- --------------------------------------------------------
 
@@ -50,7 +70,8 @@ INSERT INTO `admins` (`id`, `name`, `email`, `password`, `created_at`) VALUES
 
 CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
-  `employee_id` int(11) NOT NULL,
+  `employee_id` int(11) DEFAULT NULL,
+  `manager_id` int(11) DEFAULT NULL,
   `date` date NOT NULL,
   `morning_in` time DEFAULT NULL,
   `morning_out` time DEFAULT NULL,
@@ -65,33 +86,35 @@ CREATE TABLE `attendance` (
 -- Dumping data for table `attendance`
 --
 
-INSERT INTO `attendance` (`id`, `employee_id`, `date`, `morning_in`, `morning_out`, `afternoon_in`, `afternoon_out`, `status`, `created_at`, `updated_at`) VALUES
-(87, 118, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:15:43', '2025-05-25 10:40:03'),
-(88, 116, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:37', '2025-05-25 10:51:13'),
-(89, 117, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:53', '2025-05-25 10:45:52'),
-(90, 115, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:57', '2025-05-25 10:45:38'),
-(91, 116, '2025-05-26', NULL, NULL, NULL, NULL, 'Present', '2025-05-26 07:58:37', '2025-05-26 07:58:37'),
-(93, 118, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:05', '2025-05-27 17:54:42'),
-(94, 115, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:08', '2025-05-27 17:55:55'),
-(95, 117, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:11', '2025-05-27 17:55:44'),
-(96, 116, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:15', '2025-05-27 17:55:24'),
-(97, 124, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:19:47', '2025-05-30 01:19:47'),
-(98, 118, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:21:43', '2025-05-30 01:21:43'),
-(99, 117, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:41:31', '2025-05-30 01:41:31'),
-(107, 115, '2025-06-14', '21:50:07', '21:50:48', '21:55:30', '22:17:28', 'Present', '2025-06-14 13:50:07', '2025-06-14 14:17:28'),
-(108, 117, '2025-06-14', '21:50:10', '21:51:40', '21:55:44', NULL, 'Present', '2025-06-14 13:50:10', '2025-06-14 13:55:44'),
-(109, 116, '2025-06-14', '21:50:39', '21:52:04', '21:59:57', NULL, 'Present', '2025-06-14 13:50:39', '2025-06-14 13:59:57'),
-(110, 115, '2025-06-15', '21:18:02', '22:18:19', '22:18:25', '22:18:32', 'Present', '2025-06-15 13:18:02', '2025-06-15 14:18:32'),
-(111, 116, '2025-06-15', '22:27:01', '22:43:30', '23:29:00', '23:29:00', 'Present', '2025-06-15 14:27:01', '2025-06-15 15:29:00'),
-(112, 115, '2025-06-16', '00:17:07', NULL, NULL, NULL, 'Present', '2025-06-15 16:17:07', '2025-06-15 16:17:07'),
-(114, 115, '2025-07-08', '06:01:45', '11:01:49', '15:27:44', '15:28:08', 'Present', '2025-07-08 07:01:45', '2025-07-08 07:28:08'),
-(115, 115, '2025-07-15', '21:07:05', '21:17:18', '21:28:12', '22:06:58', 'Present', '2025-07-15 13:07:05', '2025-07-15 14:06:58'),
-(121, 116, '2025-07-15', '22:47:30', '22:49:27', '22:49:39', '22:53:48', 'Present', '2025-07-15 14:47:30', '2025-07-15 14:53:48'),
-(122, 118, '2025-07-15', '22:56:11', '22:57:00', '23:19:43', '23:19:49', 'Present', '2025-07-15 14:56:11', '2025-07-15 15:19:49'),
-(123, 117, '2025-07-15', '22:56:17', '22:57:16', '23:46:29', '23:46:34', 'Present', '2025-07-15 14:56:17', '2025-07-15 15:46:34'),
-(124, 118, '2025-07-17', '22:57:10', '22:57:14', '22:57:15', '22:57:18', 'Present', '2025-07-17 14:57:10', '2025-07-17 14:57:18'),
-(125, 118, '2025-07-23', '14:37:06', '14:37:29', NULL, NULL, 'Present', '2025-07-23 06:37:06', '2025-07-23 06:37:29'),
-(126, 180, '2025-08-27', NULL, NULL, '15:58:19', '15:58:33', 'Present', '2025-08-27 07:58:19', '2025-08-27 07:58:33');
+INSERT INTO `attendance` (`id`, `employee_id`, `manager_id`, `date`, `morning_in`, `morning_out`, `afternoon_in`, `afternoon_out`, `status`, `created_at`, `updated_at`) VALUES
+(87, 118, NULL, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:15:43', '2025-05-25 10:40:03'),
+(88, 116, NULL, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:37', '2025-05-25 10:51:13'),
+(89, 117, NULL, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:53', '2025-05-25 10:45:52'),
+(90, 115, NULL, '2025-05-25', NULL, NULL, NULL, NULL, 'Present', '2025-05-25 10:16:57', '2025-05-25 10:45:38'),
+(91, 116, NULL, '2025-05-26', NULL, NULL, NULL, NULL, 'Present', '2025-05-26 07:58:37', '2025-05-26 07:58:37'),
+(93, 118, NULL, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:05', '2025-05-27 17:54:42'),
+(94, 115, NULL, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:08', '2025-05-27 17:55:55'),
+(95, 117, NULL, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:11', '2025-05-27 17:55:44'),
+(96, 116, NULL, '2025-05-28', NULL, NULL, NULL, NULL, 'Present', '2025-05-27 16:02:15', '2025-05-27 17:55:24'),
+(97, 124, NULL, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:19:47', '2025-05-30 01:19:47'),
+(98, 118, NULL, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:21:43', '2025-05-30 01:21:43'),
+(99, 117, NULL, '2025-05-30', NULL, NULL, NULL, NULL, 'Present', '2025-05-30 01:41:31', '2025-05-30 01:41:31'),
+(107, 115, NULL, '2025-06-14', '21:50:07', '21:50:48', '21:55:30', '22:17:28', 'Present', '2025-06-14 13:50:07', '2025-06-14 14:17:28'),
+(108, 117, NULL, '2025-06-14', '21:50:10', '21:51:40', '21:55:44', NULL, 'Present', '2025-06-14 13:50:10', '2025-06-14 13:55:44'),
+(109, 116, NULL, '2025-06-14', '21:50:39', '21:52:04', '21:59:57', NULL, 'Present', '2025-06-14 13:50:39', '2025-06-14 13:59:57'),
+(110, 115, NULL, '2025-06-15', '21:18:02', '22:18:19', '22:18:25', '22:18:32', 'Present', '2025-06-15 13:18:02', '2025-06-15 14:18:32'),
+(111, 116, NULL, '2025-06-15', '22:27:01', '22:43:30', '23:29:00', '23:29:00', 'Present', '2025-06-15 14:27:01', '2025-06-15 15:29:00'),
+(112, 115, NULL, '2025-06-16', '00:17:07', NULL, NULL, NULL, 'Present', '2025-06-15 16:17:07', '2025-06-15 16:17:07'),
+(114, 115, NULL, '2025-07-08', '06:01:45', '11:01:49', '15:27:44', '15:28:08', 'Present', '2025-07-08 07:01:45', '2025-07-08 07:28:08'),
+(115, 115, NULL, '2025-07-15', '21:07:05', '21:17:18', '21:28:12', '22:06:58', 'Present', '2025-07-15 13:07:05', '2025-07-15 14:06:58'),
+(121, 116, NULL, '2025-07-15', '22:47:30', '22:49:27', '22:49:39', '22:53:48', 'Present', '2025-07-15 14:47:30', '2025-07-15 14:53:48'),
+(122, 118, NULL, '2025-07-15', '22:56:11', '22:57:00', '23:19:43', '23:19:49', 'Present', '2025-07-15 14:56:11', '2025-07-15 15:19:49'),
+(123, 117, NULL, '2025-07-15', '22:56:17', '22:57:16', '23:46:29', '23:46:34', 'Present', '2025-07-15 14:56:17', '2025-07-15 15:46:34'),
+(124, 118, NULL, '2025-07-17', '22:57:10', '22:57:14', '22:57:15', '22:57:18', 'Present', '2025-07-17 14:57:10', '2025-07-17 14:57:18'),
+(125, 118, NULL, '2025-07-23', '14:37:06', '14:37:29', NULL, NULL, 'Present', '2025-07-23 06:37:06', '2025-07-23 06:37:29'),
+(126, 180, NULL, '2025-08-27', NULL, NULL, '15:58:19', '15:58:33', 'Present', '2025-08-27 07:58:19', '2025-08-27 07:58:33'),
+(127, 117, NULL, '2025-09-26', NULL, NULL, '14:34:30', NULL, 'Present', '2025-09-26 06:34:30', '2025-09-26 06:34:30'),
+(129, NULL, 4, '2025-09-27', NULL, NULL, '20:40:18', '20:42:08', 'Present', '2025-09-27 12:40:18', '2025-09-27 12:42:08');
 
 -- --------------------------------------------------------
 
@@ -115,7 +138,38 @@ CREATE TABLE `benefit_rates` (
 INSERT INTO `benefit_rates` (`id`, `sss_rate`, `pagibig_rate`, `philhealth_rate`, `status`, `updated_at`) VALUES
 (39, 7.00, 7.00, 5.00, 'inactive', '2025-07-15 13:04:16'),
 (41, 5.00, 5.00, 5.00, 'inactive', '2025-08-17 17:07:55'),
-(42, 5.00, 5.00, 5.00, 'active', '2025-08-17 17:07:55');
+(42, 5.00, 5.00, 5.00, 'inactive', '2025-09-18 14:08:06'),
+(43, 5.00, 5.00, 5.00, 'inactive', '2025-09-18 14:08:17'),
+(44, 5.00, 5.00, 2.00, 'inactive', '2025-09-18 14:08:47'),
+(45, 5.00, 5.00, 2.00, 'inactive', '2025-09-18 14:09:02'),
+(48, 5.00, 2.00, 5.00, 'inactive', '2025-09-27 12:11:28'),
+(49, 5.00, 2.00, 5.00, 'active', '2025-09-27 12:11:28');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `branches`
+--
+
+CREATE TABLE `branches` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `branches`
+--
+
+INSERT INTO `branches` (`id`, `name`, `address`, `created_at`, `updated_at`) VALUES
+(8, 'LMG Co., Ltd', 'Tagum', '2025-10-05 14:03:05', '2025-10-05 14:03:05'),
+(9, 'Global Marketing Alliance', 'Panabo', '2025-10-05 14:03:26', '2025-10-05 14:03:26'),
+(10, 'Expressway Liaison Services', 'Tagum', '2025-10-05 14:03:54', '2025-10-05 14:03:54'),
+(11, 'test', 'test', '2025-10-08 11:15:52', '2025-10-08 11:15:52'),
+(14, 'test 1', 'test 1', '2025-10-08 13:08:40', '2025-10-08 13:09:19'),
+(15, 'test 3', 'test 3', '2025-10-18 16:05:40', '2025-10-18 16:05:40');
 
 -- --------------------------------------------------------
 
@@ -182,10 +236,10 @@ INSERT INTO `employees` (`id`, `employee_no`, `rfid_number`, `first_name`, `midd
 (160, 'EMP-341898', '5235234124', 'jhe5ttw', 'asdgh', 'adgadfgg', '2025-07-24', 'hhdfhdfhg', 'Female', 'Divorced', '09095782637', 'gsdjgh@gmail.com', 'fasfas', 'A+', 'Manager', 'dasdfasf', NULL, 31234.00, '125435346346', '324562345726', '645634654645', '2025-07-20 11:46:32', '2025-09-07 17:23:26', 3, NULL, 0, '$argon2id$v=19$m=65536,t=4,p=3$VGRvQ1lnbENud1NqTDJrZw$VkOEQnTJSrNEQaf1iVaOiabYJe5XXRXE1xa/ZS62Cwo'),
 (162, 'EMP-605829', '1234123', 'safsadf', 'asfasf', 'fasdfsadf', '2025-07-20', 'asfgsag', 'Male', 'Married', '09941662164', 'asgasdg@gmail.com', 'kjjfsafas', 'A+', 'Staff', 'fasfsadf', NULL, 3213.00, '141241241254', '525251414124', '125412514124', '2025-07-20 11:50:39', '2025-09-07 17:23:26', 3, NULL, 0, '$argon2id$v=19$m=65536,t=4,p=3$VGRvQ1lnbENud1NqTDJrZw$VkOEQnTJSrNEQaf1iVaOiabYJe5XXRXE1xa/ZS62Cwo'),
 (163, 'EMP-375954', '54234', 'dasdsad', 'qdad', 'asdasdas', '2025-07-24', 'dasdasd', 'Male', 'Single', '09974523758', 'ufjahj@gmail.com', 'fasadasdasa', 'A+', 'Human Resources', 'dfadasd', NULL, 1231.00, '151545234625', '547262545252', '352452352352', '2025-07-20 12:50:52', '2025-09-07 17:23:26', 4, NULL, 0, '$argon2id$v=19$m=65536,t=4,p=3$VGRvQ1lnbENud1NqTDJrZw$VkOEQnTJSrNEQaf1iVaOiabYJe5XXRXE1xa/ZS62Cwo'),
-(167, 'EMP-117011', '123123', 'adasd', 'dadsad', 'addaasd', '2025-07-14', 'dadasd', 'Male', 'Separated', '09984678682', 'dadas@gmail.com', 'asdas', 'A+', 'Human Resources', 'adasda', 'upload/emp_687ce7ff7b2836.18115541.png', 123.00, '412412415254', '243523452345', '452352524525', '2025-07-20 12:58:39', '2025-09-07 17:23:26', 4, NULL, 0, '$argon2id$v=19$m=65536,t=4,p=3$VGRvQ1lnbENud1NqTDJrZw$VkOEQnTJSrNEQaf1iVaOiabYJe5XXRXE1xa/ZS62Cwo'),
+(167, 'EMP-117011', '123123', 'adasd', 'dadsad', 'addaasd', '2025-07-14', 'dadasd', 'Male', 'Separated', '09984678682', 'dadas@gmail.com', 'asdas', 'A+', 'Human Resources', 'adasda', 'upload/emp_687ce7ff7b2836.18115541.png', 123.00, '412412415254', '243523452345', '452352524525', '2025-07-20 12:58:39', '2025-09-18 11:24:23', 4, NULL, 0, '$argon2id$v=19$m=65536,t=4,p=3$VGRvQ1lnbENud1NqTDJrZw$VkOEQnTJSrNEQaf1iVaOiabYJe5XXRXE1xa/ZS62Cwo'),
 (173, 'EMP-109346', '421423', 'asdsad', 'sdasd', 'asdsa', '2025-08-05', 'dasd', 'Male', 'Single', '09974782637', 'hfjaio@gmail.com', 'fafasfas', 'A+', 'Staff', 'fsafasd', NULL, 31.00, '563567346345', '124213423523', '895950580967', '2025-08-07 13:19:42', '2025-09-07 17:23:26', 22, NULL, 0, '$argon2id$v=19$m=65536,t=4,p=3$VGRvQ1lnbENud1NqTDJrZw$VkOEQnTJSrNEQaf1iVaOiabYJe5XXRXE1xa/ZS62Cwo'),
-(179, 'EMP-943244', '563535345', 'test', 'test', 'test', '2025-08-13', 'test', 'Male', 'Married', '09563535333', 'yonitanabesis01@gmail.com', 'Filipino', 'A+', 'Staff', 'test', NULL, 133.00, '123541354363', '522634879980', '242353645865', '2025-08-13 03:18:22', '2025-09-07 17:15:56', NULL, NULL, 1, '$2y$10$oOecK.qACZnL1RGmZwjQHeq81lBdqPbpKZiUY0U0PzX386XduDQDG'),
-(180, 'EMP-474954', '0967857456', 'Lauriana', 'sillote', 'Nabesis', '1964-07-04', 'Davao city', 'Female', 'Married', '09956646111', 'lauriananabesis@gmail.com', 'Filipino', 'A+', 'Human Resources', 'Purok 7 - San miguel, San isidro, Bunawan, Davao city', NULL, 601.00, '079673452542', '090789674111', '078078967463', '2025-08-13 03:30:37', '2025-09-13 08:45:52', 30, NULL, 1, '$2y$10$.Y1mwU/Q7RRmzb4xdgB3tO50.AR9XdJ8HaNVOBMwXo3OK.NVjGK8q'),
+(179, 'EMP-943244', '563535345', 'test', 'test', 'test', '2025-08-13', 'test', 'Male', 'Married', '09563535333', 'yonitanabesis01@gmail.com', 'Filipino', 'A+', 'Staff', 'test', NULL, 133.00, '123541354363', '522634879111', '242353645865', '2025-08-13 03:18:22', '2025-09-27 11:59:10', 31, NULL, 1, '$2y$10$oOecK.qACZnL1RGmZwjQHeq81lBdqPbpKZiUY0U0PzX386XduDQDG'),
+(180, 'EMP-474954', '0967857456', 'Lauriana', 'sillote', 'Nabesis', '1964-07-04', 'Davao city', 'Female', 'Married', '09956646111', 'lauriananabesis@gmail.com', 'Filipino', 'A+', 'Human Resources', 'Purok 7 - San miguel, San isidro, Bunawan, Davao city', 'upload/emp_68cc11e760b985.73506899.png', 601.00, '079673452542', '090789674111', '078078967111', '2025-08-13 03:30:37', '2025-10-26 07:51:30', 4, NULL, 1, '$2y$10$OYorKcmKDLZX4LpZsAKxOOf57zPCPGN.DSnilUslqVDB/QxuDDiQ.'),
 (181, 'EMP-965793', '7685230923', 'fasdas', 'jhjhjkh', 'jhjkjkkj', '2025-09-13', 'jfoijoasjd', 'Male', 'Single', '09034712789', 'yuankyriejuarez23@gmail.com', 'Filipino', 'A+', 'Driver', 'gjhggjhg', NULL, 786.00, '896756354267', '967534677898', '097867656563', '2025-09-13 14:07:58', '2025-09-13 14:07:58', 31, NULL, 0, NULL);
 
 -- --------------------------------------------------------
@@ -216,6 +270,48 @@ INSERT INTO `employee_schedules` (`id`, `employee_id`, `schedule_id`) VALUES
 (112, 116, 103),
 (114, 146, 105),
 (115, 180, 106);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr`
+--
+
+CREATE TABLE `hr` (
+  `id` int(11) NOT NULL,
+  `hr_employee_id` varchar(50) NOT NULL,
+  `hr_photo_path` varchar(255) DEFAULT NULL,
+  `hr_first_name` varchar(100) NOT NULL,
+  `hr_middle_name` varchar(100) DEFAULT NULL,
+  `hr_last_name` varchar(100) NOT NULL,
+  `hr_email` varchar(100) NOT NULL,
+  `hr_position` varchar(100) NOT NULL DEFAULT 'Human Resources',
+  `hr_rfid_number` varchar(50) DEFAULT NULL,
+  `hr_dob` date DEFAULT NULL,
+  `hr_place_of_birth` varchar(100) DEFAULT NULL,
+  `hr_sex` varchar(10) DEFAULT NULL,
+  `hr_civil_status` varchar(20) DEFAULT NULL,
+  `hr_contact_number` varchar(15) DEFAULT NULL,
+  `hr_citizenship` varchar(50) DEFAULT NULL,
+  `hr_blood_type` varchar(5) DEFAULT NULL,
+  `hr_address` varchar(255) DEFAULT NULL,
+  `hr_base_salary` decimal(10,2) DEFAULT NULL,
+  `hr_sss_number` varchar(20) DEFAULT NULL,
+  `hr_pagibig_number` varchar(20) DEFAULT NULL,
+  `hr_philhealth_number` varchar(20) DEFAULT NULL,
+  `hr_password` varchar(255) NOT NULL,
+  `hr_created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `hr_updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hr`
+--
+
+INSERT INTO `hr` (`id`, `hr_employee_id`, `hr_photo_path`, `hr_first_name`, `hr_middle_name`, `hr_last_name`, `hr_email`, `hr_position`, `hr_rfid_number`, `hr_dob`, `hr_place_of_birth`, `hr_sex`, `hr_civil_status`, `hr_contact_number`, `hr_citizenship`, `hr_blood_type`, `hr_address`, `hr_base_salary`, `hr_sss_number`, `hr_pagibig_number`, `hr_philhealth_number`, `hr_password`, `hr_created_at`, `hr_updated_at`, `deleted_at`) VALUES
+(6, 'HR-653677', NULL, 'hfgadsd', 'asdasd', 'dasds', 'bahanadamuzakpa@gmail.com', 'Human Resources', '2786422', '2025-10-26', 'asdasd', 'Male', 'Married', '09237845637', 'Filipino', 'A-', 'dasdas', 31231.00, '312341231312', '414522565656', '234653245634', '$argon2id$v=19$m=65536,t=4,p=3$WWZJVk1KYmZpMFgyMVF0Tw$6IprSBUl5X+Lnwg378VGAn09DhhULwSvTXsxuRioNwo', '2025-10-26 02:53:26', '2025-10-26 03:21:38', NULL),
+(8, 'HR-697660', NULL, 'sasfasd', 'adasda', 'asdas', 'migrantsventurecorporation@gmail.com', 'Human Resources', '12313123', '2025-10-26', 'dafadasd', 'Male', 'Married', '09647237654', 'Filipino', 'A+', 'dasdas', 123.00, '412452352356', '234523623634', '342623462345', '$argon2id$v=19$m=65536,t=4,p=3$VnVFWHpPWVUzSDZPNlhjSw$hRdfZiIVfY6ZRIl746kGh6TwFEsmrSQl/Llb0SrTMB8', '2025-10-26 02:59:14', '2025-10-26 07:41:04', NULL);
 
 -- --------------------------------------------------------
 
@@ -254,7 +350,8 @@ INSERT INTO `leaves` (`id`, `employee_id`, `manager_id`, `leave_type`, `start_da
 (83, 115, 4, 'Emergency Leave', '2025-06-29', '2025-07-02', 4, 'dasds', NULL, 'Approved', '2025-07-03 12:14:56', '2025-07-03 12:15:18'),
 (101, 115, NULL, 'Sick Leave', '2025-07-01', '2025-07-03', 3, '', 'upload/med_cert/med_686d3d1cb67865.73669816.jpg', 'Pending', '2025-07-08 15:45:32', '2025-07-08 15:45:32'),
 (102, 118, NULL, 'Sick Leave', '2025-07-01', '2025-07-03', 3, '', 'upload/med_cert/med_6879ba28d957a3.99688076.png', 'Pending', '2025-07-18 03:06:16', '2025-07-18 03:06:16'),
-(103, 118, 2, 'Sick Leave', '2025-07-01', '2025-07-10', 10, '', 'upload/med_cert/med_688080f6180282.11263295.jpg', 'Approved', '2025-07-23 06:28:06', '2025-07-23 06:33:03');
+(103, 118, 2, 'Sick Leave', '2025-07-01', '2025-07-10', 10, '', 'upload/med_cert/med_688080f6180282.11263295.jpg', 'Approved', '2025-07-23 06:28:06', '2025-07-23 06:33:03'),
+(104, 180, NULL, 'Sick Leave', '2025-10-01', '2025-10-02', 2, 'fsdfdsf', NULL, 'Pending', '2025-10-03 06:33:32', '2025-10-03 06:33:32');
 
 -- --------------------------------------------------------
 
@@ -265,8 +362,7 @@ INSERT INTO `leaves` (`id`, `employee_id`, `manager_id`, `leave_type`, `start_da
 CREATE TABLE `leave_credits` (
   `id` int(11) NOT NULL,
   `employee_id` int(11) NOT NULL,
-  `leave_type_id` int(11) DEFAULT NULL,
-  `leave_type` enum('Sick Leave','Emergency Leave','Vacation Leave','Personal Leave','Maternity/Paternity Leave') NOT NULL,
+  `leave_type_id` int(11) NOT NULL,
   `taken` int(11) DEFAULT 0,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -275,51 +371,37 @@ CREATE TABLE `leave_credits` (
 -- Dumping data for table `leave_credits`
 --
 
-INSERT INTO `leave_credits` (`id`, `employee_id`, `leave_type_id`, `leave_type`, `taken`, `updated_at`) VALUES
-(1, 115, 1, 'Sick Leave', 0, '2025-09-13 15:37:36'),
-(2, 115, 2, 'Emergency Leave', 1, '2025-09-13 15:37:36'),
-(3, 115, 3, 'Vacation Leave', 0, '2025-09-13 15:37:36'),
-(4, 115, 4, 'Personal Leave', 0, '2025-09-13 15:37:36'),
-(5, 115, 5, 'Maternity/Paternity Leave', 0, '2025-09-13 15:37:36'),
-(6, 122, 1, 'Sick Leave', 0, '2025-09-13 15:37:36'),
-(7, 122, 2, 'Emergency Leave', 0, '2025-09-13 15:37:36'),
-(8, 122, 3, 'Vacation Leave', 0, '2025-09-13 15:37:36'),
-(9, 122, 4, 'Personal Leave', 0, '2025-09-13 15:37:36'),
-(10, 122, 5, 'Maternity/Paternity Leave', 0, '2025-09-13 15:37:36'),
-(11, 118, 1, 'Sick Leave', 1, '2025-09-13 15:37:36'),
-(12, 118, 2, 'Emergency Leave', 0, '2025-09-13 15:37:36'),
-(13, 118, 3, 'Vacation Leave', 0, '2025-09-13 15:37:36'),
-(14, 118, 4, 'Personal Leave', 0, '2025-09-13 15:37:36'),
-(15, 118, 5, 'Maternity/Paternity Leave', 0, '2025-09-13 15:37:36'),
-(16, 116, 1, 'Sick Leave', 0, '2025-09-13 15:37:36'),
-(17, 116, 2, 'Emergency Leave', 0, '2025-09-13 15:37:36'),
-(18, 116, 3, 'Vacation Leave', 0, '2025-09-13 15:37:36'),
-(19, 116, 4, 'Personal Leave', 0, '2025-09-13 15:37:36'),
-(20, 116, 5, 'Maternity/Paternity Leave', 0, '2025-09-13 15:37:36'),
-(21, 180, 1, 'Sick Leave', 0, '2025-09-13 15:37:36'),
-(22, 180, 2, 'Emergency Leave', 0, '2025-09-13 15:37:36'),
-(23, 180, 3, 'Vacation Leave', 0, '2025-09-13 15:37:36'),
-(24, 180, 4, 'Personal Leave', 0, '2025-09-13 15:37:36'),
-(25, 180, 5, 'Maternity/Paternity Leave', 0, '2025-09-13 15:37:36'),
-(26, 179, 1, 'Sick Leave', 0, '2025-09-13 15:37:36'),
-(27, 179, 2, 'Emergency Leave', 0, '2025-09-13 15:37:36'),
-(28, 179, 3, 'Vacation Leave', 0, '2025-09-13 15:37:36'),
-(29, 179, 4, 'Personal Leave', 0, '2025-09-13 15:37:36'),
-(30, 179, 5, 'Maternity/Paternity Leave', 0, '2025-09-13 15:37:36');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `leave_credits_new`
---
-
-CREATE TABLE `leave_credits_new` (
-  `id` int(11) NOT NULL,
-  `employee_id` int(11) NOT NULL,
-  `leave_type_id` int(11) NOT NULL,
-  `taken` int(11) DEFAULT 0,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `leave_credits` (`id`, `employee_id`, `leave_type_id`, `taken`, `updated_at`) VALUES
+(1, 115, 1, 0, '2025-09-13 15:37:36'),
+(2, 115, 2, 1, '2025-09-13 15:37:36'),
+(3, 115, 3, 0, '2025-09-13 15:37:36'),
+(4, 115, 4, 0, '2025-09-13 15:37:36'),
+(5, 115, 5, 0, '2025-09-13 15:37:36'),
+(6, 122, 1, 0, '2025-09-13 15:37:36'),
+(7, 122, 2, 0, '2025-09-13 15:37:36'),
+(8, 122, 3, 0, '2025-09-13 15:37:36'),
+(9, 122, 4, 0, '2025-09-13 15:37:36'),
+(10, 122, 5, 0, '2025-09-13 15:37:36'),
+(11, 118, 1, 1, '2025-09-13 15:37:36'),
+(12, 118, 2, 0, '2025-09-13 15:37:36'),
+(13, 118, 3, 0, '2025-09-13 15:37:36'),
+(14, 118, 4, 0, '2025-09-13 15:37:36'),
+(15, 118, 5, 0, '2025-09-13 15:37:36'),
+(16, 116, 1, 0, '2025-09-13 15:37:36'),
+(17, 116, 2, 0, '2025-09-13 15:37:36'),
+(18, 116, 3, 0, '2025-09-13 15:37:36'),
+(19, 116, 4, 0, '2025-09-13 15:37:36'),
+(20, 116, 5, 0, '2025-09-13 15:37:36'),
+(21, 180, 1, 0, '2025-09-13 15:37:36'),
+(22, 180, 2, 0, '2025-09-13 15:37:36'),
+(23, 180, 3, 0, '2025-09-13 15:37:36'),
+(24, 180, 4, 0, '2025-09-13 15:37:36'),
+(25, 180, 5, 0, '2025-09-13 15:37:36'),
+(26, 179, 1, 0, '2025-09-13 15:37:36'),
+(27, 179, 2, 0, '2025-09-13 15:37:36'),
+(28, 179, 3, 0, '2025-09-13 15:37:36'),
+(29, 179, 4, 0, '2025-09-13 15:37:36'),
+(30, 179, 5, 0, '2025-09-13 15:37:36');
 
 -- --------------------------------------------------------
 
@@ -366,11 +448,11 @@ CREATE TABLE `leave_types` (
 --
 
 INSERT INTO `leave_types` (`id`, `name`, `default_allowed`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Sick Leave', 10, 'Medical leave for illness', 1, '2025-09-13 15:33:32', '2025-09-13 15:33:32'),
+(1, 'Sick Leave', 5, 'Medical leave for illness', 1, '2025-09-13 15:33:32', '2025-09-13 16:05:44'),
 (2, 'Emergency Leave', 5, 'Emergency situations', 1, '2025-09-13 15:33:32', '2025-09-13 15:33:32'),
-(3, 'Vacation Leave', 15, 'Annual vacation leave', 1, '2025-09-13 15:33:32', '2025-09-13 15:33:32'),
+(3, 'Vacation Leave', 5, 'Annual vacation leave', 1, '2025-09-13 15:33:32', '2025-09-18 13:22:09'),
 (4, 'Personal Leave', 5, 'Personal matters', 1, '2025-09-13 15:33:32', '2025-09-13 15:33:32'),
-(5, 'Maternity/Paternity Leave', 8, 'Parental leave', 1, '2025-09-13 15:33:32', '2025-09-13 15:33:32');
+(5, 'Maternity/Paternity Leave', 5, 'Parental leave', 1, '2025-09-13 15:33:32', '2025-09-13 16:20:12');
 
 -- --------------------------------------------------------
 
@@ -413,16 +495,16 @@ CREATE TABLE `managers` (
 --
 
 INSERT INTO `managers` (`id`, `m_employee_id`, `m_photo_path`, `m_first_name`, `m_middle_name`, `m_last_name`, `m_full_name`, `m_email`, `m_branch`, `m_position`, `m_rfid_number`, `m_dob`, `m_place_of_birth`, `m_sex`, `m_civil_status`, `m_contact_number`, `m_citizenship`, `m_blood_type`, `m_address`, `m_base_salary`, `m_sss_number`, `m_pagibig_number`, `m_philhealth_number`, `m_password`, `m_created_at`, `m_updated_at`, `deleted_at`) VALUES
-(2, '', '', 'roy', 'b', 'nabesis', 'Roy B. Nabesis', 'roydonnabesis@gmail.com', 'Branch-Tagum-2', 'Manager', '41234234', '2025-08-13', 'Asdas', 'Male', 'Single', '09525434343', 'Filipino', 'O+', 'fsdfsdfdsf', 123.00, '542342344234', '423423423423', '312312311111', '$2y$10$fxZ.6r183iuUZHjDEWVPuObVM7HX5uew8X1d8g0DgykCXJkJG0Bba', '2025-05-28 14:02:00', '2025-08-17 16:06:09', NULL),
-(3, '', 'upload/emp_6897f8f2992d65.15014270.jpg', 'Ronn Charles', 'C.', 'Domingo', 'Ronn Charles O. Domingo', 'ronncharlesd8@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '234234', '2002-10-02', 'dasd', 'Male', 'Single', '09454564564', 'dfgfgdfg', 'A+', 'fsdfsd', 123.00, '435634674567', '568574634534', '347345674575', '$2y$10$lDAhZsilwoBMyeQea7nWX.9lKRstCAYEdlvCmW1D8/VqDzyB8uKIC', '2025-05-28 14:18:42', '2025-08-13 10:39:31', NULL),
-(4, '', NULL, 'ken jazver', 'v', 'galanido', 'Ken Jazver V. Galanido', 'terraken08@gmail.com', 'Branch-Tagum-2', 'Manager', '4234234', '2003-12-07', 'dasd', 'Male', 'Single', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '$argon2id$v=19$m=65536,t=4,p=3$NHZSTDg2MS5Sa3AzL2k1cA$V+jmZJsTy3jsfjs5IkUdcud9GkWaGe6oJfYJBuS/I/E', '2025-05-28 14:19:05', '2025-08-27 07:46:33', NULL),
+(2, '', '', 'roy', 'b', 'nabesis', 'Roy B. Nabesis', 'roydonnabesis@gmail.com', 'Global Marketing Alliance - Panabo', 'Manager', '41234234', '2025-08-13', 'Asdas', 'Male', 'Single', '09525434343', 'Filipino', 'O+', 'fsdfsdfdsf', 123.00, '542342344234', '423423423423', '312312311111', '$2y$10$fxZ.6r183iuUZHjDEWVPuObVM7HX5uew8X1d8g0DgykCXJkJG0Bba', '2025-05-28 14:02:00', '2025-10-08 11:58:35', NULL),
+(3, '', 'upload/emp_6897f8f2992d65.15014270.jpg', 'Ronn Charles', 'C.', 'Domingo', 'Ronn Charles O. Domingo', 'ronncharlesd8@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '234234', '2002-10-02', 'dasd', 'Male', 'Single', '09454564564', 'dfgfgdfg', 'A+', 'fsdfsd', 123.00, '435634674567', '568574634534', '347345674575', '$2y$10$lDAhZsilwoBMyeQea7nWX.9lKRstCAYEdlvCmW1D8/VqDzyB8uKIC', '2025-05-28 14:18:42', '2025-10-18 16:03:23', NULL),
+(4, 'EMP-033873', '', 'ken jazver', 'v', 'galanido', 'Ken Jazver V. Galanido', 'terraken08@gmail.com', 'Expressway Liaison Services - Tagum', 'Manager', '4234234', '2003-12-07', 'dasd', 'Male', 'Single', '09843578345', 'Filipino', 'A+', 'Panabo City', 500.00, '347895634789', '907657826372', '123875638465', '$argon2id$v=19$m=65536,t=4,p=3$NHZSTDg2MS5Sa3AzL2k1cA$V+jmZJsTy3jsfjs5IkUdcud9GkWaGe6oJfYJBuS/I/E', '2025-05-28 14:19:05', '2025-10-18 16:04:06', NULL),
 (5, 'EMP-320673', 'upload/emp_68892140ebad31.44344137.jpg', 'dasdasdd', 'asdasd', 'dasdasd', '', 'fsdasoO@fmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '3123123', '2025-07-24', 'asdasd', 'Male', 'Divorced', '09525534534', 'dasdsa', 'O+', 'dasdasd', 123123.00, '412412412412', '124121312111', '412412312111', '', '2025-07-23 14:49:55', '2025-07-29 19:41:36', NULL),
 (22, 'EMP-385357', 'upload/emp_688926a74856f8.60484205.jpg', 'popouui', 'dadasd', 'dasd', '', 'gdgdfgj@gmail.com', 'Branch-Tagum-2', 'Manager', '5345435', '2025-07-18', 'dasd', 'Female', 'Divorced', '09545353536', 'dfasdasd', 'A-', 'asdsad', 123.00, '235465756876', '987098098907', '567663535353', '$argon2id$v=19$m=65536,t=4,p=3$T2E1ZG5hTUhXMG5xMnR0YQ$GfFvgFBNmvnYymemV+fAkY8LbfnX/tdaBil9dbDk9rw', '2025-07-29 19:43:15', '2025-08-25 16:46:23', NULL),
-(23, 'EMP-755007', '', 'habx', 'sdfds', 'ggdfg', '', 'fkkg@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '24324', '2025-07-30', 'dsfbfd', 'Male', 'Widowed', '09754634522', 'dasdasd', 'B+', 'dasds', 123.00, '123123423423', '523255435345', '523542345252', '$2y$10$JiTy5yTw61ihvvk6PhJezuPf1DvRFCoORzu74XOSBEnbcVaKq18AS', '2025-07-29 19:51:20', '2025-07-29 19:52:57', NULL),
+(23, 'EMP-755007', '', 'habx', 'sdfds', 'ggdfg', '', 'fkkg@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '24324', '2025-07-30', 'dsfbfd', 'Male', 'Widowed', '09754634522', 'dasdasd', 'B+', 'dasds', 123.00, '123123423423', '523255435345', '523542345252', '$2y$10$JiTy5yTw61ihvvk6PhJezuPf1DvRFCoORzu74XOSBEnbcVaKq18AS', '2025-07-29 19:51:20', '2025-10-08 11:54:36', NULL),
 (24, 'EMP-590788', 'upload/emp_6897fec210d419.30605324.png', 'fafhjgf', 'dsad', 'fasas', 'fafhjgf dsad fasas', 'dassgf@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '558453566', '2025-08-13', 'fasfa', 'Male', 'Single', '09574564645', 'dasdasd', 'B+', 'dasdasd', 123.00, '142315346456', '547252345252', '626546735735', '$argon2id$v=19$m=65536,t=4,p=3$RHUuZ0NwZ0JsTkRCakFwTQ$gLxRk2sm/6deMKhSDf9miLs5uMLwpPdpUXqpThS3Op0', '2025-07-30 09:51:21', '2025-08-27 06:59:27', NULL),
-(27, 'EMP-007678', '', 'sfsdf', 'fsdfsd', 'sdfsdfsdf', 'sfsdf fsdfsd sdfsdfsdf', 'royskienabesis@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '42423434', '2025-08-13', 'fsfsdfafa', 'Male', 'Married', '09623454354', 'Afghan', 'A-', 'asdsad', 123.00, '452365475696', '352134564654', '254424736858', '$2y$10$/.N0JJ3djBNBjszQ47LksO0aqQrxQDABblihMTB1/3SoOB5m2/pVu', '2025-08-13 13:25:04', '2025-08-13 13:25:04', NULL),
-(30, 'EMP-864509', '', 'test2', 'test2', 'test2', 'test2 test2 test2', 'drewu382@gmail.com', 'Global Marketing Alliance - Panabo', 'Manager', '5234263', '2025-08-13', 'Davao city', 'Male', 'Separated', '09625353453', 'Filipino', 'B+', 'Purok 7 - San miguel, San isidro, Bunawan, Davao city', 213.00, '654754433333', '123436231222', '235236511111', '$argon2id$v=19$m=65536,t=4,p=3$RmR3M3M2SVNGVkI4NEwycA$Zc4di4nig4iLWipl1ixlz+HxStG5rHAsMH4QEneiqDY', '2025-08-17 13:26:32', '2025-09-05 05:30:07', NULL),
-(31, 'EMP-185013', '', 'dghdfgdf', 'ggjfhfgh', 'kukgjgh', 'dghdfgdf ggjfhfgh kukgjgh', 'uncledrew090119@gmail.com', 'LMG Co., Ltd - Tagum', 'Manager', '54234234', '2025-09-10', 'dfgdfg', 'Male', 'Separated', '09086847232', 'Albanian', 'A-', 'sdfsdfs', 123.00, '972986342398', '472987492349', '908592379598', '$argon2id$v=19$m=65536,t=4,p=3$UUZ6LmxVejlVV3kvYXVqYg$j4zszje4Pb3Tqw/wsTjRLO8zbMWD0uoQPON2bmtd/IM', '2025-09-09 16:52:17', '2025-09-13 14:28:12', NULL);
+(27, 'EMP-007678', '', 'sfsdf', 'fsdfsd', 'sdfsdfsdf', 'sfsdf fsdfsd sdfsdfsdf', 'royskienabesis@gmail.com', 'Global Marketing Alliance - Panabo', 'Manager', '42423434', '2025-08-13', 'fsfsdfafa', 'Male', 'Married', '09623454354', 'Afghan', 'A-', 'asdsad', 123.00, '452365475696', '352134564654', '254424736858', '$2y$10$/.N0JJ3djBNBjszQ47LksO0aqQrxQDABblihMTB1/3SoOB5m2/pVu', '2025-08-13 13:25:04', '2025-10-08 11:54:18', NULL),
+(30, 'EMP-864509', '', 'test2', 'test2', 'test2', 'test2 test2 test2', 'drewu382@gmail.com', 'Global Marketing Alliance - Panabo', 'Manager', '5234263', '2025-08-13', 'Davao city', 'Male', 'Separated', '09625353453', 'Filipino', 'B+', 'Purok 7 - San miguel, San isidro, Bunawan, Davao city', 213.00, '654754433333', '123436231222', '235236511111', '1234', '2025-08-17 13:26:32', '2025-10-03 06:38:50', NULL),
+(31, 'EMP-185013', 'upload/emp_68e65eb2614660.32464238.png', 'test', 'ggjfhfgh', 'kukgjgh', 'dghdfgdf ggjfhfgh kukgjgh', 'uncledrew090119@gmail.com', 'Expressway Liaison Services - Tagum', 'Manager', '54234234', '2025-09-10', 'dfgdfg', 'Male', 'Separated', '09086847232', 'Albanian', 'A-', 'sdfsdfs', 123.00, '972986342398', '472987492111', '908592379598', '$argon2id$v=19$m=65536,t=4,p=3$UUZ6LmxVejlVV3kvYXVqYg$j4zszje4Pb3Tqw/wsTjRLO8zbMWD0uoQPON2bmtd/IM', '2025-09-09 16:52:17', '2025-10-19 04:23:46', NULL);
 
 -- --------------------------------------------------------
 
@@ -441,7 +523,50 @@ CREATE TABLE `manager_schedules` (
 --
 
 INSERT INTO `manager_schedules` (`id`, `manager_id`, `schedule_id`) VALUES
-(1, 30, 107);
+(1, 30, 107),
+(2, 4, 108);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hr_schedules`
+--
+
+CREATE TABLE `hr_schedules` (
+  `id` int(11) NOT NULL,
+  `hr_id` int(11) NOT NULL,
+  `schedule_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hr_schedules`
+--
+
+-- (no default rows)
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `owners`
+--
+
+CREATE TABLE `owners` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `photo_path` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `owners`
+--
+
+INSERT INTO `owners` (`id`, `name`, `email`, `password`, `phone`, `photo_path`, `created_at`, `updated_at`) VALUES
+(2, 'System Owner', 'owner@example.com', '$argon2id$v=19$m=65536,t=4,p=1$SVB3Ui5MaG5rWHN4L09Saw$zsYwpLI0ERpgTAIymXO41/3S4Mn+mm1k7QBISNmBTaM', '09171234567', 'upload/owner_profile.png', '2025-10-05 11:08:37', '2025-10-05 11:09:30');
 
 -- --------------------------------------------------------
 
@@ -492,7 +617,11 @@ INSERT INTO `password_resets` (`id`, `user_type`, `user_id`, `token`, `verificat
 (24, 'employee', 180, 'c0ac30d4304301fd1b856759e7cb30b32c425f62b4c4a8aea5389f247aef3c9f', '518944', '2025-09-13 10:48:00', NULL, NULL, '2025-09-13 16:18:00'),
 (25, 'employee', 180, '7797c1b8ba44612ae9544b44ec1f48c2d6a9dfb5f3a344bd37a422e06b641f74', '945958', '2025-09-13 10:49:13', NULL, NULL, '2025-09-13 16:19:13'),
 (26, 'employee', 180, 'd0470b15f85cdb39f55831c2631c2a43de8feb4bd16c02263f227d411be6783d', '443034', '2025-09-13 10:53:16', NULL, NULL, '2025-09-13 16:43:16'),
-(27, 'employee', 180, '6c8f3ac55a638e9b04cb185b0da505d29e62f453db8712252768c3921b74d4c2', '421800', '2025-09-13 10:54:47', '2025-09-13 16:45:52', '2025-09-13 16:45:24', '2025-09-13 16:44:47');
+(27, 'employee', 180, '6c8f3ac55a638e9b04cb185b0da505d29e62f453db8712252768c3921b74d4c2', '421800', '2025-09-13 10:54:47', '2025-09-13 16:45:52', '2025-09-13 16:45:24', '2025-09-13 16:44:47'),
+(28, 'manager', 30, '9e6e04b5d6b2d7cffad7e05ea95e441b7b8853b292db00d6c38ec1ceb1d58bd6', '848712', '2025-09-18 17:09:57', '2025-09-18 22:47:25', '2025-09-18 22:41:52', '2025-09-18 22:39:57'),
+(29, 'manager', 30, '99375eaf41bbe5a93358430b7a0a35ae3bd2d60186e283d905d7ef3d5279a9e8', '802458', '2025-09-18 17:17:59', '2025-09-18 22:48:44', '2025-09-18 22:48:21', '2025-09-18 22:47:59'),
+(30, 'employee', 180, 'a56bc4b0bbed213cf68fdb0a0eb083f936bc58351515832fb6efe161e241be52', '408349', '2025-10-03 05:46:58', '2025-10-03 11:19:16', '2025-10-03 11:17:44', '2025-10-03 11:16:58'),
+(31, 'manager', 30, 'c0c8cee5116e46f882945063f06439feef351964d91337a413695ba13acb6202', '503144', '2025-10-03 09:05:44', NULL, NULL, '2025-10-03 14:35:44');
 
 -- --------------------------------------------------------
 
@@ -566,8 +695,8 @@ CREATE TABLE `schedules` (
   `sched_afternoon_in` time NOT NULL,
   `sched_afternoon_out` time NOT NULL,
   `grace_period` int(11) NOT NULL,
-  `type` enum('employee','manager') DEFAULT 'employee',
-  `record_type` enum('employee','manager') DEFAULT 'employee'
+  `type` enum('employee','manager','hr') DEFAULT 'employee',
+  `record_type` enum('employee','manager','hr') DEFAULT 'employee'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -586,7 +715,8 @@ INSERT INTO `schedules` (`id`, `name`, `sched_morning_in`, `sched_morning_out`, 
 (103, 'Ronn Charles O. Domingo', '22:00:00', '22:05:00', '22:10:00', '22:15:00', 14, 'employee', 'employee'),
 (105, 'Adasd A. Aasd', '04:00:00', '11:00:00', '13:00:00', '17:00:00', 14, 'employee', 'employee'),
 (106, 'Lauriana S. Nabesis', '06:30:00', '11:00:00', '13:00:00', '17:00:00', 11, 'employee', 'employee'),
-(107, 'Test2 T. Test2', '06:00:00', '11:30:00', '13:00:00', '16:00:00', 10, 'manager', 'manager');
+(107, 'Test2 T. Test2', '06:00:00', '11:30:00', '13:00:00', '16:00:00', 10, 'manager', 'manager'),
+(108, 'Ken Jazver V. Galanido', '07:00:00', '11:00:00', '13:00:00', '21:00:00', 15, 'manager', 'manager');
 
 --
 -- Indexes for dumped tables
@@ -597,23 +727,32 @@ INSERT INTO `schedules` (`id`, `name`, `sched_morning_in`, `sched_morning_out`, 
 --
 ALTER TABLE `admins`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`hr_email`);
 
 --
 -- Indexes for table `attendance`
 --
 ALTER TABLE `attendance`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_attendance_per_day` (`employee_id`,`date`),
+  ADD UNIQUE KEY `unique_employee_attendance` (`employee_id`,`date`),
+  ADD UNIQUE KEY `unique_manager_attendance` (`manager_id`,`date`),
   ADD KEY `idx_attendance_date` (`date`),
   ADD KEY `idx_attendance_status` (`status`),
-  ADD KEY `idx_attendance_empid` (`employee_id`);
+  ADD KEY `idx_attendance_empid` (`employee_id`),
+  ADD KEY `idx_attendance_manager_id` (`manager_id`);
 
 --
 -- Indexes for table `benefit_rates`
 --
 ALTER TABLE `benefit_rates`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `branches`
+--
+ALTER TABLE `branches`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_branches_name` (`name`);
 
 --
 -- Indexes for table `employees`
@@ -637,6 +776,12 @@ ALTER TABLE `employee_schedules`
   ADD KEY `fk_employee_schedules_employee` (`employee_id`);
 
 --
+-- Indexes for table `hr`
+--
+ALTER TABLE `hr`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `leaves`
 --
 ALTER TABLE `leaves`
@@ -649,16 +794,8 @@ ALTER TABLE `leaves`
 --
 ALTER TABLE `leave_credits`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_leave` (`employee_id`,`leave_type`),
-  ADD KEY `fk_leave_type` (`leave_type_id`);
-
---
--- Indexes for table `leave_credits_new`
---
-ALTER TABLE `leave_credits_new`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_leave` (`employee_id`,`leave_type_id`),
-  ADD KEY `leave_type_id` (`leave_type_id`);
+  ADD KEY `fk_leave_type` (`leave_type_id`);
 
 --
 -- Indexes for table `leave_rejections`
@@ -690,6 +827,22 @@ ALTER TABLE `manager_schedules`
   ADD PRIMARY KEY (`id`),
   ADD KEY `manager_id` (`manager_id`),
   ADD KEY `schedule_id` (`schedule_id`);
+
+--
+-- Indexes for table `hr_schedules`
+--
+ALTER TABLE `hr_schedules`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `hr_id` (`hr_id`),
+  ADD KEY `schedule_id` (`schedule_id`);
+
+--
+-- Indexes for table `owners`
+--
+ALTER TABLE `owners`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `idx_owners_email` (`email`);
 
 --
 -- Indexes for table `password_resets`
@@ -737,13 +890,19 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
 
 --
 -- AUTO_INCREMENT for table `benefit_rates`
 --
 ALTER TABLE `benefit_rates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+
+--
+-- AUTO_INCREMENT for table `branches`
+--
+ALTER TABLE `branches`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `employees`
@@ -758,22 +917,22 @@ ALTER TABLE `employee_schedules`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
 
 --
+-- AUTO_INCREMENT for table `hr`
+--
+ALTER TABLE `hr`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
 -- AUTO_INCREMENT for table `leaves`
 --
 ALTER TABLE `leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
 
 --
 -- AUTO_INCREMENT for table `leave_credits`
 --
 ALTER TABLE `leave_credits`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
-
---
--- AUTO_INCREMENT for table `leave_credits_new`
---
-ALTER TABLE `leave_credits_new`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT for table `leave_rejections`
@@ -785,7 +944,7 @@ ALTER TABLE `leave_rejections`
 -- AUTO_INCREMENT for table `leave_types`
 --
 ALTER TABLE `leave_types`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `managers`
@@ -797,13 +956,25 @@ ALTER TABLE `managers`
 -- AUTO_INCREMENT for table `manager_schedules`
 --
 ALTER TABLE `manager_schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `hr_schedules`
+--
+ALTER TABLE `hr_schedules`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+--
+-- AUTO_INCREMENT for table `owners`
+--
+ALTER TABLE `owners`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `payroll`
@@ -821,7 +992,7 @@ ALTER TABLE `payslips`
 -- AUTO_INCREMENT for table `schedules`
 --
 ALTER TABLE `schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
 
 --
 -- Constraints for dumped tables
@@ -859,14 +1030,8 @@ ALTER TABLE `leaves`
 --
 ALTER TABLE `leave_credits`
   ADD CONSTRAINT `fk_leave_type` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `leave_credits_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `leave_credits_new`
---
-ALTER TABLE `leave_credits_new`
-  ADD CONSTRAINT `leave_credits_new_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `leave_credits_new_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `leave_credits_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `leave_credits_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `leave_rejections`
@@ -880,6 +1045,13 @@ ALTER TABLE `leave_rejections`
 ALTER TABLE `manager_schedules`
   ADD CONSTRAINT `fk_manager_schedules_manager` FOREIGN KEY (`manager_id`) REFERENCES `managers` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_manager_schedules_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hr_schedules`
+--
+ALTER TABLE `hr_schedules`
+  ADD CONSTRAINT `fk_hr_schedules_hr` FOREIGN KEY (`hr_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_hr_schedules_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `payroll`

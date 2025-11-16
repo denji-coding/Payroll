@@ -192,6 +192,10 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
             </svg>
         </button>
         <div id="payrollSectionDropdown" class="dropdown-container ml-0 mt-0">
+        <a href="index.php?payroll=payroll_manager"
+                class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'payroll_manager') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+                <i class="bi bi-credit-card"></i> Payroll Manager
+            </a>
             <a href="index.php?payroll=timerecords"
                 class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'timerecords') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                 <i class="bi bi-calendar2-week"></i> Time Records

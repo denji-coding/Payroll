@@ -804,17 +804,23 @@ require_once views_path("partials/nav");
             div.setAttribute('data-value', String(row.id || ''));
             div.setAttribute('data-label', label);
             div.textContent = label;
-            if (currentValue && currentValue === label) { div.classList.add('active'); }
+                                                // Check if this is the currently selected branch
+                                                if (currentValue && currentValue === label) { 
+                                                    div.classList.add('active', 'selected'); 
+                                                }
                                                 editListEl.appendChild(div);
                                             });
+                                            
         // Ensure selected label reflects current hidden value
         try {
-            var currId = editHiddenInput ? (editHiddenInput.value || '') : '';
-            if (currId && editSelectedSpan) {
+                                                var currLabel = editHiddenInput ? (editHiddenInput.value || '') : '';
+                                                if (currLabel && editSelectedSpan) {
                 var selectedOpt = Array.from(editListEl.querySelectorAll('.custom-dropdown-option')).find(function(el){
-                  return (el.getAttribute('data-label') || el.textContent) === currId;
+                                                        return (el.getAttribute('data-label') || el.textContent) === currLabel;
                 });
-                if (selectedOpt) { editSelectedSpan.textContent = selectedOpt.getAttribute('data-label') || selectedOpt.textContent || 'Select a branch'; }
+                                                    if (selectedOpt) { 
+                                                        editSelectedSpan.textContent = selectedOpt.getAttribute('data-label') || selectedOpt.textContent || 'Select a branch'; 
+                                                    }
             }
         } catch(_) {}
                                         }
@@ -826,13 +832,14 @@ require_once views_path("partials/nav");
                                                   .then(function(res){
                                                       if (res && res.status === 'success' && Array.isArray(res.data)) {
                       renderEditBranches(res.data);
-                      // After render, sync selection if we already have an ID
-                      try {
-                          var currId = editHiddenInput ? (editHiddenInput.value || '') : '';
-                          if (currId && editSelectedSpan) {
-                              var selectedOpt = editListEl.querySelector('[data-value="' + currId + '"]');
+                                                          // After render, sync selection if we already have a label
+                                                          try {
+                                                              var currLabel = editHiddenInput ? (editHiddenInput.value || '') : '';
+                                                              if (currLabel && editSelectedSpan) {
+                                                                  var selectedOpt = editListEl.querySelector('[data-label="' + currLabel + '"]');
                               if (selectedOpt) {
                                   editSelectedSpan.textContent = selectedOpt.getAttribute('data-label') || selectedOpt.textContent || 'Select a branch';
+                                                                      selectedOpt.classList.add('active', 'selected');
                               }
                           }
                       } catch(_) {}
@@ -857,10 +864,11 @@ require_once views_path("partials/nav");
                                                 fetchEditBranches();
                                             }
         try {
-            var curr = editHiddenInput ? (editHiddenInput.value || '') : '';
+                                                var currLabel = editHiddenInput ? (editHiddenInput.value || '') : '';
             editListEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){
-                var lab = el.getAttribute('data-label') || el.textContent || '';
-                el.classList.toggle('active', curr && curr === lab);
+                                                    var label = el.getAttribute('data-label') || el.textContent || '';
+                                                    el.classList.toggle('active', currLabel && currLabel === label);
+                                                    el.classList.toggle('selected', currLabel && currLabel === label);
             });
         } catch(_) {}
                                         }
@@ -882,8 +890,10 @@ require_once views_path("partials/nav");
             if (editHiddenInput) editHiddenInput.value = label; // store label (name - address)
             if (editSelectedSpan) editSelectedSpan.textContent = label || 'Select a branch';
                                                 try {
-                                                    editListEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){ el.classList.remove('active'); });
-                                                    opt.classList.add('active');
+                                                    editListEl.querySelectorAll('.custom-dropdown-option').forEach(function(el){ 
+                                                        el.classList.remove('active', 'selected'); 
+                                                    });
+                                                    opt.classList.add('active', 'selected');
                                                 } catch(_) {}
                                                 closeEditBranchDropdown();
                                             });
@@ -1430,34 +1440,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Branch select - update dropdown display
     const branchSpan = document.getElementById("editBranchDropdownSelected");
     const hiddenBranchInput = document.getElementById("m_edit_branchManager");
-    let branchId = manager.branch_id || manager.m_branch_id || '';
-    if (hiddenBranchInput) hiddenBranchInput.value = branchId;
-    if (branchSpan) {
+    let branchLabel = '';
+    
       if (manager.branch_name) {
-        branchSpan.textContent = manager.branch_name + (manager.branch_address ? (' - ' + manager.branch_address) : '');
-      } else {
-        // Try to resolve from current dropdown options
-      const branchList = document.getElementById("editBranchDropdownList");
-      if (branchList) {
-          if (branchId) {
-            const optionById = branchList.querySelector(`[data-value="${branchId}"]`);
-            if (optionById) branchSpan.textContent = optionById.getAttribute('data-label') || optionById.textContent;
+      branchLabel = manager.branch_name + (manager.branch_address ? (' - ' + manager.branch_address) : '');
           } else if (manager.m_branch) {
-            // Fallback: match by label text if only label is available
-            const desiredLabel = manager.m_branch;
-            const match = Array.from(branchList.querySelectorAll('.custom-dropdown-option')).find(function(el){
-              return (el.getAttribute('data-label') || el.textContent) === desiredLabel;
-            });
-            if (match) {
-              const id = match.getAttribute('data-value') || '';
-              branchSpan.textContent = match.getAttribute('data-label') || match.textContent;
-              if (hiddenBranchInput) hiddenBranchInput.value = id;
-              branchId = id;
+      branchLabel = manager.m_branch;
+    }
+    
+    if (hiddenBranchInput) hiddenBranchInput.value = branchLabel;
+    if (branchSpan) {
+      if (branchLabel) {
+        branchSpan.textContent = branchLabel;
             } else {
               branchSpan.textContent = 'Select a branch';
-            }
-          }
-        }
       }
     }
 
@@ -1606,28 +1602,13 @@ document.addEventListener("DOMContentLoaded", () => {
               document.getElementById("managerPhone").textContent = manager.m_contact_number || 'N/A';
               document.getElementById("managerPlaceOfBirth").textContent = capitalize(manager.m_place_of_birth) || 'N/A';
               // Resolve branch label
-              (function(){
-                function getBranchLabelById(id){
-                  if (!id) return '';
-                  try {
-                    var lists = [document.getElementById('branchDropdownList'), document.getElementById('editBranchDropdownList')];
-                    for (var i=0;i<lists.length;i++){
-                      var list = lists[i];
-                      if (!list) continue;
-                      var opt = list.querySelector('[data-value="'+ String(id) +'"]');
-                      if (opt) return opt.getAttribute('data-label') || opt.textContent || '';
-                    }
-                  } catch(_) {}
-                  return '';
-                }
                 var branchLabel = '';
                 if (manager.branch_name) {
                   branchLabel = manager.branch_name + (manager.branch_address ? (' - ' + manager.branch_address) : '');
-                } else if (manager.branch_id) {
-                  branchLabel = getBranchLabelById(manager.branch_id);
+              } else if (manager.m_branch) {
+                branchLabel = manager.m_branch;
                 }
-                document.getElementById('managerBranch').textContent = branchLabel || manager.m_branch || 'N/A';
-              })();
+              document.getElementById('managerBranch').textContent = branchLabel || 'N/A';
               document.getElementById("managerSalary").textContent = parseFloat(manager.m_base_salary || 0).toFixed(2);
               document.getElementById("managerSSS").textContent = formatSSS(manager.m_sss_number);
               document.getElementById("managerPagibig").textContent = formatPagibig(manager.m_pagibig_number);
@@ -2274,28 +2255,13 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("managerPhone").textContent = data.m_contact_number || 'N/A';
           document.getElementById("managerPlaceOfBirth").textContent = capitalize(data.m_place_of_birth) || 'N/A';
           // Resolve branch label for cached row data too
-          (function(){
-            function getBranchLabelById(id){
-              if (!id) return '';
-              try {
-                var lists = [document.getElementById('branchDropdownList'), document.getElementById('editBranchDropdownList')];
-                for (var i=0;i<lists.length;i++){
-                  var list = lists[i];
-                  if (!list) continue;
-                  var opt = list.querySelector('[data-value="'+ String(id) +'"]');
-                  if (opt) return opt.getAttribute('data-label') || opt.textContent || '';
-                }
-              } catch(_) {}
-              return '';
-            }
             var branchLabel = '';
             if (data.branch_name) {
               branchLabel = data.branch_name + (data.branch_address ? (' - ' + data.branch_address) : '');
-            } else if (data.branch_id) {
-              branchLabel = getBranchLabelById(data.branch_id);
+          } else if (data.m_branch) {
+            branchLabel = data.m_branch;
             }
-            document.getElementById('managerBranch').textContent = branchLabel || data.m_branch || 'N/A';
-          })();
+          document.getElementById('managerBranch').textContent = branchLabel || 'N/A';
           document.getElementById("managerSalary").textContent = parseFloat(data.m_base_salary || 0).toFixed(2);
           document.getElementById("managerSSS").textContent = formatSSS(data.m_sss_number);
           document.getElementById("managerPagibig").textContent = formatPagibig(data.m_pagibig_number);

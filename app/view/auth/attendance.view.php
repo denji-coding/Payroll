@@ -281,29 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const selectedDate = dateInput.value;
       if (selectedDate) {
         toggleClearBtn(selectedDate);
-        refreshAttendanceTableFilter(selectedDate);
+        refreshAttendanceTable(selectedDate);
       }
     });
-  }
-
-  function refreshAttendanceTableFilter(date = todayStr) {
-    fetch(`../app/api/attendance-api.php?date=${date}`)
-      .then(res => res.json())
-      .then(res => {
-        const tbody = document.getElementById('attendance-table-body');
-        if (res.status === 'success' && res.html) {
-          tbody.innerHTML = res.html;
-        } else {
-          tbody.innerHTML = `
-                            <tr>
-                                <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
-                                <i class="bi bi-calendar-x fs-5 me-2"></i>No attendance records found.
-                                </td>
-                            </tr>
-                            `;
-        }
-      })
-      .catch(err => console.error("Table fetch error:", err));
   }
 });
 
@@ -338,7 +318,33 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <tr class="fade-in-slide ">
                                             <td class="py-3 px-4 text-center"><?= $index + 1?></td>
                                             <td class="py-3 px-4">
-                                                <img src="<?= htmlspecialchars($record['photo_path'] ?: 'assets/image/default_user_image.svg') ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" />
+                                                <?php 
+                                                $photoPath = $record['photo_path'] ?? null;
+                                                $gender = strtolower($record['gender'] ?? '');
+                                                
+                                                // Determine default image based on gender
+                                                if (empty($photoPath)) {
+                                                    if ($gender === 'male' || $gender === 'm') {
+                                                        $defaultImage = 'assets/image/default_men.png';
+                                                    } elseif ($gender === 'female' || $gender === 'f') {
+                                                        $defaultImage = 'assets/image/default_women.png';
+                                                    } else {
+                                                        $defaultImage = 'assets/image/default_user_image.svg';
+                                                    }
+                                                    $imageSrc = $defaultImage;
+                                                } else {
+                                                    $imageSrc = $photoPath;
+                                                    // Set fallback default based on gender
+                                                    if ($gender === 'male' || $gender === 'm') {
+                                                        $defaultImage = 'assets/image/default_men.png';
+                                                    } elseif ($gender === 'female' || $gender === 'f') {
+                                                        $defaultImage = 'assets/image/default_women.png';
+                                                    } else {
+                                                        $defaultImage = 'assets/image/default_user_image.svg';
+                                                    }
+                                                }
+                                                ?>
+                                                <img src="<?= htmlspecialchars($imageSrc) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>';" />
                                             </td>
                                             <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td>
                                             <td class="py-3 text-sm px-4"><?= htmlspecialchars(ucwords(strtolower($record['full_name']))) ?></td>
@@ -404,9 +410,21 @@ function formatName(str) {
 }
 
 // === Refresh attendance table
-function refreshAttendanceTable() {
-  const today = new Date().toISOString().split('T')[0];
-  fetch(`../app/api/attendance-api.php?date=${today}`)
+function refreshAttendanceTable(date = null) {
+  // Get the selected date from the date picker, or use today if not provided
+  let selectedDate;
+  if (date) {
+    selectedDate = date;
+  } else {
+    const dateInput = document.getElementById("date");
+    if (dateInput && dateInput.value) {
+      selectedDate = dateInput.value;
+    } else {
+      selectedDate = new Date().toISOString().split('T')[0];
+    }
+  }
+  
+  fetch(`../app/api/attendance-api.php?date=${selectedDate}`)
     .then(res => res.json())
     .then(res => {
   console.log("Fetch Log Response:", res);
@@ -414,13 +432,26 @@ function refreshAttendanceTable() {
   if (res.status === 'success' && res.html) {
     tbody.innerHTML = res.html;
   } else {
-    console.warn('No HTML returned:', res.message);
-    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-sm">No data found.</td></tr>';
+        console.warn('No HTML returned:', res.message || 'Unknown error');
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+              <i class="bi bi-calendar-x fs-5 me-2"></i>No attendance records found.
+            </td>
+          </tr>
+        `;
   }
 })
-
     .catch(err => {
       console.error('Table refresh error:', err);
+      const tbody = document.getElementById('attendance-table-body');
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="text-center py-4 text-sm text-red-500">Error loading attendance records. Please try again.</td>
+          </tr>
+        `;
+      }
     });
 }
 
@@ -461,8 +492,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Start the midnight refresh scheduler
   scheduleMidnightRefresh();
 
-  const showSimpleAlert = (type, title, text) => {
-    Swal.fire({ icon: type, title, text, timer: 2500, showConfirmButton: false });
+  const showSimpleAlert = (type, title, text, timer = 2500) => {
+    Swal.fire({ icon: type, title, text, timer: timer, showConfirmButton: false });
   };
 
   const showCustomToast = (message, bgColor) => {
@@ -543,6 +574,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
           const imageUrl = data.image_url || 'assets/image/default_user_image.svg';
 
+          // Refresh table immediately with today's date (new attendance is always for today)
+          const today = new Date().toISOString().split('T')[0];
+          refreshAttendanceTable(today);
+          
+          // Update date picker to today if it's showing a different date
+          const dateInput = document.getElementById("date");
+          if (dateInput && window.fp) {
+            window.fp.setDate(today, false); // false = don't trigger change event
+          }
+
           Swal.fire({
   html: `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -560,13 +601,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popup) popup.style.border = '5px solid ' + borderColor;
     showCustomToast(`You have ${type.replace('-', ' ')} at ${currentTime}.`, bgColor);
   }
-}).then(() => {
-  // Refresh table only after the Swal popup finishes
-  refreshAttendanceTable();
 });
 
         } else {
-          showSimpleAlert(data.status || 'error', 'Error', data.message || 'Something went wrong.');
+          const alertTitle = data.status === 'warning' ? 'Restricted' : (data.status === 'info' ? 'Info' : 'Error');
+          const timer = data.status === 'warning' ? 3000 : 2500; // 3 seconds for restricted warnings
+          showSimpleAlert(data.status || 'error', alertTitle, data.message || 'Something went wrong.', timer);
         }
 
         if (rfidInput) rfidInput.value = '';

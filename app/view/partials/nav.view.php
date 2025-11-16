@@ -1,4 +1,5 @@
 <?php
+
 $username = $_SESSION['USERNAME'] ?? 'Unknown User';
 $email = $_SESSION['SESSION_EMAIL'] ?? 'no-email@example.com';
 $photoPath = $_SESSION['photo_path'] ?? '';
@@ -71,8 +72,8 @@ if (!empty($photoPath)) {
                         <div class="w-4 h-4 bg-white border-t border-l border-gray-200 rotate-45"></div>
                     </div> -->
                     <div class="mb-2">
-                        <h4 class="font-semibold text-[#403E43]"><?= htmlspecialchars($username) ?></h4>
-                        <p class="text-sm text-gray-500"><?= htmlspecialchars($email) ?></p>
+                        <h4 class="font-semibold text-[#403E43] capitalize"><?= htmlspecialchars($username) ?></h4>
+                        <p title="<?= htmlspecialchars($email) ?>" class="truncate text-sm text-gray-500"><?= htmlspecialchars($email) ?></p>
                     </div>
                     <hr class="my-2">
                     <ul class="space-y-2 text-sm text-[#403E43]">

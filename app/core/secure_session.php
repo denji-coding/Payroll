@@ -159,9 +159,10 @@ function secureLogin($userData, $userType) {
     // Set user-specific session data
     $_SESSION['user_id'] = $userData['id'];
     $_SESSION['user_type'] = $userType;
-    $_SESSION['user_email'] = $userData['email'] ?? $userData['m_email'] ?? '';
-    $_SESSION['user_name'] = $userData['name'] ?? $userData['m_full_name'] ?? 
-                            ($userData['first_name'] . ' ' . $userData['last_name']);
+    $_SESSION['user_email'] = $userData['email'] ?? $userData['hr_email'] ?? $userData['m_email'] ?? '';
+    $_SESSION['user_name'] = $userData['name'] 
+        ?? $userData['m_full_name'] 
+        ?? trim(($userData['hr_first_name'] ?? $userData['first_name'] ?? '') . ' ' . ($userData['hr_last_name'] ?? $userData['last_name'] ?? ''));
     $_SESSION['login_time'] = time();
     $_SESSION['last_activity'] = time();
     $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -170,11 +171,14 @@ function secureLogin($userData, $userType) {
     // Set role-specific session variables
     switch ($userType) {
         case 'admin':
-            $_SESSION['SESSION_EMAIL'] = $userData['email'];
+            $_SESSION['SESSION_EMAIL'] = $userData['email'] ?? $userData['hr_email'] ?? '';
             $_SESSION['SESSION_USER_ID'] = $userData['id'];
-            $_SESSION['USERNAME'] = $userData['name'];
-            if (isset($userData['photo_path']) && $userData['photo_path'] !== '') {
+            $_SESSION['USERNAME'] = $userData['name'] 
+                ?? trim(($userData['hr_first_name'] ?? '') . ' ' . ($userData['hr_last_name'] ?? ''));
+            if (!empty($userData['photo_path'] ?? '')) {
                 $_SESSION['photo_path'] = $userData['photo_path'];
+            } elseif (!empty($userData['hr_photo_path'] ?? '')) {
+                $_SESSION['photo_path'] = $userData['hr_photo_path'];
             }
             break;
             

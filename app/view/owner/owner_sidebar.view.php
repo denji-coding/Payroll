@@ -206,7 +206,7 @@ main#mainContent {
             </a>  
 
             <a href="index.php?payroll=owner_hrmanagement" title="HR Management"
-            class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'owner_hr') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'owner_hrmanagement') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-people"></i> <span>HR Management</span>
             </a>
 
@@ -218,6 +218,11 @@ main#mainContent {
             <a href="index.php?payroll=owner_payroll" title="Payroll"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'owner_payroll') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-credit-card"></i> <span>HR Payroll</span>
+            </a>
+
+            <a href="index.php?payroll=owner_hrschedule" title="HR Schedule"
+            class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'owner_hrschedule') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-clock-history"></i> <span>HR Schedule</span>
             </a>
 
                   

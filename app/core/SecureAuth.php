@@ -90,7 +90,8 @@ class SecureAuth {
         }
         
         try {
-            $stmt = $this->db->query("SELECT * FROM admins WHERE email = ?", [$email]);
+            // Note: admins table uses hr_email and hr_password columns
+            $stmt = $this->db->query("SELECT * FROM admins WHERE hr_email = ?", [$email]);
             $admin = $stmt ? $stmt[0] : null;
             
             if (!$admin) {
@@ -98,15 +99,15 @@ class SecureAuth {
                 return ['success' => false, 'message' => 'Invalid email or password.'];
             }
             
-            if (!$this->verifyPassword($password, $admin['password'])) {
+            if (!$this->verifyPassword($password, $admin['hr_password'])) {
                 $this->recordLoginAttempt($email, 'admin', false);
                 return ['success' => false, 'message' => 'Invalid email or password.'];
             }
             
             // Check if password needs rehashing
-            if ($this->passwordNeedsRehash($admin['password'])) {
+            if ($this->passwordNeedsRehash($admin['hr_password'])) {
                 $newHash = $this->hashPassword($password);
-                $this->db->query("UPDATE admins SET password = ? WHERE id = ?", [$newHash, $admin['id']]);
+                $this->db->query("UPDATE admins SET hr_password = ? WHERE id = ?", [$newHash, $admin['id']]);
             }
             
             $this->recordLoginAttempt($email, 'admin', true);
