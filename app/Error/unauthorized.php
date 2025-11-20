@@ -1,3 +1,11 @@
+<?php
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+// Include session helper for isAdminLoggedIn function
+require_once __DIR__ . '/../core/session_helper.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,7 +59,71 @@
   <script>
     // No automatic redirect - let user choose manually
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Unauthorized page loaded - user must choose login type manually');
+      console.log('🔴 403 Access Denied - Debug Information');
+      console.log('==========================================');
+      
+      // Session Information
+      console.log('📋 Session Information:');
+      console.log('  Session ID:', '<?php echo session_id(); ?>');
+      console.log('  SESSION_EMAIL:', '<?php echo $_SESSION['SESSION_EMAIL'] ?? 'NOT SET'; ?>');
+      console.log('  SESSION_USER_ID:', '<?php echo $_SESSION['SESSION_USER_ID'] ?? 'NOT SET'; ?>');
+      console.log('  USERNAME:', '<?php echo $_SESSION['USERNAME'] ?? 'NOT SET'; ?>');
+      console.log('  user_type:', '<?php echo $_SESSION['user_type'] ?? 'NOT SET'; ?>');
+      console.log('  user_id:', '<?php echo $_SESSION['user_id'] ?? 'NOT SET'; ?>');
+      console.log('  manager_id:', '<?php echo $_SESSION['manager_id'] ?? 'NOT SET'; ?>');
+      console.log('  employee_id:', '<?php echo $_SESSION['employee_id'] ?? 'NOT SET'; ?>');
+      console.log('  owner_id:', '<?php echo $_SESSION['owner_id'] ?? 'NOT SET'; ?>');
+      
+      // Authentication Status
+      console.log('🔐 Authentication Status:');
+      console.log('  isAdminLoggedIn():', '<?php echo (function_exists("isAdminLoggedIn") && isAdminLoggedIn()) ? "TRUE" : "FALSE"; ?>');
+      console.log('  isManagerLoggedIn():', '<?php echo (function_exists("isManagerLoggedIn") && isManagerLoggedIn()) ? "TRUE" : "FALSE"; ?>');
+      console.log('  isEmployeeLoggedIn():', '<?php echo (function_exists("isEmployeeLoggedIn") && isEmployeeLoggedIn()) ? "TRUE" : "FALSE"; ?>');
+      console.log('  isOwnerLoggedIn():', '<?php echo (function_exists("isOwnerLoggedIn") && isOwnerLoggedIn()) ? "TRUE" : "FALSE"; ?>');
+      
+      // Cookies
+      console.log('🍪 Cookie Information:');
+      console.log('  Session Cookie Name:', '<?php echo session_name(); ?>');
+      const sessionCookie = document.cookie.split(';').find(c => c.trim().startsWith('<?php echo session_name(); ?>='));
+      console.log('  Session Cookie Value:', sessionCookie || 'NOT FOUND');
+      if (sessionCookie) {
+        const cookieValue = sessionCookie.split('=')[1];
+        console.log('  Extracted Cookie Value:', cookieValue);
+        console.log('  Cookie matches Session ID:', cookieValue === '<?php echo session_id(); ?>' ? 'YES ✅' : 'NO ❌');
+      }
+      console.log('  All Cookies:', document.cookie);
+      console.log('  Cookie Count:', document.cookie ? document.cookie.split(';').length : 0);
+      
+      // Session Data
+      console.log('📦 All Session Keys:', <?php echo json_encode(array_keys($_SESSION ?? [])); ?>);
+      console.log('📦 Full Session Data:', <?php echo json_encode($_SESSION ?? []); ?>);
+      
+      // Analysis
+      console.log('📊 Analysis:');
+      const sessionEmail = '<?php echo $_SESSION['SESSION_EMAIL'] ?? ''; ?>';
+      const sessionUserId = '<?php echo $_SESSION['SESSION_USER_ID'] ?? ''; ?>';
+      const isAdmin = '<?php echo (function_exists("isAdminLoggedIn") && isAdminLoggedIn()) ? "TRUE" : "FALSE"; ?>';
+      
+      if (sessionEmail && sessionEmail !== 'NOT SET' && sessionUserId && sessionUserId !== 'NOT SET') {
+        console.log('  ✅ Session data is present (SESSION_EMAIL and SESSION_USER_ID are set)');
+        if (isAdmin === 'FALSE') {
+          console.log('  ❌ BUT isAdminLoggedIn() returns FALSE - This is the problem!');
+          console.log('  💡 Possible causes:');
+          console.log('     - Session cookie not being sent with request');
+          console.log('     - Session data not being loaded from cookie');
+          console.log('     - Session path/domain mismatch');
+        } else {
+          console.log('  ✅ isAdminLoggedIn() returns TRUE - Session should be valid');
+        }
+      } else {
+        console.log('  ❌ Session data is missing (SESSION_EMAIL or SESSION_USER_ID not set)');
+        console.log('  💡 Possible causes:');
+        console.log('     - Session was cleared during redirect');
+        console.log('     - Session cookie not being sent');
+        console.log('     - Session expired or invalid');
+      }
+      
+      console.log('==========================================');
     });
 
     function goToAdminLogin() {

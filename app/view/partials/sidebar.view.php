@@ -171,6 +171,10 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'leave_history') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-calendar-check"></i> Leave History
         </a>
+        <a href="index.php?payroll=hr_manager_leave_approval"
+            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'hr_manager_leave_approval') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+            <i class="bi bi-person-check"></i> Manager Leave Approvals
+        </a>
         <a href="index.php?payroll=managers_account"
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'managers_account') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-person-badge"></i> Managers
@@ -337,7 +341,7 @@ function toggleSectionDropdown(sectionId, arrowId, buttonId) {
 
 document.addEventListener("DOMContentLoaded", () => {
     // Define which pages belong to which dropdown
-    const employeeDropdownPages = ['employees', 'approvals_request', 'delete_history', 'schedules', 'leave_history', 'managers_account', 'leave_credits'];
+    const employeeDropdownPages = ['employees', 'approvals_request', 'delete_history', 'schedules', 'leave_history', 'hr_manager_leave_approval', 'managers_account', 'leave_credits'];
     const payrollDropdownPages = ['timerecords', 'benefit_rates', 'payslips', 'reports'];
     // Get current page
     const currentPage = (typeof window !== 'undefined' && (new URLSearchParams(window.location.search)).get('payroll')) || (typeof window !== 'undefined' && window.location.pathname.split('/').pop());

@@ -50,39 +50,42 @@ require_once views_path("partials/nav");
 
 .leave-credits-card {
     background: #ffffff;
-    border: 2px solid #bbf7d0; /* green-200 */
+    border: 1px solid #d1fae5; /* emerald-200 */
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
     margin-left: 11px;
     margin-right: 11px;
+    transition: box-shadow 0.3s ease;
+}
+
+.leave-credits-card:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .credits-table {
     background: white;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .credits-table th {
-    background: #ffffff;
-    color: #478547;
+    background: #059669; /* emerald-600 - solid color */
+    color: #ffffff;
     font-weight: 700;
     text-transform: none;
-    font-size: 0.9rem;
-    letter-spacing: 0;
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+    padding: 0.75rem 1rem;
+    border: none;
 }
 
 /* Ensure sticky headers stay fixed within scroll containers */
-/* .credits-table {
-    border-collapse: separate;
-    border-spacing: 0;
-} */
 .credits-table thead th {
     position: sticky;
     top: 0;
     z-index: 12;
-    background: #ffffff;
+    background: #059669; /* emerald-600 - solid color */
 }
 
 /* Custom checkbox styling for Apply to all existing employees */
@@ -158,85 +161,115 @@ input#applyToAll.form-check-input:checked::after {
 
 .credits-table td {
     vertical-align: middle;
-    border-bottom: 1px solid #f1f3f4;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.875rem 1rem;
+}
+
+.credits-table tbody tr {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
 }
 
 .credits-table tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
+    background-color: #f0fdf4; /* emerald-50 */
+    transform: translateX(2px);
+    border-left-color: #10b981; /* emerald-500 */
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+}
+
+.credits-table tbody tr:nth-child(even) {
+    background-color: #ecfdf5; /* emerald-50/light */
+}
+
+.credits-table tbody tr:nth-child(even):hover {
+    background-color: #d1fae5; /* emerald-100 */
 }
 
 .badge-credits {
     font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
+    padding: 0.5rem 0.875rem;
     border-radius: 50px;
     font-weight: 600;
 }
 
 .badge-allowed {
-    background: linear-gradient(135deg, #28a745, #20c997);
+    background: #059669; /* emerald-600 - solid */
     color: white;
 }
 
 .badge-taken {
-    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    background: #dc2626; /* red-600 - solid */
     color: white;
 }
 
 .badge-remaining {
-    background: linear-gradient(135deg, #17a2b8, #6f42c1);
+    background: #2563eb; /* blue-600 - solid */
     color: white;
 }
 
 .btn-action {
-    padding: 0.375rem 0.75rem;
+    padding: 0.5rem 0.875rem;
     font-size: 0.875rem;
     border-radius: 6px;
     font-weight: 500;
     transition: all 0.2s ease;
+    border: none;
 }
 
 .btn-edit {
-    background: linear-gradient(135deg, #ffc107, #ffb300);
-    color: #212529;
-    border: none;
+    background: #d97706; /* amber-600 - solid */
+    color: white;
 }
 
 .btn-edit:hover {
-    background: linear-gradient(135deg, #ffb300, #ff8f00);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    background: #b45309; /* amber-700 */
+    color: white;
 }
 
 .btn-delete {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+    background: #dc2626; /* red-600 - solid */
     color: white;
-    border: none;
 }
 
 .btn-delete:hover {
-    background: linear-gradient(135deg, #c82333, #bd2130);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    background: #b91c1c; /* red-700 */
+    color: white;
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #206037 0%, #1a5a2e 100%);
+    background: #059669; /* emerald-600 - solid */
     color: white;
     border-bottom: none;
     border-radius: 8px 8px 0 0;
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-header .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
 }
 
 .modal-content {
     border: none;
     border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 .form-control:focus {
-    border-color: #206037;
-    box-shadow: 0 0 0 0.2rem rgba(32, 96, 55, 0.25);
+    border-color: #059669; /* emerald-600 */
+    box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.25);
+}
+
+.form-control {
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:hover {
+    border-color: #9ca3af; /* gray-400 */
 }
 
 .form-label {
@@ -246,11 +279,17 @@ input#applyToAll.form-check-input:checked::after {
 }
 
 .stats-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #059669; /* emerald-600 - solid */
     color: white;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 .stats-card h3 {
@@ -339,12 +378,13 @@ body {
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
             <div>
-                <span class="text-2xl ml-2 font-bold tracking-tight text-[#133913]">Leave Credits Management</span>
-                <p class="text-[#478547] ml-2">Manage employee leave credits and allocations.</p>
+                <span class="text-2xl ml-2 font-bold tracking-tight" style="color: #047857;">Leave Credits Management</span>
+                <p class="ml-2" style="color: #059669;">Manage employee leave credits and allocations.</p>
             </div>
-                <button type="button" class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " data-bs-toggle="modal" data-bs-target="#addLeaveTypeModal">
+                <button type="button" class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 font-semibold" 
+                        data-bs-toggle="modal" data-bs-target="#addLeaveTypeModal">
                     <i class="bi bi-plus-circle me-2"></i>
-                    <span class="font-semibold">Add Leave Type</span>
+                    <span>Add Leave Type</span>
                 </button>
                 <!-- <button id="showAddEmployeeModal" 
                             class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " 
@@ -402,9 +442,6 @@ body {
                             <i class="bi bi-gear me-1"></i>
                             Bulk Update Leave Types
                         </button>
-                        <!-- <button class="btn btn-outline-success btn-sm" onclick="refreshTable()">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button> -->
                     </div>
                 </div>
 
@@ -423,30 +460,29 @@ body {
                     <div class="table-responsive overflow-y-auto max-h-[357px] transition-all duration-300 ease-in-out" id="leaveTypesTable">
                         <table class="min-w-full table-auto md:table-fixed credits-table mb-0">
                             <thead class="sticky top-0 z-10">
-                                <tr class="border-b hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                                    <th class="h-12 px-2 md:px-4 text-left text-sm font-bold text-[#478547] bg-white">Leave Type</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Employees</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Total Allowed</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Total Taken</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Total Remaining</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Average per Employee</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Range (Min-Max)</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Actions</th>
+                                <tr>
+                                    <th class="h-12 px-2 md:px-4 text-left text-sm font-bold text-white">Leave Type</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Employees</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Total Allowed</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Total Taken</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Total Remaining</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Average per Employee</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Range (Min-Max)</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100 text-sm">
                                 <?php foreach ($leaveTypeStats as $stat): 
                                     $totalRemaining = $stat['total_allowed'] - $stat['total_taken'];
                                 ?>
-                                    <tr class="fade-in-slide border-b-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                    <tr class="fade-in-slide border-b-0">
                                         <td class="px-4 py-3">
                                             <div class="d-flex align-items-center">
-                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
                                                     <i class="bi bi-calendar-check text-white"></i>
                                                 </div>
                                                 <div>
                                                     <div class="fw-semibold text-dark"><?= htmlspecialchars($stat['leave_type']) ?></div>
-                                                    <!-- <small class="text-muted">Leave Type</small> -->
                                                 </div>
                                             </div>
                                         </td>
@@ -470,15 +506,14 @@ body {
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group gap-2" role="group">
-
-                                                <button type="button" class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white"
+                                                <button type="button" class="btn btn-sm btn-success"
                                                         data-action="view-leave-type"
                                                         data-type='<?= htmlspecialchars($stat['leave_type'], ENT_QUOTES) ?>'
                                                         title="View Employee Details">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
 
-                                                <button type="button" class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-red-600 hover:text-white"
+                                                <button type="button" class="btn btn-sm btn-danger"
                                                         data-action="delete-leave-type"
                                                         data-id="<?= (int)$stat['id'] ?>"
                                                         data-type='<?= htmlspecialchars($stat['leave_type'], ENT_QUOTES) ?>'
@@ -497,20 +532,20 @@ body {
                     <div class="table-responsive overflow-y-auto max-h-[357px] transition-all duration-300 ease-in-out d-none" id="employeeDetailsTable">
                         <table class="min-w-full table-auto md:table-fixed credits-table mb-0">
                             <thead class="sticky top-0 z-10">
-                                <tr class="border-b hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-                                    <th class="h-12 px-2 md:px-4 text-left text-sm font-bold text-[#478547] bg-white">Employee</th>
-                                    <th class="h-12 px-2 md:px-4 text-left text-sm font-bold text-[#478547] bg-white">Leave Type</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Allowed</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Taken</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Remaining</th>
-                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-[#478547] bg-white">Actions</th>
+                                <tr>
+                                    <th class="h-12 px-2 md:px-4 text-left text-sm font-bold text-white">Employee</th>
+                                    <th class="h-12 px-2 md:px-4 text-left text-sm font-bold text-white">Leave Type</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Allowed</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Taken</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Remaining</th>
+                                    <th class="h-12 px-2 md:px-4 text-center text-sm font-bold text-white">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100 text-sm">
                                 <?php foreach ($leaveCredits as $credit): 
                                     $remaining = $credit['default_allowed'] - $credit['taken'];
                                 ?>
-                                    <tr class="fade-in-slide border-b-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]" data-default-allowed="<?= $credit['default_allowed'] ?>">
+                                    <tr class="fade-in-slide border-b-0" data-default-allowed="<?= $credit['default_allowed'] ?>">
                                         <td class="px-4 py-3">
                                             <div class="d-flex align-items-center">
                                                 <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
@@ -537,12 +572,12 @@ body {
                                         </td>
                                         <td class="text-center px-4 py-3">
                                             <div class="btn-group gap-2" role="group">
-                                                <button type="button" class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white" 
+                                                <button type="button" class="btn btn-sm btn-warning"
                                                         onclick='editCredits(<?= json_encode($credit, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>)'
                                                         title="Edit Leave Credits">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button type="button" class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-red-600 hover:text-white" 
+                                                <button type="button" class="btn btn-sm btn-danger"
                                                         onclick='deleteCredits(<?= (int)$credit['id'] ?>, <?= json_encode($credit['first_name'] . ' ' . $credit['last_name']) ?>)'
                                                         title="Delete Leave Credits">
                                                     <i class="bi bi-trash"></i>

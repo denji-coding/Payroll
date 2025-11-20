@@ -4,7 +4,8 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header('Content-Type: application/json');
 
-session_start();
+require_once __DIR__ . '/../core/secure_session.php';
+startSecureSession();
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/session_helper.php';
 
@@ -27,7 +28,7 @@ if ($method === 'OPTIONS') {
 $db = new Database();
 $pdo = $db->getConnection();
 
-// GET: Fetch pending HR leave applications
+// GET: Fetch HR leave applications (all statuses for display)
 if ($method === 'GET') {
     try {
         $sql = "
@@ -42,15 +43,21 @@ if ($method === 'GET') {
                 l.status,
                 l.created_at,
                 l.applicant_hr_id,
-                CONCAT(admin.hr_first_name, ' ', IFNULL(admin.hr_middle_name, ''), ' ', admin.hr_last_name) as hr_name,
+                l.approver_owner_id,
+                l.approver_type,
+                l.approver_name,
+                CONCAT(
+                    UPPER(LEFT(admin.hr_first_name, 1)), LOWER(SUBSTRING(admin.hr_first_name, 2)), ' ',
+                    IFNULL(CONCAT(UPPER(LEFT(admin.hr_middle_name, 1)), '. '), ''),
+                    UPPER(LEFT(admin.hr_last_name, 1)), LOWER(SUBSTRING(admin.hr_last_name, 2))
+                ) as hr_name,
                 admin.hr_email as hr_email,
                 admin.hr_position as hr_position,
                 admin.hr_employee_id as hr_employee_id
             FROM leaves l
-            JOIN admins admin ON l.applicant_hr_id = admin.id
+            LEFT JOIN admins admin ON l.applicant_hr_id = admin.id AND admin.deleted_at IS NULL
             WHERE l.applicant_type = 'hr' 
-            AND l.status = 'Pending'
-            AND admin.deleted_at IS NULL
+            AND l.applicant_hr_id IS NOT NULL
             ORDER BY l.created_at DESC
         ";
         
@@ -58,9 +65,13 @@ if ($method === 'GET') {
         $stmt->execute();
         $leaves = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        // Debug: Log query results
+        error_log("Owner HR Leave Approval API: Found " . count($leaves) . " HR leave applications");
+        
         echo json_encode([
             'status' => 'success',
-            'data' => $leaves
+            'data' => $leaves,
+            'count' => count($leaves)
         ]);
     } catch (Exception $e) {
         error_log("Owner HR Leave Approval API Error: " . $e->getMessage());
@@ -104,7 +115,7 @@ if ($method === 'POST') {
                 admin.hr_middle_name,
                 admin.hr_last_name
             FROM leaves l
-            JOIN admins admin ON l.applicant_hr_id = admin.id
+            LEFT JOIN admins admin ON l.applicant_hr_id = admin.id AND admin.deleted_at IS NULL
             WHERE l.id = ? AND l.applicant_type = 'hr' AND l.status = 'Pending'
         ");
         $leaveStmt->execute([$leaveId]);
@@ -119,7 +130,7 @@ if ($method === 'POST') {
         
         // Get Owner name for approver_name
         $ownerStmt = $pdo->prepare("
-            SELECT CONCAT(owner_first_name, ' ', IFNULL(owner_middle_name, ''), ' ', owner_last_name) as owner_name
+            SELECT name as owner_name
             FROM owners
             WHERE id = ?
         ");

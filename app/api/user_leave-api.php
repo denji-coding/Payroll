@@ -3,7 +3,8 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-session_start();
+require_once __DIR__ . '/../core/secure_session.php';
+startSecureSession();
 require_once __DIR__ . '/../core/database.php';
 $db = new Database();
 
@@ -214,18 +215,18 @@ if ($method === 'POST') {
                 ':type_id' => $leaveTypeId
             ]);
         } elseif ($user_type === 'hr') {
-            $creditStmt = $db->getConnection()->prepare("
-                SELECT 
-                    lc.taken, 
-                    lt.default_allowed 
-                FROM leave_credits lc
-                JOIN leave_types lt ON lc.leave_type_id = lt.id
+        $creditStmt = $db->getConnection()->prepare("
+            SELECT 
+                lc.taken, 
+                lt.default_allowed 
+            FROM leave_credits lc
+            JOIN leave_types lt ON lc.leave_type_id = lt.id
                 WHERE lc.hr_id = :user_id AND lc.leave_type_id = :type_id AND lc.user_type = 'hr'
-            ");
-            $creditStmt->execute([
+        ");
+        $creditStmt->execute([
                 ':user_id' => $user_id,
-                ':type_id' => $leaveTypeId
-            ]);
+            ':type_id' => $leaveTypeId
+        ]);
         }
         
         $credit = $creditStmt->fetch(PDO::FETCH_ASSOC);
@@ -263,14 +264,14 @@ if ($method === 'POST') {
                 ]);
             } elseif ($user_type === 'hr') {
                 // For HR: employee_id must be NULL, hr_id is set
-                $insertStmt = $db->getConnection()->prepare("
+            $insertStmt = $db->getConnection()->prepare("
                     INSERT INTO leave_credits (employee_id, hr_id, leave_type_id, taken, user_type) 
                     VALUES (NULL, :user_id, :type_id, 0, 'hr')
-                ");
-                $insertStmt->execute([
+            ");
+            $insertStmt->execute([
                     ':user_id' => $user_id,
-                    ':type_id' => $leaveTypeId
-                ]);
+                ':type_id' => $leaveTypeId
+            ]);
             }
             
             // Get default allowed from leave_types
@@ -351,8 +352,9 @@ if ($method === 'POST') {
         ];
     } elseif ($user_type === 'manager') {
         // For managers: employee_id must be NULL, applicant_manager_id is set
-        $sql = "INSERT INTO leaves (employee_id, applicant_manager_id, applicant_type, leave_type, start_date, end_date, duration, reason, med_cert_path)
-                VALUES (NULL, :user_id, 'manager', :lt, :sd, :ed, :dur, :rs, :mp)";
+        // approver_type is set to 'hr' to indicate HR will approve manager leaves
+        $sql = "INSERT INTO leaves (employee_id, applicant_manager_id, applicant_type, approver_type, leave_type, start_date, end_date, duration, reason, med_cert_path)
+                VALUES (NULL, :user_id, 'manager', 'hr', :lt, :sd, :ed, :dur, :rs, :mp)";
         $params = [
             ':user_id' => $user_id,
             ':lt' => $leave_type,
@@ -366,15 +368,15 @@ if ($method === 'POST') {
         // For HR: employee_id must be NULL, applicant_hr_id is set
         $sql = "INSERT INTO leaves (employee_id, applicant_hr_id, applicant_type, leave_type, start_date, end_date, duration, reason, med_cert_path)
                 VALUES (NULL, :user_id, 'hr', :lt, :sd, :ed, :dur, :rs, :mp)";
-        $params = [
+    $params = [
             ':user_id' => $user_id,
-            ':lt' => $leave_type,
-            ':sd' => $start_date,
-            ':ed' => $end_date,
-            ':dur' => $duration,
-            ':rs' => $reason,
-            ':mp' => $med_cert_path
-        ];
+        ':lt' => $leave_type,
+        ':sd' => $start_date,
+        ':ed' => $end_date,
+        ':dur' => $duration,
+        ':rs' => $reason,
+        ':mp' => $med_cert_path
+    ];
     }
 
     $ok = $db->query($sql, $params);

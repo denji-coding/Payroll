@@ -1,6 +1,13 @@
 <?php
+// Ensure session is started before checking authentication
+require_once __DIR__ . '/../core/secure_session.php';
 require_once __DIR__ . '/../core/Database.php';
 require_once __DIR__ . '/../core/session_helper.php';
+
+// Start secure session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    startSecureSession();
+}
 
 header('Content-Type: application/json');
 
@@ -8,9 +15,24 @@ try {
     // Auth: Allow GET for owner or admin; write operations restricted to owner
     $method = $_SERVER['REQUEST_METHOD'];
     $isReadOnly = ($method === 'GET');
-    if (!isOwnerLoggedIn() && !($isReadOnly && function_exists('isAdminLoggedIn') && isAdminLoggedIn())) {
+    
+    $isOwner = isOwnerLoggedIn();
+    $isAdmin = function_exists('isAdminLoggedIn') && isAdminLoggedIn();
+    
+    // For read operations: allow owner OR admin
+    // For write operations: only allow owner
+    if (!$isOwner && !($isReadOnly && $isAdmin)) {
         http_response_code(401);
-        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Unauthorized',
+            'debug' => [
+                'method' => $method,
+                'isReadOnly' => $isReadOnly,
+                'isOwner' => $isOwner,
+                'isAdmin' => $isAdmin
+            ]
+        ]);
         exit;
     }
 

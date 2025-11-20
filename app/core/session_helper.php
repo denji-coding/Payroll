@@ -4,16 +4,26 @@
  * Handles session validation for different user types
  */
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// DO NOT start session here - let secure_session.php handle it
+// This ensures the session name is set correctly before session_start()
+// The session will be started by secure_session.php via startSecureSession()
 
 /**
  * Check if user is logged in as admin/HR
  */
 function isAdminLoggedIn() {
-    return isset($_SESSION['SESSION_EMAIL']) && isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_EMAIL']);
+    $hasEmail = isset($_SESSION['SESSION_EMAIL']) && !empty($_SESSION['SESSION_EMAIL']);
+    $hasUserId = isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID']);
+    
+    // Debug logging for troubleshooting
+    if (!$hasEmail || !$hasUserId) {
+        error_log("isAdminLoggedIn() check failed:");
+        error_log("  SESSION_EMAIL: " . ($_SESSION['SESSION_EMAIL'] ?? 'NOT SET'));
+        error_log("  SESSION_USER_ID: " . ($_SESSION['SESSION_USER_ID'] ?? 'NOT SET'));
+        error_log("  Session ID: " . session_id());
+    }
+    
+    return $hasEmail && $hasUserId;
 }
 
 /**
@@ -119,8 +129,11 @@ function canAccessEmployeePortal($userId = null, $userType = null) {
  * Check if user is logged in as employee
  */
 function isEmployeeLoggedIn() {
-    // Ensure session is started
+    // Ensure session is started with correct name
     if (session_status() === PHP_SESSION_NONE) {
+        if (session_name() !== 'MVC_PAYROLL_SESS') {
+            session_name('MVC_PAYROLL_SESS');
+        }
         session_start();
     }
     
@@ -220,22 +233,25 @@ function getCurrentUserType() {
         return 'owner';
     }
     
-    // Check if user is accessing employee portal (has employee portal access)
-    // This takes priority because a user can have multiple portal access permissions
-    if (isEmployeeLoggedIn()) {
-        // If user has employee portal access, return 'employee' regardless of their base role
-        // This allows managers/HR with employee portal access to access employee pages
-        return 'employee';
-    }
-    
-    // Check for admin (HR)
+    // Check for admin (HR) BEFORE checking employee portal access
+    // This ensures HR users are identified as 'admin' for admin-only pages
     if (isAdminLoggedIn()) {
         return 'admin';
     }
     
-    // Check for manager
+    // Check for manager BEFORE checking employee portal access
+    // This ensures managers are identified as 'manager' for manager-only pages
     if (isManagerLoggedIn()) {
         return 'manager';
+    }
+    
+    // Check if user is accessing employee portal (has employee portal access)
+    // This allows managers/HR with employee portal access to access employee pages
+    // But only if they haven't been identified as admin/manager above
+    if (isEmployeeLoggedIn()) {
+        // If user has employee portal access, return 'employee'
+        // This allows managers/HR with employee portal access to access employee pages
+        return 'employee';
     }
     
     // If no valid session, return guest
@@ -300,9 +316,23 @@ function requireManagerAuth() {
  * Require employee authentication
  */
 function requireEmployeeAuth() {
-    // Ensure session is started
+    // Ensure session is started with correct name
+    // Use startSecureSession() to ensure proper session initialization
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        // Check if secure_session.php is loaded
+        if (function_exists('startSecureSession')) {
+            startSecureSession();
+        } else {
+            // Fallback to manual session start
+            if (session_name() !== 'MVC_PAYROLL_SESS') {
+                session_name('MVC_PAYROLL_SESS');
+            }
+            // Check if session cookie exists before starting
+            if (isset($_COOKIE['MVC_PAYROLL_SESS'])) {
+                session_id($_COOKIE['MVC_PAYROLL_SESS']);
+            }
+            session_start();
+        }
     }
     
     error_log("=== requireEmployeeAuth() CALLED ===");

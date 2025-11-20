@@ -244,20 +244,49 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
     outline: none;
     box-shadow: none;
 }
+
+/* Compact table styles - no horizontal scroll */
+#leaveTable {
+    table-layout: fixed;
+    width: 100%;
+}
+
+#leaveTable th,
+#leaveTable td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#leaveTable th:not(:has(.truncate)),
+#leaveTable td:not(:has(.truncate)) {
+    white-space: nowrap;
+}
+
+.btn-xs {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    min-width: auto;
+}
+
+.btn-xs i {
+    font-size: 0.75rem;
+}
 </style>
 
 <!-- Main layout -->
 <div class="flex min-h-screen overflow-hidden">
-    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">
+    <main id="mainContent" class="flex-1 p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px; overflow-x: hidden;">
         <div>
             <span class="text-2xl font-bold tracking-tight">Leave Management</span>
             <p class="text-gray-600">Manage leave requests from all branches and view details below.</p>
         </div>
 
-        <div class="mt-6 -ml-1 bg-white shadow rounded-lg overflow-hidden">
-            <div class="flex items-center justify-between p-4 border-b border-gray-200 relative">
+        <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-gray-200 gap-4">
                 <span class="text-lg font-semibold text-gray-800">HR Leave Applications</span>
-                <div class="relative max-w-sm w-full sm:w-auto">
+                <div class="relative w-full sm:max-w-sm sm:w-auto">
                     <svg class="absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.3-4.3"></path>
@@ -279,23 +308,23 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                 </div>
             </div>
 
-            <div class="relative w-full overflow-auto custom-scrollbar">
-                    <div class="max-h-[calc(100vh-220px)] ">
-                <table class="min-w-[1000px] w-full divide-y divide-gray-200 text-sm">
+            <div class="relative w-full overflow-hidden custom-scrollbar">
+                <div class="max-h-[calc(100vh-220px)] overflow-y-auto">
+                <table class="w-full divide-y divide-gray-200 text-xs" id="leaveTable">
 
-                <thead class="bg-emerald-600 sticky top-0 text-white text-[13.8px]">
+                <thead class="bg-emerald-600 sticky top-0 text-white text-[10px] sm:text-xs">
                     <tr>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">HR Name</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Employee ID</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Leave Type</th>
-                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Start</th>
-                        <th class="px-3 py-3 text-center font-semibold tracking-wide">End</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Duration</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Reason</th>
-                        <th class="px-3 py-3 text-left font-semibold tracking-wide">Approver</th>
-                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Status</th>
-                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Created</th>
-                        <th class="px-3 py-3 text-center font-semibold tracking-wide">Actions</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-left font-semibold tracking-wide" style="max-width: 120px;">HR Name</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-left font-semibold tracking-wide" style="max-width: 100px;">Employee ID</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-left font-semibold tracking-wide hidden md:table-cell" style="max-width: 100px;">Position</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-left font-semibold tracking-wide" style="max-width: 110px;">Leave Type</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide" style="max-width: 90px;">Start</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide" style="max-width: 90px;">End</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide" style="max-width: 70px;">Duration</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide" style="max-width: 60px;">Reason</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide" style="max-width: 80px;">Status</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide hidden xl:table-cell" style="max-width: 100px;">Created At</th>
+                        <th class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center font-semibold tracking-wide" style="max-width: 90px;">Actions</th>
                     </tr>
                 </thead>
 
@@ -349,23 +378,26 @@ function createLeaveRow(leave) {
     const createdDate = new Date(leave.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     
     tr.innerHTML = `
-        <td class="px-3 py-3 whitespace-nowrap">${escapeHtml(leave.hr_name || 'N/A')}</td>
-        <td class="px-3 py-3 whitespace-nowrap">${escapeHtml(leave.hr_employee_id || 'N/A')}</td>
-        <td class="px-3 py-3">${escapeHtml(leave.leave_type)}</td>
-        <td class="px-3 py-3 text-center whitespace-nowrap">${escapeHtml(leave.start_date)}</td>
-        <td class="px-3 py-3 text-center whitespace-nowrap">${escapeHtml(leave.end_date)}</td>
-        <td class="px-3 py-3 text-center">${leave.duration} day(s)</td>
-        <td class="text-center">
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-[10px] sm:text-xs truncate" style="max-width: 120px;" title="${escapeHtml(leave.hr_name || 'N/A')}">${escapeHtml(leave.hr_name || 'N/A')}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-[10px] sm:text-xs truncate" style="max-width: 100px;" title="${escapeHtml(leave.hr_employee_id || 'N/A')}">${escapeHtml(leave.hr_employee_id || 'N/A')}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-[10px] sm:text-xs truncate hidden md:table-cell" style="max-width: 100px;" title="${escapeHtml(leave.hr_position || 'N/A')}">${escapeHtml(leave.hr_position || 'N/A')}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-[10px] sm:text-xs truncate" style="max-width: 110px;" title="${escapeHtml(leave.leave_type)}">${escapeHtml(leave.leave_type)}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center text-[10px] sm:text-xs whitespace-nowrap" style="max-width: 90px;">${escapeHtml(leave.start_date)}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center text-[10px] sm:text-xs whitespace-nowrap" style="max-width: 90px;">${escapeHtml(leave.end_date)}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center text-[10px] sm:text-xs" style="max-width: 70px;">${leave.duration}d</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center" style="max-width: 60px;">
             ${showModal ? `
-                <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#reasonModal${leave.id}">
-                    <i class="bi bi-eye"></i>
+                <button class="btn btn-xs btn-outline-success" data-bs-toggle="modal" data-bs-target="#reasonModal${leave.id}" title="View Details">
+                    <i class="bi bi-eye" style="font-size: 0.75rem;"></i>
                 </button>
                 <div class="modal fade" id="reasonModal${leave.id}" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
                             <div class="modal-header bg-success text-white">
                                 <h5 class="modal-title">Leave Details</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                                <span aria-hidden="true">&times;</span>
+                                </button>
                             </div>
                             <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
                                 ${hasReason ? `<div class="text-start">${escapeHtml(leave.reason).replace(/\n/g, '<br>')}</div>` : ''}
@@ -389,21 +421,18 @@ function createLeaveRow(leave) {
                 </div>
             ` : '<span class="text-muted fst-italic">N/A</span>'}
         </td>
-        <td class="px-3 py-4 text-center">
-            ${leave.approver_name ? `<small class="text-muted">${escapeHtml(leave.approver_name)}</small>` : '<span class="text-muted fst-italic">—</span>'}
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center" style="max-width: 80px;">
+            <span class="badge ${statusBadgeClass} rounded-pill px-1.5 py-0.5 text-[10px]">${escapeHtml(leave.status)}</span>
         </td>
-        <td class="px-3 py-4 text-center">
-            <span class="badge ${statusBadgeClass} rounded-pill px-3 py-1">${escapeHtml(leave.status)}</span>
-        </td>
-        <td class="px-3 py-4 text-center whitespace-nowrap">${createdDate}</td>
-        <td class="px-3 py-4">
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center text-[10px] sm:text-xs whitespace-nowrap hidden xl:table-cell" style="max-width: 100px;">${createdDate}</td>
+        <td class="px-1.5 py-1.5 sm:px-2 sm:py-2 text-center" style="max-width: 90px;">
             ${leave.status === 'Pending' ? `
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-success approve-btn" data-leave-id="${leave.id}">
-                        <i class="bi bi-check2-circle"></i>
+                <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-xs btn-success approve-btn" data-leave-id="${leave.id}" title="Approve">
+                        <i class="bi bi-check2-circle" style="font-size: 0.75rem;"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger reject-btn" data-leave-id="${leave.id}" data-bs-toggle="modal" data-bs-target="#rejectModal${leave.id}">
-                        <i class="bi bi-x-circle"></i>
+                    <button class="btn btn-xs btn-danger reject-btn" data-leave-id="${leave.id}" data-bs-toggle="modal" data-bs-target="#rejectModal${leave.id}" title="Reject">
+                        <i class="bi bi-x-circle" style="font-size: 0.75rem;"></i>
                     </button>
                     <div class="modal fade" id="rejectModal${leave.id}" tabindex="-1">
                         <div class="modal-dialog modal-dialog-centered">
@@ -526,9 +555,9 @@ document.addEventListener('DOMContentLoaded', function() {
 const searchInput = document.getElementById('leaveSearch');
 const clearBtn = document.getElementById('clearSearch');
 const table = document.getElementById('leaveTable');
-const noResultsRow = document.getElementById('noLeavesRow');
+const tbody = document.getElementById('hrLeaveTableBody');
 
-if (searchInput && table) {
+if (searchInput && table && tbody) {
   searchInput.addEventListener('input', () => {
     // Only show clear button if it exists
     if (clearBtn) {
@@ -536,7 +565,7 @@ if (searchInput && table) {
     }
 
     const searchTerm = searchInput.value.toLowerCase();
-    const rows = Array.from(table.tBodies[0].rows).filter(row => row.id !== 'noLeavesRow');
+    const rows = Array.from(tbody.rows).filter(row => row.id !== 'noLeavesRow' && row.id !== 'noSearchResultsRow');
 
     let visibleCount = 0;
 
@@ -547,9 +576,19 @@ if (searchInput && table) {
       if (match) visibleCount++;
     });
 
-    // Show or hide the "no results" row if it exists
-    if (noResultsRow) {
-      noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+    // Remove existing "no search results" row if it exists
+    const existingNoResultsRow = document.getElementById('noSearchResultsRow');
+    if (existingNoResultsRow) {
+      existingNoResultsRow.remove();
+    }
+
+    // Show "no results" message if search has a term but no matches
+    if (searchTerm && visibleCount === 0) {
+      const noResultsRow = document.createElement('tr');
+      noResultsRow.id = 'noSearchResultsRow';
+      noResultsRow.className = 'fade-in-slide';
+      noResultsRow.innerHTML = '<td colspan="11" class="text-center px-6 py-4 text-muted"><i class="bi bi-search me-2"></i>No records found matching your search.</td>';
+      tbody.appendChild(noResultsRow);
     }
   });
 }

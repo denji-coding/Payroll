@@ -6,15 +6,35 @@ error_reporting(E_ALL);
 require_once "../app/core/SecureAuth.php";
 require_once "../app/core/secure_session.php";
 
+// Ensure session is started
+startSecureSession();
+
 $auth = new SecureAuth();
 $msg = "";
 
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Reset session for fresh login attempt
-    resetSessionForLogin();
+    
+    // Don't reset session completely - just clear old login data
+    // This preserves any debug data we might need
+    if (isset($_SESSION['employee_auth_debug'])) {
+        $preservedDebug = $_SESSION['employee_auth_debug'];
+        error_log("Preserved debug data from previous attempt");
+    }
+    
+    // Clear only login-related session data, not the entire session
+    unset($_SESSION['SESSION_USER_ID'], $_SESSION['SESSION_EMAIL'], $_SESSION['USERNAME']);
+    unset($_SESSION['employee_id'], $_SESSION['employee_no'], $_SESSION['manager_id']);
+    unset($_SESSION['login_success'], $_SESSION['error']);
+    
+    // Restore preserved debug if it exists
+    if (isset($preservedDebug)) {
+        $_SESSION['employee_auth_debug'] = $preservedDebug;
+    }
     
     $loginType = $_POST['login_type'] ?? 'manager'; // get login type
+    error_log("Login type from POST: " . $loginType);
 
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
@@ -38,13 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } elseif ($loginType === 'employee') {
-            // Employee login logic - try employee first, then manager, then HR
-            error_log("=== EMPLOYEE LOGIN DEBUG START ===");
-            error_log("Email: " . $email);
-            error_log("Login Type: " . $loginType);
-            
+            // Employee login logic
             $result = $auth->authenticateEmployee($email, $password);
-            error_log("Employee auth result: " . json_encode($result));
+            
             error_log("Session after employee auth: " . json_encode([
                 'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
                 'manager_id' => $_SESSION['manager_id'] ?? 'NOT SET',
@@ -54,21 +70,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]));
             
             if ($result['success']) {
-                // Check if user has employee portal access
-                $canAccess = isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal'] == 1;
-                error_log("Employee auth success. can_access_employee_portal: " . ($canAccess ? 'YES' : 'NO'));
-                if ($canAccess) {
-                    error_log("Redirecting to user_dashboard");
-                    header("Location: index.php?payroll=user_dashboard");
-                    exit;
-                } else {
-                    error_log("ERROR: Employee authenticated but no employee portal access");
-                    $_SESSION['error'] = 'You do not have access to the employee portal.';
-                }
+                // Employees always have access to the employee portal
+                $sessionDebug = [
+                    'employee_id' => $_SESSION['employee_id'] ?? 'NOT SET',
+                    'employee_no' => $_SESSION['employee_no'] ?? 'NOT SET',
+                    'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
+                    'session_id' => session_id(),
+                    'session_name' => session_name(),
+                    'session_status' => session_status(),
+                    'cookie_set' => isset($_COOKIE['MVC_PAYROLL_SESS']),
+                    'cookie_value' => $_COOKIE['MVC_PAYROLL_SESS'] ?? 'NOT SET'
+                ];
+                error_log("Employee auth success. Session data before redirect: " . json_encode($sessionDebug));
+                
+                // Output debug info as HTML comment for console inspection
+                echo "<!-- EMPLOYEE_LOGIN_DEBUG: " . json_encode($sessionDebug) . " -->\n";
+                
+                error_log("Redirecting to user_dashboard");
+                header("Location: index.php?payroll=user_dashboard");
+                exit;
             } else {
                 error_log("Employee auth failed, trying manager...");
-                // If employee login fails, try manager login
-                $result = $auth->authenticateManager($email, $password);
+            // If employee login fails, try manager login
+            $result = $auth->authenticateManager($email, $password);
                 error_log("Manager auth result: " . json_encode($result));
                 error_log("Session after manager auth: " . json_encode([
                     'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
@@ -76,22 +100,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'role_id' => $_SESSION['role_id'] ?? 'NOT SET'
                 ]));
                 
-                if ($result['success']) {
+            if ($result['success']) {
                     // Check if manager has employee portal access
                     $canAccess = isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal'] == 1;
                     error_log("Manager auth success. can_access_employee_portal: " . ($canAccess ? 'YES' : 'NO'));
                     if ($canAccess) {
                         error_log("Redirecting to user_dashboard");
-                        header("Location: index.php?payroll=user_dashboard");
-                        exit;
+                header("Location: index.php?payroll=user_dashboard");
+                exit;
                     } else {
                         error_log("ERROR: Manager authenticated but no employee portal access");
                         $_SESSION['error'] = 'You do not have access to the employee portal.';
-                    }
+            }
                 } else {
                     error_log("Manager auth failed, trying HR/Admin...");
-                    // If manager login fails, try HR/Admin login
-                    $result = $auth->authenticateAdmin($email, $password);
+            // If manager login fails, try HR/Admin login
+            $result = $auth->authenticateAdmin($email, $password);
                     error_log("HR/Admin auth result: " . json_encode($result));
                     error_log("Session after HR/Admin auth: " . json_encode([
                         'can_access_employee_portal' => $_SESSION['can_access_employee_portal'] ?? 'NOT SET',
@@ -99,22 +123,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'role_id' => $_SESSION['role_id'] ?? 'NOT SET'
                     ]));
                     
-                    if ($result['success']) {
+            if ($result['success']) {
                         // Check if HR has employee portal access
                         $canAccess = isset($_SESSION['can_access_employee_portal']) && $_SESSION['can_access_employee_portal'] == 1;
                         error_log("HR/Admin auth success. can_access_employee_portal: " . ($canAccess ? 'YES' : 'NO'));
                         if ($canAccess) {
                             error_log("Redirecting to user_dashboard");
-                            header("Location: index.php?payroll=user_dashboard");
-                            exit;
+                header("Location: index.php?payroll=user_dashboard");
+                exit;
                         } else {
                             error_log("ERROR: HR/Admin authenticated but no employee portal access");
                             $_SESSION['error'] = 'You do not have access to the employee portal.';
                         }
                     } else {
-                        // All login attempts failed
+            // All login attempts failed
                         error_log("ERROR: All authentication attempts failed");
-                        $_SESSION['error'] = 'Invalid email or password.';
+            $_SESSION['error'] = 'Invalid email or password.';
                     }
                 }
             }
@@ -131,6 +155,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Redirect back with error and correct login type
     header("Location: index.php?payroll=login1&type=$loginType");
     exit;
+}
+
+// Handle debug clear request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_debug'])) {
+    unset($_SESSION['employee_auth_debug']);
+    exit('OK');
 }
 
 // Show logout message if set

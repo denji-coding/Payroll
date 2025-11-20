@@ -26,12 +26,20 @@ try {
                 $stmt = $pdo->prepare("
     SELECT 
         e.*, 
-        a.name AS manager_name,
-        CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name) AS branch_name,
+        CASE 
+            WHEN m.id IS NOT NULL THEN CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name)
+            WHEN a.id IS NOT NULL THEN CONCAT(a.hr_first_name, ' ', UPPER(LEFT(a.hr_middle_name, 1)), '. ', a.hr_last_name)
+            ELSE NULL
+        END AS manager_name,
+        CASE 
+            WHEN m.id IS NOT NULL THEN CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name)
+            WHEN a.id IS NOT NULL THEN CONCAT(a.hr_first_name, ' ', UPPER(LEFT(a.hr_middle_name, 1)), '. ', a.hr_last_name)
+            ELSE NULL
+        END AS branch_name,
         m.m_branch AS branch_address
     FROM employees e
-    LEFT JOIN admins a ON e.branch_manager = a.id
-    LEFT JOIN managers m ON e.branch_manager = m.id
+    LEFT JOIN managers m ON e.branch_manager = m.id AND m.deleted_at IS NULL
+    LEFT JOIN admins a ON e.branch_manager = a.id AND a.deleted_at IS NULL
     WHERE e.id = :id AND e.deleted_at IS NULL
 ");
 

@@ -22,7 +22,7 @@ if (isset($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['SESSION_USER_ID']))
     $username = $_SESSION['manager_name'] ?? 'Manager';
 } else {
     // Regular Employee
-    $username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Employee';
+$username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Employee';
 }
 
 if ($loginSuccess) {
@@ -32,6 +32,78 @@ if ($loginSuccess) {
 
 $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");</script>';
 ?>
+
+<script>
+// Debug logging functions (same as login page)
+function debugLog(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = {
+        time: timestamp,
+        message: message,
+        type: type
+    };
+    
+    // Store in localStorage for persistence
+    let logs = JSON.parse(localStorage.getItem('employeeLoginDebugLogs') || '[]');
+    logs.push(logEntry);
+    if (logs.length > 100) {
+        logs = logs.slice(-100);
+    }
+    localStorage.setItem('employeeLoginDebugLogs', JSON.stringify(logs));
+    
+    const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
+    console[consoleMethod](`[${timestamp}] ${message}`);
+}
+
+// Debug: Check session state when dashboard loads
+document.addEventListener('DOMContentLoaded', function() {
+    debugLog('=== EMPLOYEE DASHBOARD LOAD ===', 'success');
+    debugLog('Current URL: ' + window.location.href, 'info');
+    
+    // Check for debug comment from PHP
+    if (document.body.innerHTML.includes('USER_DASHBOARD_DEBUG')) {
+        debugLog('✅ Found PHP debug output', 'success');
+        const htmlContent = document.body.innerHTML;
+        const match = htmlContent.match(/USER_DASHBOARD_DEBUG:\s*({[^}]+})/);
+        if (match) {
+            try {
+                const debugData = JSON.parse(match[1]);
+                debugLog('Session debug data: ' + JSON.stringify(debugData), 'info');
+            } catch (e) {
+                debugLog('Could not parse debug data', 'warning');
+            }
+        }
+    } else {
+        debugLog('⚠️ No PHP debug output found', 'warning');
+    }
+    
+    // Check cookies
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+    }, {});
+    debugLog('Cookies: ' + JSON.stringify(cookies), 'info');
+    debugLog('MVC_PAYROLL_SESS cookie: ' + (cookies['MVC_PAYROLL_SESS'] || 'NOT SET'), cookies['MVC_PAYROLL_SESS'] ? 'success' : 'error');
+    debugLog('PHPSESSID cookie: ' + (cookies['PHPSESSID'] || 'NOT SET'), cookies['PHPSESSID'] ? 'warning' : 'info');
+    
+    // Check if we're actually on the dashboard
+    if (window.location.href.includes('user_dashboard')) {
+        debugLog('✅ Successfully loaded employee dashboard', 'success');
+    } else {
+        debugLog('❌ Not on dashboard - redirected to: ' + window.location.href, 'error');
+    }
+    
+    // Check for error messages
+    const errorElements = document.querySelectorAll('.alert-danger, [class*="error"], [class*="unauthorized"]');
+    if (errorElements.length > 0) {
+        debugLog('❌ Error elements found: ' + errorElements.length, 'error');
+        errorElements.forEach((el, idx) => {
+            debugLog(`Error ${idx + 1}: ` + el.textContent.trim(), 'error');
+        });
+    }
+});
+</script>
 
 <div class="flex min-h-screen bg-gray-50">
     <main id="mainContent" class="flex-1 transition-all duration-300 ease-in-out">

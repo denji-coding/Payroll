@@ -52,17 +52,17 @@ elseif (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
 }
 // Regular Employee
 else {
-    $username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Unknown Employee';
-    $email = $_SESSION['email'] ?? 'no-email@example.com';
+$username = $_SESSION['name'] ?? $_SESSION['username'] ?? $_SESSION['first_name'] ?? 'Unknown Employee';
+$email = $_SESSION['email'] ?? 'no-email@example.com';
     $gender = strtolower($_SESSION['gender'] ?? $_SESSION['sex'] ?? '');
     $photoPath = $_SESSION['photo_path'] ?? '';
-    
+
     $defaultImage = in_array($gender, ['male', 'm', 'male'])
-        ? '../public/assets/image/default_men.png'
-        : '../public/assets/image/default_women.png';
+    ? '../public/assets/image/default_men.png'
+    : '../public/assets/image/default_women.png';
     $imagePath = (!empty($photoPath))
         ? '../public/upload/' . basename($photoPath)
-        : $defaultImage;
+    : $defaultImage;
 }
 ?>
 

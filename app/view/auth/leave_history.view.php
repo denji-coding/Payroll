@@ -79,8 +79,9 @@ require_once views_path("partials/nav");
               <thead class="[&_tr]:border-b bg-[#f2f8f2] sticky top-0 z-10">
                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Photos</th>
-                  <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Employee Name</th>
-                  <th class="h-12 px-3 text-left font-bold whitespace-nowrap text-[#478547] bg-white">Employee ID</th>
+                  <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Name</th>
+                  <th class="h-12 px-3 text-left font-bold whitespace-nowrap text-[#478547] bg-white">ID</th>
+                  <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Type</th>
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Leave Types</th>
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Start Date</th>
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">End Date</th>
@@ -107,6 +108,30 @@ require_once views_path("partials/nav");
                       </td>
                       <td class="p-3 font-medium"><?= htmlspecialchars($employee['employee_name']) ?></td>
                       <td class="p-3"><?= htmlspecialchars($employee['employee_no']) ?></td>
+                      <td class="p-3">
+                        <?php
+                          $applicantType = $employee['applicant_type'] ?? 'employee';
+                          $typeBadgeClass = '';
+                          $typeLabel = '';
+                          switch ($applicantType) {
+                            case 'manager':
+                              $typeBadgeClass = 'bg-blue-100 text-blue-800';
+                              $typeLabel = 'Manager';
+                              break;
+                            case 'hr':
+                              $typeBadgeClass = 'bg-purple-100 text-purple-800';
+                              $typeLabel = 'HR';
+                              break;
+                            default:
+                              $typeBadgeClass = 'bg-green-100 text-green-800';
+                              $typeLabel = 'Employee';
+                              break;
+                          }
+                        ?>
+                        <span class="px-2 py-1 rounded text-xs font-semibold <?= $typeBadgeClass ?>">
+                          <?= htmlspecialchars($typeLabel) ?>
+                        </span>
+                      </td>
                       <td class="p-3"><?= htmlspecialchars($employee['leave_type']) ?></td>
                       <td class="p-3 whitespace-nowrap"><?= date('M d, Y', strtotime($employee['start_date'])) ?></td>
                       <td class="p-3 whitespace-nowrap"><?= date('M d, Y', strtotime($employee['end_date'])) ?></td>
@@ -141,7 +166,7 @@ require_once views_path("partials/nav");
                   <?php endforeach; ?>
                 <?php else: ?>
                   <tr>
-                    <td colspan="9" class="p-4 text-center text-gray-500">
+                    <td colspan="10" class="p-4 text-center text-gray-500">
                       <i class="bi bi-calendar-x me-2"></i> No leave history found.
                     </td>
                   </tr>
@@ -181,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const nameCell = row.querySelector("td:nth-child(2)");
       const empNoCell = row.querySelector("td:nth-child(3)");
-      const leaveTypeCell = row.querySelector("td:nth-child(4)");
+      const leaveTypeCell = row.querySelector("td:nth-child(5)");
       if (!nameCell || !empNoCell || !leaveTypeCell) return;
 
       const name = nameCell.textContent.trim().toLowerCase();
@@ -210,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
         noRow = document.createElement("tr");
         noRow.id = "noResultRow";
         noRow.innerHTML = `
-          <td colspan="9" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+          <td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
             <i class="bi bi-calendar-x fs-4 me-2"></i> No leave records found.
           </td>`;
         tbody.appendChild(noRow);

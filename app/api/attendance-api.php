@@ -242,14 +242,26 @@ function getOrCreateAttendance(PDO $pdo, int $userId, string $userType, string $
 }
 
 /**
+ * Convert time string (HH:MM:SS) to seconds since midnight
+ */
+function timeToSeconds(string $time): int {
+    $parts = explode(':', $time);
+    $hours = (int)($parts[0] ?? 0);
+    $minutes = (int)($parts[1] ?? 0);
+    $seconds = (int)($parts[2] ?? 0);
+    return ($hours * 3600) + ($minutes * 60) + $seconds;
+}
+
+/**
  * Determine which time slot the current time falls into
  */
 function getCurrentTimeSlot(string $currentTime, array $schedule): ?string {
-    $current = strtotime($currentTime);
-    $morningStart = strtotime($schedule['sched_morning_in']);
-    $morningEnd = strtotime($schedule['sched_morning_out']);
-    $afternoonStart = strtotime($schedule['sched_afternoon_in']);
-    $afternoonEnd = strtotime($schedule['sched_afternoon_out']);
+    // Convert times to seconds since midnight for accurate comparison
+    $current = timeToSeconds($currentTime);
+    $morningStart = timeToSeconds($schedule['sched_morning_in']);
+    $morningEnd = timeToSeconds($schedule['sched_morning_out']);
+    $afternoonStart = timeToSeconds($schedule['sched_afternoon_in']);
+    $afternoonEnd = timeToSeconds($schedule['sched_afternoon_out']);
     
     $graceMinutes = $schedule['grace_period'] ?? 0;
     $morningStartWithGrace = $morningStart + ($graceMinutes * 60);
@@ -420,19 +432,18 @@ if ($method === 'GET') {
                              class="h-10 w-10 rounded-full object-cover" 
                              onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>';" />
                     </td>
-                    <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td>
                     <td class="py-3 text-sm px-4"><?= htmlspecialchars(ucwords(strtolower($record['full_name']))) ?></td>
                     <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['position']) ?></td>
-                    <td class="py-3 text-sm text-center px-4"><?= $record['morning_in'] ? date('h:i A', strtotime($record['morning_in'])) : '-' ?></td>
-                    <td class="py-3 text-sm text-center px-4"><?= $record['morning_out'] ? date('h:i A', strtotime($record['morning_out'])) : '-' ?></td>
-                    <td class="py-3 text-sm text-center px-4"><?= $record['afternoon_in'] ? date('h:i A', strtotime($record['afternoon_in'])) : '-' ?></td>
-                    <td class="py-3 text-sm text-center px-4"><?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '-' ?></td>
+                    <td class="py-3 text-sm text-center px-4"><?= $record['morning_in'] ? date('h:i A', strtotime($record['morning_in'])) : '--:--' ?></td>
+                    <td class="py-3 text-sm text-center px-4"><?= $record['morning_out'] ? date('h:i A', strtotime($record['morning_out'])) : '--:--' ?></td>
+                    <td class="py-3 text-sm text-center px-4"><?= $record['afternoon_in'] ? date('h:i A', strtotime($record['afternoon_in'])) : '--:--' ?></td>
+                    <td class="py-3 text-sm text-center px-4"><?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '--:--' ?></td>
                     <td class="py-3 px-4 text-sm text-center"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
                 </tr>
                 <?php
             }
         } else {
-            echo '<tr><td colspan="10" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
+            echo '<tr><td colspan="9" class="px-4 py-6 text-center text-secondary fst-italic bg-light fade-in-slide">
                 <i class="bi bi-calendar-x fs-5 me-3"></i>No attendance records found.
             </td></tr>';
         }
@@ -487,20 +498,40 @@ elseif ($method === 'POST') {
         if (!$schedule) {
             $user_type_text = $user_type === 'employee' ? 'employee' : ($user_type === 'manager' ? 'manager' : 'HR');
             echo json_encode([
-                "status" => "error", 
+                "status" => "warning", 
                 "message" => "No schedule assigned to this $user_type_text. Please contact your administrator."
             ]);
             exit;
         }
         
-        // Get or create attendance record
+        // Validate schedule time BEFORE creating attendance record (unless manual_type is used)
+        if (!$manual_type) {
+            // Determine which field to update based on current time slot
+            $currentTimeSlot = getCurrentTimeSlot($now, $schedule);
+            
+            // Check if current time is within schedule window
+            if (!$currentTimeSlot) {
+                $morningStart = date('h:i A', strtotime($schedule['sched_morning_in']));
+                $morningEnd = date('h:i A', strtotime($schedule['sched_morning_out']));
+                $afternoonStart = date('h:i A', strtotime($schedule['sched_afternoon_in']));
+                $afternoonEnd = date('h:i A', strtotime($schedule['sched_afternoon_out']));
+                
+                echo json_encode([
+                    "status" => "warning", 
+                    "message" => "You are not within your scheduled time. Your schedule: Morning ($morningStart - $morningEnd), Afternoon ($afternoonStart - $afternoonEnd). Current time: " . date('h:i A', strtotime($now))
+                ]);
+                exit;
+            }
+        }
+        
+        // Get or create attendance record (only after schedule validation passes)
         $attendance = getOrCreateAttendance($pdo, $user_id, $user_type, $today);
         $attendance_id = $attendance['id'];
         
         // Determine which field to update
         $field = '';
         $type = '';
-        $currentTimeSlot = null;
+        // $currentTimeSlot is already set above if not manual_type
         
         if ($manual_type) {
             $field = str_replace('-', '_', $manual_type);
@@ -520,23 +551,7 @@ elseif ($method === 'POST') {
                 exit;
             }
         } else {
-            // Determine which field to update based on current time slot
-            $currentTimeSlot = getCurrentTimeSlot($now, $schedule);
-            
-            // Check if current time is within schedule window
-            if (!$currentTimeSlot) {
-                $morningStart = date('h:i A', strtotime($schedule['sched_morning_in']));
-                $morningEnd = date('h:i A', strtotime($schedule['sched_morning_out']));
-                $afternoonStart = date('h:i A', strtotime($schedule['sched_afternoon_in']));
-                $afternoonEnd = date('h:i A', strtotime($schedule['sched_afternoon_out']));
-                
-                echo json_encode([
-                    "status" => "error", 
-                    "message" => "You are not within your scheduled time. Your schedule: Morning ($morningStart - $morningEnd), Afternoon ($afternoonStart - $afternoonEnd). Current time: " . date('h:i A', strtotime($now))
-                ]);
-                exit;
-            }
-            
+            // Use the already determined time slot from validation above
             if ($currentTimeSlot === 'morning') {
                 if (!$attendance['morning_in']) {
                     $field = 'morning_in';

@@ -4,7 +4,8 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header('Content-Type: application/json');
 
-session_start();
+require_once __DIR__ . '/../core/secure_session.php';
+startSecureSession();
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/session_helper.php';
 
@@ -27,9 +28,12 @@ if ($method === 'OPTIONS') {
 $db = new Database();
 $pdo = $db->getConnection();
 
-// GET: Fetch pending manager leave applications
+// GET: Fetch manager leave applications (all statuses for display)
 if ($method === 'GET') {
     try {
+        // Optional filter for status (default: show all)
+        $statusFilter = $_GET['status'] ?? null;
+        
         $sql = "
             SELECT 
                 l.id,
@@ -41,26 +45,44 @@ if ($method === 'GET') {
                 l.med_cert_path,
                 l.status,
                 l.created_at,
+                l.updated_at,
                 l.applicant_manager_id,
-                CONCAT(m.m_first_name, ' ', IFNULL(m.m_middle_name, ''), ' ', m.m_last_name) as manager_name,
+                l.approver_hr_id,
+                l.approver_type,
+                l.approver_name,
+                CONCAT(
+                    UPPER(LEFT(m.m_first_name, 1)), LOWER(SUBSTRING(m.m_first_name, 2)), ' ',
+                    IFNULL(CONCAT(UPPER(LEFT(m.m_middle_name, 1)), '. '), ''),
+                    UPPER(LEFT(m.m_last_name, 1)), LOWER(SUBSTRING(m.m_last_name, 2))
+                ) as manager_name,
                 m.m_email as manager_email,
                 m.m_position as manager_position,
-                m.m_employee_id as manager_employee_id
+                m.m_employee_id as manager_employee_id,
+                m.m_branch as manager_branch
             FROM leaves l
-            JOIN managers m ON l.applicant_manager_id = m.id
+            INNER JOIN managers m ON l.applicant_manager_id = m.id
             WHERE l.applicant_type = 'manager' 
-            AND l.status = 'Pending'
             AND m.deleted_at IS NULL
-            ORDER BY l.created_at DESC
         ";
         
+        $params = [];
+        
+        // Add status filter if provided
+        if ($statusFilter && in_array($statusFilter, ['Pending', 'Approved', 'Rejected'])) {
+            $sql .= " AND l.status = :status";
+            $params[':status'] = $statusFilter;
+        }
+        
+        $sql .= " ORDER BY l.created_at DESC";
+        
         $stmt = $pdo->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($params);
         $leaves = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         echo json_encode([
             'status' => 'success',
-            'data' => $leaves
+            'data' => $leaves,
+            'count' => count($leaves)
         ]);
     } catch (Exception $e) {
         error_log("HR Manager Leave Approval API Error: " . $e->getMessage());

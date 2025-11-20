@@ -51,13 +51,13 @@ try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
     $mail->SMTPAuth   = true;
-    $mail->Host       = 'mail.smtp2go.com';
-    $mail->Username   = 'nabesis.roy@dnsc.edu.ph';
-    $mail->Password   = 'pGdu8SqFpeLnVp2Y';
+    $mail->Host       = 'smtp.gmail.com';
+    $mail->Username   = 'migrantsventurecorporation@gmail.com';
+    $mail->Password   = 'tfop acec ukat dosw'; // Gmail App Password
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
-    $mail->setFrom('noreply@migrantsventurecorp.ip-ddns.com', 'Migrants Venture Corporation');
+    $mail->setFrom('migrantsventurecorporation@gmail.com', 'Migrants Venture Corporation');
     $mail->addReplyTo('support@migrantsventurecorp.ip-ddns.com', 'Support Team');
     $mail->addAddress($email);
     $mail->isHTML(true);

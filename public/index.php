@@ -55,10 +55,16 @@ if ($url === 'test_session') {
     echo json_encode([
         'session_status' => session_status() === PHP_SESSION_ACTIVE ? 'active' : 'inactive',
         'session_id' => session_id() ?: 'none',
+        'session_name' => session_name(),
         'session_data' => $_SESSION,
+        'SESSION_EMAIL' => $_SESSION['SESSION_EMAIL'] ?? 'NOT SET',
+        'SESSION_USER_ID' => $_SESSION['SESSION_USER_ID'] ?? 'NOT SET',
+        'isAdminLoggedIn' => function_exists('isAdminLoggedIn') ? isAdminLoggedIn() : 'FUNCTION NOT FOUND',
         'cookies' => $_COOKIE,
+        'MVC_PAYROLL_SESS_cookie' => $_COOKIE['MVC_PAYROLL_SESS'] ?? 'NOT SET',
+        'PHPSESSID_cookie' => $_COOKIE['PHPSESSID'] ?? 'NOT SET',
         'request_uri' => $_SERVER['REQUEST_URI']
-    ]);
+    ], JSON_PRETTY_PRINT);
     exit;
 }
 

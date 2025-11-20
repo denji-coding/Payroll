@@ -214,6 +214,19 @@ class SecureAuth {
         }
         
         try {
+            // First, check if employee exists at all
+            $checkStmt = $this->db->query("
+                SELECT e.id, e.email, e.employee_no, e.password IS NOT NULL as has_password, e.password
+                FROM employees e 
+                WHERE e.email = ?
+            ", [$email]);
+            $employeeCheck = $checkStmt ? $checkStmt[0] : null;
+            
+            if (!$employeeCheck) {
+                $this->recordLoginAttempt($email, 'employee', false);
+                return ['success' => false, 'message' => 'Invalid email or password.'];
+            }
+            
             // First try to authenticate with password field (new method)
             // Include role information in query
             $stmt = $this->db->query("
@@ -224,11 +237,15 @@ class SecureAuth {
             ", [$email]);
             $employee = $stmt ? $stmt[0] : null;
             
-            if ($employee && $this->verifyPassword($password, $employee['password'])) {
-                // Password authentication successful
-                $this->recordLoginAttempt($email, 'employee', true);
-                secureLogin($employee, 'employee');
-                return ['success' => true, 'user' => $employee, 'redirect' => 'index.php?payroll=user_dashboard'];
+            if ($employee) {
+                $passwordMatch = $this->verifyPassword($password, $employee['password']);
+                
+                if ($passwordMatch) {
+                    // Password authentication successful
+                    $this->recordLoginAttempt($email, 'employee', true);
+                    secureLogin($employee, 'employee');
+                    return ['success' => true, 'user' => $employee, 'redirect' => 'index.php?payroll=user_dashboard'];
+                }
             }
             
             // Fallback to employee_no authentication (old method)
@@ -252,6 +269,7 @@ class SecureAuth {
             
         } catch (Exception $e) {
             error_log("Employee authentication error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return ['success' => false, 'message' => 'Authentication error. Please try again.'];
         }
     }

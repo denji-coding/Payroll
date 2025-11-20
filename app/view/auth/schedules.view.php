@@ -61,13 +61,6 @@ require_once views_path("partials/nav");
       <!-- Right Side Buttons -->
       <div class="flex gap-2">
         <!-- Toggle Managers Button -->
-        <button type="button" 
-                id="toggleManagersBtn"
-                class="btn btn-outline-success d-inline-flex align-items-center h-10 px-4 py-2"
-                style="min-width: 120px;">
-          <i class="fas fa-users me-2"></i>
-          <span class="d-none d-sm-inline font-semibold">Show Managers</span>
-        </button>
 
         <!-- Add Schedule Button -->
         <button type="button" 
@@ -721,34 +714,6 @@ window.refreshEmployeeSelect = async () => {
     });
   }
 
-  // === TOGGLE MANAGERS FILTER ===
-  window.showingManagersOnly = false;
-  const toggleManagersBtn = document.getElementById('toggleManagersBtn');
-  
-  if (toggleManagersBtn) {
-    toggleManagersBtn.addEventListener('click', function() {
-      window.showingManagersOnly = !window.showingManagersOnly;
-      
-      // Update button text and style
-      const icon = this.querySelector('i');
-      const text = this.querySelector('span');
-      
-      if (window.showingManagersOnly) {
-        this.classList.remove('btn-outline-success');
-        this.classList.add('btn-success');
-        icon.className = 'fas fa-users me-2';
-        text.textContent = 'Show All';
-      } else {
-        this.classList.remove('btn-success');
-        this.classList.add('btn-outline-success');
-        icon.className = 'fas fa-users me-2';
-        text.textContent = 'Show Managers';
-      }
-      
-      // Filter table rows
-      filterTableByType();
-    });
-  }
 
   // Filter table by record type (employee/manager)
   function filterTableByType() {

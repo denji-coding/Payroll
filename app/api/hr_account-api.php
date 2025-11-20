@@ -70,12 +70,45 @@ function addHr($conn) {
             return;
         }
 
-        // Check if RFID already exists
-        $checkRfidStmt = $conn->prepare("SELECT id FROM admins WHERE hr_rfid_number = ?");
-        $checkRfidStmt->execute([sanitize($_POST['rfidNumber'])]);
-        if ($checkRfidStmt->fetch()) {
-            echo json_encode(['status' => 'error', 'message' => 'RFID number already exists']);
-            return;
+        // Check if RFID already exists across all user types (employees, managers, HR)
+        if (!empty($_POST['rfidNumber'])) {
+            $rfidNumber = sanitize($_POST['rfidNumber']);
+            
+            // Check in employees table
+            $checkRfidEmployeeStmt = $conn->prepare("SELECT id, employee_no, CONCAT(first_name, ' ', last_name) as name FROM employees WHERE rfid_number = ? AND deleted_at IS NULL");
+            $checkRfidEmployeeStmt->execute([$rfidNumber]);
+            $rfidEmployee = $checkRfidEmployeeStmt->fetch(PDO::FETCH_ASSOC);
+            if ($rfidEmployee) {
+                echo json_encode([
+                    'status' => 'error', 
+                    'message' => 'RFID number is already used by employee: ' . $rfidEmployee['name'] . ' (ID: ' . $rfidEmployee['employee_no'] . ')'
+                ]);
+                return;
+            }
+            
+            // Check in managers table
+            $checkRfidManagerStmt = $conn->prepare("SELECT id, m_employee_id, CONCAT(m_first_name, ' ', m_last_name) as name FROM managers WHERE m_rfid_number = ? AND deleted_at IS NULL");
+            $checkRfidManagerStmt->execute([$rfidNumber]);
+            $rfidManager = $checkRfidManagerStmt->fetch(PDO::FETCH_ASSOC);
+            if ($rfidManager) {
+                echo json_encode([
+                    'status' => 'error', 
+                    'message' => 'RFID number is already used by manager: ' . $rfidManager['name'] . ' (ID: ' . $rfidManager['m_employee_id'] . ')'
+                ]);
+                return;
+            }
+            
+            // Check in admins (HR) table
+            $checkRfidHrStmt = $conn->prepare("SELECT id, hr_employee_id, CONCAT(hr_first_name, ' ', hr_last_name) as name FROM admins WHERE hr_rfid_number = ? AND deleted_at IS NULL");
+            $checkRfidHrStmt->execute([$rfidNumber]);
+            $rfidHr = $checkRfidHrStmt->fetch(PDO::FETCH_ASSOC);
+            if ($rfidHr) {
+                echo json_encode([
+                    'status' => 'error', 
+                    'message' => 'RFID number is already used by HR: ' . $rfidHr['name'] . ' (ID: ' . $rfidHr['hr_employee_id'] . ')'
+                ]);
+                return;
+            }
         }
 
         // Handle photo upload
@@ -155,13 +188,58 @@ function updateHr($conn) {
         }
 
         // Check if HR exists
-        $checkStmt = $conn->prepare("SELECT hr_photo_path FROM admins WHERE id = ?");
+        $checkStmt = $conn->prepare("SELECT hr_photo_path, hr_rfid_number, hr_employee_id FROM admins WHERE id = ?");
         $checkStmt->execute([$hrId]);
-        $existingHr = $checkStmt->fetch();
+        $existingHr = $checkStmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$existingHr) {
             echo json_encode(['status' => 'error', 'message' => 'HR not found']);
             return;
+        }
+
+        // Check if RFID already exists across all user types (employees, managers, HR) - excluding current HR
+        if (!empty($_POST['rfidNumber'])) {
+            $rfidNumber = sanitize($_POST['rfidNumber']);
+            $currentRfid = $existingHr['hr_rfid_number'] ?? '';
+            
+            // Only check if RFID is being changed
+            if ($rfidNumber !== $currentRfid) {
+                // Check in employees table
+                $checkRfidEmployeeStmt = $conn->prepare("SELECT id, employee_no, CONCAT(first_name, ' ', last_name) as name FROM employees WHERE rfid_number = ? AND deleted_at IS NULL");
+                $checkRfidEmployeeStmt->execute([$rfidNumber]);
+                $rfidEmployee = $checkRfidEmployeeStmt->fetch(PDO::FETCH_ASSOC);
+                if ($rfidEmployee) {
+                    echo json_encode([
+                        'status' => 'error', 
+                        'message' => 'RFID number is already used by employee: ' . $rfidEmployee['name'] . ' (ID: ' . $rfidEmployee['employee_no'] . ')'
+                    ]);
+                    return;
+                }
+                
+                // Check in managers table
+                $checkRfidManagerStmt = $conn->prepare("SELECT id, m_employee_id, CONCAT(m_first_name, ' ', m_last_name) as name FROM managers WHERE m_rfid_number = ? AND deleted_at IS NULL");
+                $checkRfidManagerStmt->execute([$rfidNumber]);
+                $rfidManager = $checkRfidManagerStmt->fetch(PDO::FETCH_ASSOC);
+                if ($rfidManager) {
+                    echo json_encode([
+                        'status' => 'error', 
+                        'message' => 'RFID number is already used by manager: ' . $rfidManager['name'] . ' (ID: ' . $rfidManager['m_employee_id'] . ')'
+                    ]);
+                    return;
+                }
+                
+                // Check in admins (HR) table - excluding current HR
+                $checkRfidHrStmt = $conn->prepare("SELECT id, hr_employee_id, CONCAT(hr_first_name, ' ', hr_last_name) as name FROM admins WHERE hr_rfid_number = ? AND id != ? AND deleted_at IS NULL");
+                $checkRfidHrStmt->execute([$rfidNumber, $hrId]);
+                $rfidHr = $checkRfidHrStmt->fetch(PDO::FETCH_ASSOC);
+                if ($rfidHr) {
+                    echo json_encode([
+                        'status' => 'error', 
+                        'message' => 'RFID number is already used by HR: ' . $rfidHr['name'] . ' (ID: ' . $rfidHr['hr_employee_id'] . ')'
+                    ]);
+                    return;
+                }
+            }
         }
 
         // Handle photo upload

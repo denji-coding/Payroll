@@ -274,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 // Initialize form display based on URL parameter
 document.addEventListener('DOMContentLoaded', function() {
-
     // Clear any existing session storage data
     sessionStorage.clear();
     localStorage.removeItem('sidebar-collapsed');
@@ -385,14 +384,13 @@ document.getElementById('managerLoginForm').addEventListener('submit', function(
 });
 
 document.getElementById('employeeLoginForm').addEventListener('submit', function() {
-    document.getElementById('employeeSpinner').classList.remove('hidden');
-    document.getElementById('employeeLoginText').classList.add('hidden');
-    document.getElementById('employeeLoggingInText').classList.remove('hidden');
-
-    
     // Store email for potential error handling
     const email = document.getElementById('employeeEmail').value;
     sessionStorage.setItem('employeeEmail', email);
+    
+    document.getElementById('employeeSpinner').classList.remove('hidden');
+    document.getElementById('employeeLoginText').classList.add('hidden');
+    document.getElementById('employeeLoggingInText').classList.remove('hidden');
 });
 
 // Function to restore email and clear password on error
@@ -889,19 +887,7 @@ document.getElementById('managerLoginForm').addEventListener('submit', function(
 
 
 
-document.getElementById('employeeLoginForm').addEventListener('submit', function() {
-
-    document.getElementById('employeeSpinner').classList.remove('hidden');
-
-    document.getElementById('employeeLoginText').classList.add('hidden');
-
-    document.getElementById('employeeLoggingInText').classList.remove('hidden');
-
-    
-    // Store email for potential error handling
-    const email = document.getElementById('employeeEmail').value;
-    sessionStorage.setItem('employeeEmail', email);
-});
+// Duplicate handler removed - using the one above with debug logging
 
 // Function to restore email and clear password on error
 function restoreEmailOnError() {
@@ -926,6 +912,51 @@ function restoreEmailOnError() {
 
 // Call this function when page loads to restore email if there was an error
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== EMPLOYEE LOGIN PAGE LOAD DEBUG ===');
+    console.log('Current URL:', window.location.href);
+    console.log('URL params:', new URLSearchParams(window.location.search).toString());
+    
+    // Check if this is a redirect back from failed login
+    const loginAttempt = sessionStorage.getItem('employeeLoginAttempt');
+    if (loginAttempt === 'true') {
+        console.log('⚠️ Previous login attempt detected');
+        console.log('Login attempt time:', sessionStorage.getItem('employeeLoginTime'));
+        
+        // Check cookies after redirect
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+            const [key, value] = cookie.trim().split('=');
+            acc[key] = value;
+            return acc;
+        }, {});
+        console.log('Cookies after redirect:', cookies);
+        console.log('MVC_PAYROLL_SESS cookie:', cookies['MVC_PAYROLL_SESS'] || 'NOT SET');
+        console.log('PHPSESSID cookie:', cookies['PHPSESSID'] || 'NOT SET');
+        
+        // Check for error message
+        const errorMsg = document.querySelector('.alert-danger, [class*="error"]');
+        if (errorMsg) {
+            console.log('❌ Error message found:', errorMsg.textContent);
+        }
+        
+        // Check if we're on login page (failed redirect)
+        if (window.location.href.includes('login1')) {
+            console.log('❌ Still on login page - login likely failed');
+            console.log('Check PHP error logs for server-side errors');
+        } else {
+            console.log('✅ Redirected away from login page');
+        }
+        
+        sessionStorage.removeItem('employeeLoginAttempt');
+    } else {
+        console.log('✅ Fresh page load (no previous login attempt)');
+    }
+    
+    // Check session storage
+    console.log('Session storage:', {
+        employeeEmail: sessionStorage.getItem('employeeEmail'),
+        managerEmail: sessionStorage.getItem('managerEmail')
+    });
+    
     restoreEmailOnError();
 });
 

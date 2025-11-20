@@ -376,7 +376,6 @@ require_once views_path("partials/nav");
                                             </button>
                                             <div id="positionDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
                                                 <!-- <div class="custom-dropdown-option" data-value="Manager">Manager</div> -->
-                                                <div class="custom-dropdown-option" data-value="Human Resources">Human Resources</div>
                                                 <div class="custom-dropdown-option" data-value="Staff">Staff</div>
                                                 <div class="custom-dropdown-option" data-value="Driver">Driver</div>
                                             </div>
@@ -1199,10 +1198,20 @@ function setupCustomCitizenshipDropdown(dropdownBtnId, dropdownListId, selectedS
 
     // Fetch options from API
     fetch(apiUrl)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.status === 'success') {
+            if (data.status === 'success' && Array.isArray(data.data)) {
                 options = data.data;
+                
+                // Ensure options have citizenship property (handle both 'name' and 'citizenship' for backward compatibility)
+                options = options.map(opt => ({
+                    citizenship: opt.citizenship || opt.name || ''
+                })).filter(opt => opt.citizenship);
                 
                 // Check if current value is valid
                 const isValidValue = options.some(opt => opt.citizenship === selectedValue);
@@ -1223,6 +1232,9 @@ function setupCustomCitizenshipDropdown(dropdownBtnId, dropdownListId, selectedS
                 }
                 
                 renderOptions();
+            } else {
+                console.error('Invalid API response:', data);
+                selectedSpan.textContent = 'Error loading options';
             }
         })
         .catch(error => {

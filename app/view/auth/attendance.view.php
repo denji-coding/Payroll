@@ -65,6 +65,7 @@ require_once views_path("partials/header");
                     autocomplete="off"
                     required
                     oninput="this.value = this.value.toUpperCase()"
+                    tabindex="1"
                     class="w-full px-3 py-2 rounded-md bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20"
                 />
             </div>
@@ -91,7 +92,7 @@ require_once views_path("partials/header");
         </form>
 
         <!-- Hidden RFID Input -->
-        <input type="text" name="rfid" id="rfidInput" autocomplete="off" class="sr-only mt-4">
+        <input type="text" name="rfid" id="rfidInput" autocomplete="off" class="sr-only mt-4" tabindex="-1">
     </div>
 </aside>
 
@@ -298,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr>
                         <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">NO.</th>
                         <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">PHOTO</th>
-                        <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">EMP. ID</th>
+                        <!-- <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">EMP. ID</th> -->
                         <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">NAME</th>
                         <th class="py-3 px-4 text-left text-xs font-bold" rowspan="2">POSITION</th>
                         <th class="h-12 px-4 text-center text-xs align-bottom font-bold" colspan="2">MORNING</th>
@@ -346,21 +347,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 ?>
                                                 <img src="<?= htmlspecialchars($imageSrc) ?>" alt="Photo" class="h-10 w-10 rounded-full object-cover" onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultImage) ?>';" />
                                             </td>
-                                            <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td>
+                                            <!-- <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['employee_no']) ?></td> -->
                                             <td class="py-3 text-sm px-4"><?= htmlspecialchars(ucwords(strtolower($record['full_name']))) ?></td>
 
                                             <td class="py-3 text-sm px-4"><?= htmlspecialchars($record['position']) ?></td>
-                                            <td class="py-3 text-sm text-center px-4">
-                                                <?= $record['morning_in'] ? date('h:i A', strtotime($record['morning_in'])) : '-' ?>
+                                            <td class="truncate py-3 text-sm text-center px-4">
+                                                <?= $record['morning_in'] ? date('h:i A', strtotime($record['morning_in'])) : '--:--' ?>
                                             </td>
-                                            <td class="py-3 text-sm text-center px-4">
-                                                <?= $record['morning_out'] ? date('h:i A', strtotime($record['morning_out'])) : '-' ?>
+                                            <td class="truncate py-3 text-sm text-center px-4">
+                                                <?= $record['morning_out'] ? date('h:i A', strtotime($record['morning_out'])) : '--:--' ?>
                                             </td>
-                                            <td class="py-3 text-sm text-center px-4">
-                                                <?= $record['afternoon_in'] ? date('h:i A', strtotime($record['afternoon_in'])) : '-' ?>
+                                            <td class="truncate py-3 text-sm text-center px-4">
+                                                <?= $record['afternoon_in'] ? date('h:i A', strtotime($record['afternoon_in'])) : '--:--' ?>
                                             </td>
-                                            <td class="py-3 text-sm text-center px-4">
-                                                <?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '-' ?>
+                                            <td class="truncate py-3 text-sm text-center px-4">
+                                                <?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '--:--' ?>
                                             </td>
                                             <td class="py-3 px-4 text-sm text-center"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
                                         </tr>
@@ -609,9 +610,18 @@ document.addEventListener('DOMContentLoaded', () => {
           showSimpleAlert(data.status || 'error', alertTitle, data.message || 'Something went wrong.', timer);
         }
 
-        if (rfidInput) rfidInput.value = '';
+        if (rfidInput) {
+          rfidInput.value = '';
+          // Clear any pending timeout
+          if (rfidInput.submitTimeout) {
+            clearTimeout(rfidInput.submitTimeout);
+          }
+          // Refocus RFID input after a short delay to ensure it's ready
+          setTimeout(() => {
+            rfidInput.focus();
+          }, 100);
+        }
         if (employeeIdInput) employeeIdInput.value = '';
-        rfidInput?.focus();
       })
       .catch(error => {
         console.error('Fetch Error:', error);
@@ -636,7 +646,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (rfidInput) {
-    rfidInput.focus();
+    // Focus RFID input immediately on page load
+    setTimeout(() => {
+      rfidInput.focus();
+    }, 100);
+    
+    // Handle RFID card input (auto-submit when RFID is scanned)
+    rfidInput.addEventListener('input', (e) => {
+      const rfid = rfidInput.value.trim();
+      // RFID cards typically send data quickly, so submit after a short delay
+      if (rfid.length >= 8) { // Most RFID cards have at least 8 characters
+        clearTimeout(rfidInput.submitTimeout);
+        rfidInput.submitTimeout = setTimeout(() => {
+          if (rfidInput.value.trim()) {
+            submitAttendance({ rfid: rfidInput.value.trim() });
+          }
+        }, 300); // Wait 300ms for complete RFID scan
+      }
+    });
+    
     rfidInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         const rfid = rfidInput.value.trim();
