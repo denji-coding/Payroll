@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowbite Dropdown Date Picker</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Flowbite CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+    <!-- Flowbite Datepicker CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite-datepicker@1.2.0/dist/css/flowbite-datepicker.min.css" />
+</head>
+<body class="bg-gray-100 p-10">
+
+    <div class="max-w-4xl mx-auto h-[100vh]">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Flowbite Dropdown Date Picker</h2>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <!-- Datepicker with Button -->
+            <div class="flex justify-center items-center gap-4 mb-6">
+                <!-- Container for button and datepicker -->
+                <div class="relative inline-block" id="datepicker-container">
+                    <!-- Hidden input for datepicker -->
+                    <input type="text" id="datepicker-input" class="hidden" />
+                    
+                    <!-- Button to trigger datepicker -->
+                    <button 
+                        type="button" 
+                        id="datepicker-button"
+                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Select Date
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selected Date Display -->
+            <div class="mt-6 text-center">
+                <p class="text-sm font-medium text-gray-700 mb-2">Selected Date:</p>
+                <p id="selectedDate" class="text-lg font-semibold text-gray-800">No date selected</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flowbite Datepicker JS -->
+    <script src="node_modules/flowbite/dist/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite-datepicker@1.2.0/dist/js/flowbite-datepicker.min.js"></script>
+
+    <script>
+        // Get elements
+        const datepickerInput = document.getElementById('datepicker-input');
+        const datepickerButton = document.getElementById('datepicker-button');
+        const datepickerContainer = document.getElementById('datepicker-container');
+        const selectedDateEl = document.getElementById('selectedDate');
+
+        // Initialize datepicker with container
+        const datepicker = new Datepicker(datepickerInput, {
+            format: 'yyyy-mm-dd',
+            autohide: true,
+            todayHighlight: true,
+            clearBtn: true,
+            todayBtn: true,
+            weekStart: 1, // Monday
+            language: 'en',
+            container: datepickerContainer, // Try to use container option
+        });
+
+        // Function to position datepicker under button (centered)
+        function positionDatepicker() {
+            // Try to get picker from datepicker object first
+            let pickerElement = null;
+            if (datepicker.picker && datepicker.picker.element) {
+                pickerElement = datepicker.picker.element;
+            } else {
+                // Fallback: find by class in DOM
+                pickerElement = document.querySelector('.datepicker-picker');
+            }
+            
+            if (pickerElement) {
+                const buttonRect = datepickerButton.getBoundingClientRect();
+                
+                // Set initial position
+                pickerElement.style.cssText = `
+                    position: fixed !important;
+                    top: ${buttonRect.bottom + 8}px !important;
+                    left: ${buttonRect.left}px !important;
+                    margin: 0 !important;
+                    transform: none !important;
+                    z-index: 1000 !important;
+                    width: auto !important;
+                    right: auto !important;
+                    bottom: auto !important;
+                `;
+                
+                // Wait for element to render and get its dimensions, then center it
+                requestAnimationFrame(() => {
+                    const pickerRect = pickerElement.getBoundingClientRect();
+                    const buttonCenter = buttonRect.left + (buttonRect.width / 2);
+                    const pickerCenter = pickerRect.width / 2;
+                    const centeredLeft = buttonCenter - pickerCenter;
+                    
+                    // Center it horizontally
+                    pickerElement.style.setProperty('left', centeredLeft + 'px', 'important');
+                    pickerElement.style.setProperty('top', (buttonRect.bottom + 8) + 'px', 'important');
+                });
+            }
+        }
+
+        // Use MutationObserver to watch for picker element being added to DOM
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        // Check if it's the picker element or contains it
+                        if (node.classList && node.classList.contains('datepicker-picker')) {
+                            requestAnimationFrame(() => {
+                                positionDatepicker();
+                            });
+                        } else if (node.querySelector && node.querySelector('.datepicker-picker')) {
+                            requestAnimationFrame(() => {
+                                positionDatepicker();
+                            });
+                        }
+                    }
+                });
+            });
+        });
+
+        // Start observing the document body for datepicker elements
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+
+        // Continuous positioning check when picker is active
+        let positionInterval = null;
+        
+        function startPositioning() {
+            if (positionInterval) clearInterval(positionInterval);
+            positionInterval = setInterval(() => {
+                if (datepicker.picker && datepicker.picker.active) {
+                    positionDatepicker();
+                } else {
+                    clearInterval(positionInterval);
+                    positionInterval = null;
+                }
+            }, 50);
+        }
+
+        // Show datepicker when button is clicked and position it
+        datepickerButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            // Toggle datepicker
+            if (datepicker.picker && datepicker.picker.active) {
+                datepicker.hide();
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                    positionInterval = null;
+                }
+            } else {
+                datepicker.show();
+                
+                // Start continuous positioning
+                startPositioning();
+                
+                // Position the datepicker after it's shown - multiple attempts to ensure it works
+                requestAnimationFrame(() => {
+                    positionDatepicker();
+                });
+                
+                setTimeout(() => {
+                    positionDatepicker();
+                }, 10);
+                
+                setTimeout(() => {
+                    positionDatepicker();
+                }, 30);
+                
+                setTimeout(() => {
+                    positionDatepicker();
+                }, 50);
+                
+                setTimeout(() => {
+                    positionDatepicker();
+                }, 100);
+            }
+        });
+
+        // Reposition on window resize
+        window.addEventListener('resize', function() {
+            if (datepicker.picker && datepicker.picker.active) {
+                positionDatepicker();
+            }
+        });
+
+        // Close datepicker when clicking outside
+        document.addEventListener('click', function(e) {
+            // Check if datepicker is active
+            if (!datepicker.picker || !datepicker.picker.active) {
+                return;
+            }
+
+            // Get picker element (try multiple ways to find it)
+            const pickerElement = datepicker.picker?.element || document.querySelector('.datepicker-picker');
+            
+            // Check if click is on the button or inside the picker
+            const clickedButton = datepickerButton.contains(e.target) || e.target === datepickerButton;
+            const clickedPicker = pickerElement && (pickerElement.contains(e.target) || pickerElement === e.target);
+            const clickedContainer = datepickerContainer.contains(e.target);
+            
+            // Close if clicked outside both the button and the picker
+            if (!clickedButton && !clickedPicker && !clickedContainer) {
+                datepicker.hide();
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                    positionInterval = null;
+                }
+            }
+        });
+
+        // Update selected date display when date changes
+        datepickerInput.addEventListener('changeDate', function(e) {
+            updateSelectedDateDisplay();
+        });
+
+        datepickerInput.addEventListener('datepicker:change', function(e) {
+            updateSelectedDateDisplay();
+        });
+
+        // Function to update the selected date display
+        function updateSelectedDateDisplay() {
+            const selectedDate = datepicker.getDate();
+            if (selectedDate) {
+                const formattedDate = selectedDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                selectedDateEl.textContent = formattedDate + ` (${selectedDate.toISOString().split('T')[0]})`;
+                
+                // Update button text to show selected date
+                datepickerButton.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                `;
+            } else {
+                selectedDateEl.textContent = 'No date selected';
+                datepickerButton.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Select Date
+                `;
+            }
+        }
+    </script>
+
+    <style>
+        /* Container for button and datepicker */
+        #datepicker-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Ensure datepicker dropdown is properly positioned */
+        .datepicker {
+            z-index: 1000;
+        }
+
+        .datepicker-picker {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        /* Ensure picker is positioned correctly - override all possible positioning */
+        .datepicker-picker {
+            position: fixed !important;
+            transform: none !important;
+            margin: 0 !important;
+            right: auto !important;
+            bottom: auto !important;
+        }
+        
+        /* Override any default positioning */
+        #datepicker-container .datepicker-picker,
+        body > .datepicker-picker,
+        .datepicker .datepicker-picker {
+            position: fixed !important;
+            transform: none !important;
+            margin: 0 !important;
+            right: auto !important;
+            bottom: auto !important;
+        }
+        
+        /* Prevent any inline positioning from library */
+        .datepicker-picker[style*="left"] {
+            position: fixed !important;
+        }
+
+        /* Green Theme Styling */
+        /* Header background */
+        .datepicker-picker .datepicker-header {
+            background-color: #10b981 !important; /* green-500 */
+            color: white !important;
+        }
+
+        /* Navigation buttons */
+        .datepicker-picker .datepicker-controls .datepicker-header .datepicker-control-view,
+        .datepicker-picker .datepicker-controls .datepicker-header button {
+            color: white !important;
+            background-color: transparent !important;
+        }
+
+        .datepicker-picker .datepicker-controls .datepicker-header .datepicker-control-view:hover,
+        .datepicker-picker .datepicker-controls .datepicker-header button:hover {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+        }
+
+        /* Selected date */
+        .datepicker-picker .datepicker-cell.selected,
+        .datepicker-picker .datepicker-cell.selected:hover,
+        .datepicker-picker .datepicker-cell.selected.focused {
+            background-color: #10b981 !important; /* green-500 */
+            color: white !important;
+            font-weight: 600 !important;
+        }
+
+        /* Today's date */
+        .datepicker-picker .datepicker-cell.today {
+            background-color: #d1fae5 !important; /* green-100 */
+            color: #065f46 !important; /* green-800 */
+            font-weight: 600 !important;
+        }
+
+        .datepicker-picker .datepicker-cell.today.selected {
+            background-color: #10b981 !important; /* green-500 */
+            color: white !important;
+        }
+
+        /* Hover state */
+        .datepicker-picker .datepicker-cell:hover:not(.disabled):not(.selected) {
+            background-color: #a7f3d0 !important; /* green-200 */
+            color: #065f46 !important; /* green-800 */
+        }
+
+        /* Focused date */
+        .datepicker-picker .datepicker-cell.focused:not(.selected) {
+            background-color: #6ee7b7 !important; /* green-300 */
+            color: #065f46 !important; /* green-800 */
+        }
+
+        /* Disabled dates */
+        .datepicker-picker .datepicker-cell.disabled {
+            color: #9ca3af !important; /* gray-400 */
+            opacity: 0.5 !important;
+        }
+
+        /* Weekday headers */
+        .datepicker-picker .datepicker-grid .datepicker-cell.datepicker-cell-head {
+            color: #059669 !important; /* green-600 */
+            font-weight: 600 !important;
+        }
+
+        /* Range selection (if used) */
+        .datepicker-picker .datepicker-cell.range {
+            background-color: #d1fae5 !important; /* green-100 */
+            color: #065f46 !important; /* green-800 */
+        }
+
+        /* Clear and Today buttons */
+        .datepicker-picker .datepicker-footer .datepicker-controls button {
+            color: #10b981 !important; /* green-500 */
+            border-color: #10b981 !important;
+        }
+
+        .datepicker-picker .datepicker-footer .datepicker-controls button:hover {
+            background-color: #10b981 !important; /* green-500 */
+            color: white !important;
+        }
+
+        /* Border color */
+        .datepicker-picker {
+            border-color: #10b981 !important; /* green-500 */
+        }
+    </style>
+
+</body>
+</html>

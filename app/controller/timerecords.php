@@ -41,7 +41,31 @@ $filterDate = $_GET['date'] ?? date('Y-m-d');
 // Fetch attendance records with employee info for the date
 $attendanceRecords = [];
 try {
-    $stmt = $pdo->prepare("\n        SELECT \n            e.photo_path,\n            e.employee_no,\n            CONCAT(\n                e.first_name, ' ',\n                IFNULL(CONCAT(UPPER(LEFT(IFNULL(e.middle_name,''), 1)), '. '), ''),\n                e.last_name\n            ) AS full_name,\n            e.position,\n            a.date,\n            a.morning_in,\n            a.morning_out,\n            a.afternoon_in,\n            a.afternoon_out,\n            a.status\n        FROM attendance a\n        INNER JOIN employees e ON a.employee_id = e.id\n        WHERE DATE(a.date) = :filterDate\n        ORDER BY e.last_name, e.first_name\n    ");
+    // Include employees, managers, and HR in the query
+    $stmt = $pdo->prepare("
+        SELECT 
+            COALESCE(e.photo_path, m.m_photo_path, ad.hr_photo_path) AS photo_path,
+            COALESCE(e.employee_no, m.m_employee_id, ad.hr_employee_id) AS employee_no,
+            COALESCE(
+                CONCAT(e.first_name, ' ', IFNULL(CONCAT(UPPER(LEFT(IFNULL(e.middle_name,''), 1)), '. '), ''), e.last_name),
+                CONCAT(m.m_first_name, ' ', IFNULL(CONCAT(UPPER(LEFT(IFNULL(m.m_middle_name,''), 1)), '. '), ''), m.m_last_name),
+                CONCAT(ad.hr_first_name, ' ', IFNULL(CONCAT(UPPER(LEFT(IFNULL(ad.hr_middle_name,''), 1)), '. '), ''), ad.hr_last_name)
+            ) AS full_name,
+            COALESCE(e.position, m.m_position, ad.hr_position) AS position,
+            a.date,
+            a.morning_in,
+            a.morning_out,
+            a.afternoon_in,
+            a.afternoon_out,
+            a.status
+        FROM attendance a
+        LEFT JOIN employees e ON a.employee_id = e.id
+        LEFT JOIN managers m ON a.manager_id = m.id AND m.deleted_at IS NULL
+        LEFT JOIN admins ad ON a.hr_id = ad.id AND ad.deleted_at IS NULL
+        WHERE DATE(a.date) = :filterDate
+        AND (a.employee_id IS NOT NULL OR a.manager_id IS NOT NULL OR a.hr_id IS NOT NULL)
+        ORDER BY full_name
+    ");
     $stmt->bindParam(':filterDate', $filterDate);
     $stmt->execute();
     $attendanceRecords = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

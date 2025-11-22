@@ -324,43 +324,55 @@ function generateLeaveFormHTML($data, $logoImgTag, $formatDate) {
             .signature-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 20px;
+                margin-top: 25px;
+                border: 1px solid #000;
+            }
+            .signature-table tr {
                 border: 1px solid #000;
             }
             .signature-table td {
                 border: 1px solid #000;
-                padding: 12px 10px;
+                padding: 15px 12px;
                 vertical-align: top;
+                width: 50%;
             }
             .signature-label {
                 font-weight: 600;
                 font-size: 11px;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
             }
             .signature-line {
                 border-bottom: 1px solid #000;
-                margin-top: 50px;
-                padding-bottom: 3px;
+                margin-top: 55px;
+                padding-bottom: 4px;
                 min-height: 20px;
                 font-size: 11px;
+                width: 100%;
+                display: block;
             }
             .checkbox-inline {
                 display: inline-block;
-                margin-right: 25px;
-                margin-top: 10px;
+                margin-right: 30px;
+                margin-top: 12px;
+                font-size: 11px;
             }
             .comments-box {
-                min-height: 100px;
+                min-height: 110px;
                 border: 1px solid #000;
-                padding: 8px;
-                margin-top: 8px;
+                padding: 10px;
+                margin-top: 10px;
                 font-size: 11px;
+                width: 100%;
+                box-sizing: border-box;
             }
             .received-by-title {
                 text-align: center;
                 font-size: 10px;
                 margin-top: 8px;
                 color: #666;
+            }
+            .approval-checkboxes {
+                margin-top: 12px;
             }
         </style>
     </head>
@@ -466,13 +478,13 @@ function generateLeaveFormHTML($data, $logoImgTag, $formatDate) {
         <!-- Signature and Approval Table -->
         <table class="signature-table">
             <tr>
-                <td style="width: 50%;">
+                <td>
                     <div class="signature-label">EMPLOYEE\'S SIGNITURE:</div>
                     <div class="signature-line">' . htmlspecialchars($data['employee_signature']) . '</div>
                 </td>
-                <td style="width: 50%;">
+                <td>
                     <div class="signature-label">HR/MANAGER/OWNER APPROVAL:</div>
-                    <div style="margin-top: 8px;">
+                    <div class="approval-checkboxes">
                         <span class="checkbox-inline">
                             <span class="checkbox' . ($data['approval_status'] === 'APPROVED' ? ' checked' : '') . '"></span> APPROVED
                         </span>
@@ -483,11 +495,11 @@ function generateLeaveFormHTML($data, $logoImgTag, $formatDate) {
                 </td>
             </tr>
             <tr>
-                <td style="width: 50%;">
+                <td>
                     <div class="signature-label">NOTE/COMMENTS:</div>
                     <div class="comments-box">' . nl2br(htmlspecialchars($data['note_comments'])) . '</div>
                 </td>
-                <td style="width: 50%;">
+                <td>
                     <div class="signature-label">RECEIVED BY:</div>
                     <div class="signature-line">' . htmlspecialchars($data['received_by']) . '</div>
                     <div class="received-by-title">' . htmlspecialchars($data['received_by_title']) . '</div>

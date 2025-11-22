@@ -53,6 +53,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Removed Tailwind CDN to use offline build (src/output.css) -->
     <script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="../node_modules/flowbite/dist/flowbite.min.js"></script>
     
     <!-- Global CSRF Token -->
     <script>

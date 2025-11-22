@@ -6,24 +6,62 @@ require_once "../app/core/database.php";
 // Add Bootstrap Icons CSS
 echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">';
 
-// Fix session variable handling
-$employee_id = $_SESSION['employee_id'] ?? $_SESSION['employee_no'] ?? null;
+$db = (new Database)->getConnection();
+$currentPage = $_GET['payroll'] ?? 'user_dashboard';
 
-if (!$employee_id) {
-    // If API request (e.g. ?id=...), return JSON error
+// Resolve authenticated user context (employee, manager with access, or HR with access)
+$userContext = null;
+
+if (!empty($_SESSION['employee_id']) || !empty($_SESSION['employee_no'])) {
+    $employeeId = $_SESSION['employee_id'] ?? null;
+
+    if (!$employeeId && !empty($_SESSION['employee_no'])) {
+        $stmtEmployeeId = $db->prepare("SELECT id FROM employees WHERE employee_no = :emp_no LIMIT 1");
+        $stmtEmployeeId->execute([':emp_no' => $_SESSION['employee_no']]);
+        $employeeId = $stmtEmployeeId->fetchColumn() ?: null;
+    }
+
+    if ($employeeId) {
+        $userContext = [
+            'type' => 'employee',
+            'id' => (int)$employeeId,
+            'attendance_column' => 'employee_id',
+            'schedule_table' => 'employee_schedules',
+            'schedule_fk' => 'employee_id'
+        ];
+    }
+}
+
+if (!$userContext && !empty($_SESSION['manager_id']) && !empty($_SESSION['can_access_employee_portal'])) {
+    $userContext = [
+        'type' => 'manager',
+        'id' => (int)$_SESSION['manager_id'],
+        'attendance_column' => 'manager_id',
+        'schedule_table' => 'manager_schedules',
+        'schedule_fk' => 'manager_id'
+    ];
+}
+
+if (!$userContext && !empty($_SESSION['SESSION_USER_ID']) && !empty($_SESSION['can_access_employee_portal'])) {
+    $userContext = [
+        'type' => 'hr',
+        'id' => (int)$_SESSION['SESSION_USER_ID'],
+        'attendance_column' => 'hr_id',
+        'schedule_table' => 'hr_schedules',
+        'schedule_fk' => 'hr_id'
+    ];
+}
+
+if (!$userContext) {
     if (isset($_GET['id'])) {
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Unauthorized']);
         exit;
-    } else {
-        http_response_code(403);
-        require_once '../app/Error/unauthorized.php';
-        exit;
     }
+    http_response_code(403);
+    require_once '../app/Error/unauthorized.php';
+    exit;
 }
-
-$db = (new Database)->getConnection();
-$currentPage = $_GET['payroll'] ?? 'user_dashboard';
 
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
@@ -45,47 +83,93 @@ $selectedYear = $_GET['year'] ?? $currentYear;
 $filteredRecords = [];
 
 if ($selectedMonth && $selectedYear) {
-    // FIXED: missing comma before status
-    $stmt = $db->prepare("SELECT date, morning_in, morning_out, afternoon_in, afternoon_out, status FROM attendance WHERE employee_id = :emp_id AND MONTH(date) = :month AND YEAR(date) = :year ORDER BY date ASC");
+    $attendanceColumn = $userContext['attendance_column'];
+    $query = "SELECT date, morning_in, morning_out, afternoon_in, afternoon_out, status 
+              FROM attendance 
+              WHERE {$attendanceColumn} = :user_id 
+                AND MONTH(date) = :month 
+                AND YEAR(date) = :year 
+              ORDER BY date ASC";
+    $stmt = $db->prepare($query);
     $stmt->execute([
-        ':emp_id' => $employee_id,
+        ':user_id' => $userContext['id'],
         ':month' => $selectedMonth,
         ':year' => $selectedYear
     ]);
     $filteredRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// === Get Employee Name ===
-$stmtName = $db->prepare("SELECT first_name, middle_name, last_name FROM employees WHERE id = :emp_id LIMIT 1");
-$stmtName->execute([':emp_id' => $employee_id]);
-$employee = $stmtName->fetch(PDO::FETCH_ASSOC);
+// === Get User Name ===
+$nameQuery = null;
+switch ($userContext['type']) {
+    case 'manager':
+        $nameQuery = "SELECT m_first_name AS first_name, m_middle_name AS middle_name, m_last_name AS last_name FROM managers WHERE id = :id LIMIT 1";
+        break;
+    case 'hr':
+        $nameQuery = "SELECT hr_first_name AS first_name, hr_middle_name AS middle_name, hr_last_name AS last_name FROM admins WHERE id = :id LIMIT 1";
+        break;
+    default:
+        $nameQuery = "SELECT first_name, middle_name, last_name FROM employees WHERE id = :id LIMIT 1";
+        break;
+}
 
-$employeeName = $employee ? $employee['first_name'] . ' ' . $employee['middle_name'] . '. ' . $employee['last_name'] : "Unknown Employee";
+$userName = "Unknown User";
+if ($nameQuery) {
+    $stmtName = $db->prepare($nameQuery);
+    $stmtName->execute([':id' => $userContext['id']]);
+    $nameRecord = $stmtName->fetch(PDO::FETCH_ASSOC);
+
+    if ($nameRecord) {
+        $middle = trim($nameRecord['middle_name'] ?? '');
+        $middleInitial = $middle ? strtoupper(substr($middle, 0, 1)) . '. ' : '';
+        $userName = trim(($nameRecord['first_name'] ?? '') . ' ' . $middleInitial . ($nameRecord['last_name'] ?? '')) ?: "Unknown User";
+    }
+}
 
 // === Get Employee Schedule ===
 $officialMorningIn = '-';
 $officialMorningOut = '-';
 $officialAfternoonIn = '-';
 $officialAfternoonOut = '-';
+$scheduleTimes = [
+    'morning_in' => null,
+    'morning_out' => null,
+    'afternoon_in' => null,
+    'afternoon_out' => null,
+];
 
-$stmt = $db->prepare("SELECT schedule_id FROM employee_schedules WHERE employee_id = :employee_id LIMIT 1");
-$stmt->execute(['employee_id' => $employee_id]);
-$empSchedule = $stmt->fetch(PDO::FETCH_ASSOC);
+$scheduleStmt = $db->prepare(
+    "SELECT schedule_id FROM {$userContext['schedule_table']} WHERE {$userContext['schedule_fk']} = :id LIMIT 1"
+);
+$scheduleStmt->execute([':id' => $userContext['id']]);
+$assignedSchedule = $scheduleStmt->fetch(PDO::FETCH_ASSOC);
 
-if ($empSchedule) {
-    $scheduleId = $empSchedule['schedule_id'];
+if ($assignedSchedule) {
+    $scheduleId = $assignedSchedule['schedule_id'];
 
     $stmt2 = $db->prepare("SELECT sched_morning_in, sched_morning_out, sched_afternoon_in, sched_afternoon_out FROM schedules WHERE id = :schedule_id");
     $stmt2->execute(['schedule_id' => $scheduleId]);
     $schedule = $stmt2->fetch(PDO::FETCH_ASSOC);
 
     if ($schedule) {
+        $scheduleTimes = [
+            'morning_in' => $schedule['sched_morning_in'] ?? null,
+            'morning_out' => $schedule['sched_morning_out'] ?? null,
+            'afternoon_in' => $schedule['sched_afternoon_in'] ?? null,
+            'afternoon_out' => $schedule['sched_afternoon_out'] ?? null,
+        ];
         $officialMorningIn = isset($schedule['sched_morning_in']) ? date("g:i A", strtotime($schedule['sched_morning_in'])) : '-';
         $officialMorningOut = isset($schedule['sched_morning_out']) ? date("g:i A", strtotime($schedule['sched_morning_out'])) : '-';
         $officialAfternoonIn = isset($schedule['sched_afternoon_in']) ? date("g:i A", strtotime($schedule['sched_afternoon_in'])) : '-';   
         $officialAfternoonOut = isset($schedule['sched_afternoon_out']) ? date("g:i A", strtotime($schedule['sched_afternoon_out'])) : '-';
     }
 }
+
+$graceMinutes = 5;
+$graceSeconds = $graceMinutes * 60;
+$timeIsValid = static function ($time) {
+    return !empty($time) && $time !== '01:00:00';
+};
 ?>
 
 <div class="flex min-h-screen overflow-hidden bg-gray-100">    
@@ -145,7 +229,7 @@ if ($empSchedule) {
             <div id="dtrSection" class="text-xs leading-tight">
                 <p class="text-center font-semibold text-sm">DAILY TIME RECORD</p>
                 <p class="text-left mb-2">
-                    Name: <strong><span class="underline"><?= ucwords(htmlspecialchars($employeeName)) ?></span></strong>
+                    Name: <strong><span class="underline"><?= ucwords(htmlspecialchars($userName)) ?></span></strong>
                 </p>
                 <div class="mb-2 text-xs">
                     <p>For the month of: <strong><?= $months[$selectedMonth] ?> <?= $selectedYear ?></strong></p>
@@ -156,16 +240,18 @@ if ($empSchedule) {
                     <thead>
                         <tr>
         <th class="border border-black align-middle" rowspan="2">Day</th>
-        <th class="border border-black" colspan="2">Morning</th>
-        <th class="border border-black" colspan="2">Afternoon</th>
+        <th class="border border-black" colspan="3">Morning</th>
+        <th class="border border-black" colspan="3">Afternoon</th>
         <th class="border border-black align-middle" rowspan="2">Hours Worked</th>
-        <th class="border border-black align-middle" rowspan="2">Remarks</th>
+        <th class="border border-black align-middle" rowspan="2">Daily Remarks</th>
     </tr>
     <tr>
         <th class="border border-black">AM In</th>
         <th class="border border-black">AM Out</th>
+        <th class="border border-black">AM Remark</th>
         <th class="border border-black">PM In</th>
         <th class="border border-black">PM Out</th>
+        <th class="border border-black">PM Remark</th>
     </tr>
                     </thead>
                     <tbody>
@@ -177,6 +263,16 @@ $currentDate = date('Y-m-d');
 for ($day = 1; $day <= $daysInMonth; $day++):
     $dateStr = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $day);
     $entry = null;
+    $weekTimestamp = strtotime($dateStr);
+    
+    // Validate timestamp
+    if ($weekTimestamp === false) {
+        $weekTimestamp = mktime(0, 0, 0, $selectedMonth, $day, $selectedYear);
+    }
+    
+    $weekday = (int)date('N', $weekTimestamp); // 1 (Mon) - 7 (Sun)
+    $weekdayName = date('l', $weekTimestamp);
+    $isWeekend = in_array($weekday, [6, 7], true);
 
     foreach ($filteredRecords as $rec) {
         if ($rec['date'] === $dateStr) {
@@ -185,56 +281,138 @@ for ($day = 1; $day <= $daysInMonth; $day++):
         }
     }
 
-    $morningIn = $morningOut = $afternoonIn = $afternoonOut = '-';
-    $morningHours = $afternoonHours = 0;
-    $worked = '';
-    $remarks = '';
+$morningInRaw = $morningOutRaw = $afternoonInRaw = $afternoonOutRaw = null;
+$morningInDisplay = $morningOutDisplay = $afternoonInDisplay = $afternoonOutDisplay = '-';
 
-    if ($dateStr <= $currentDate) {
-        if ($entry) {
-            if (!empty($entry['morning_in']) && !empty($entry['morning_out']) &&
-                $entry['morning_in'] !== '01:00:00' && $entry['morning_out'] !== '01:00:00') {
-                $morningIn = date("h:i:s A", strtotime($entry['morning_in']));
-                $morningOut = date("h:i:s A", strtotime($entry['morning_out']));
-                $morningHours = (strtotime($entry['morning_out']) - strtotime($entry['morning_in'])) / 3600;
-            }
+// Skip processing database entries for weekends - they should always show "No Worked"
+if (!$isWeekend && $entry) {
+    $morningInRaw = $timeIsValid($entry['morning_in']) ? $entry['morning_in'] : null;
+    $morningOutRaw = $timeIsValid($entry['morning_out']) ? $entry['morning_out'] : null;
+    $afternoonInRaw = $timeIsValid($entry['afternoon_in']) ? $entry['afternoon_in'] : null;
+    $afternoonOutRaw = $timeIsValid($entry['afternoon_out']) ? $entry['afternoon_out'] : null;
 
-            if (!empty($entry['afternoon_in']) && !empty($entry['afternoon_out']) &&
-                $entry['afternoon_in'] !== '01:00:00' && $entry['afternoon_out'] !== '01:00:00') {
-                $afternoonIn = date("h:i:s A", strtotime($entry['afternoon_in']));
-                $afternoonOut = date("h:i:s A", strtotime($entry['afternoon_out']));
-                $afternoonHours = (strtotime($entry['afternoon_out']) - strtotime($entry['afternoon_in'])) / 3600;
-            }
-        }
-
-        $totalDayHours = $morningHours + $afternoonHours;
-
-        if ($totalDayHours >= 8) {
-            $worked = 8;
-            $remarks = 'Present';
-        } elseif ($totalDayHours >= 4) {
-            $worked = 4;
-            $remarks = 'Halfday';
-        } else {
-            $worked = 0;
-            $remarks = 'Absent';
-        }
-
-        $totalHoursWorked += (int)$worked;
+    if ($morningInRaw) {
+        $morningInDisplay = date("h:i:s A", strtotime($morningInRaw));
     }
+    if ($morningOutRaw) {
+        $morningOutDisplay = date("h:i:s A", strtotime($morningOutRaw));
+    }
+    if ($afternoonInRaw) {
+        $afternoonInDisplay = date("h:i:s A", strtotime($afternoonInRaw));
+    }
+    if ($afternoonOutRaw) {
+        $afternoonOutDisplay = date("h:i:s A", strtotime($afternoonOutRaw));
+    }
+}
+
+$morningHours = $afternoonHours = 0;
+$worked = '';
+$dailyRemarks = [];
+$morningRemarks = [];
+$afternoonRemarks = [];
+
+if ($isWeekend) {
+    $worked = '--';
+    $dailyRemarks[] = 'No Worked';
+    $morningRemarks[] = '-';
+    $afternoonRemarks[] = '-';
+} elseif ($dateStr <= $currentDate) {
+    if ($morningInRaw && $morningOutRaw) {
+        $morningHours = (strtotime($morningOutRaw) - strtotime($morningInRaw)) / 3600;
+        $morningRemarks[] = 'Present';
+        if ($scheduleTimes['morning_in'] && strtotime($morningInRaw) > strtotime($scheduleTimes['morning_in']) + $graceSeconds) {
+            $morningRemarks[] = 'Late';
+        }
+        if ($scheduleTimes['morning_out'] && strtotime($morningOutRaw) < strtotime($scheduleTimes['morning_out'])) {
+            $morningRemarks[] = 'Early Out';
+        }
+    } elseif ($morningInRaw || $morningOutRaw) {
+        $morningRemarks[] = 'Incomplete';
+    }
+    if (empty($morningRemarks)) {
+        $morningRemarks[] = 'Absent';
+    }
+
+    if ($afternoonInRaw && $afternoonOutRaw) {
+        $afternoonHours = (strtotime($afternoonOutRaw) - strtotime($afternoonInRaw)) / 3600;
+        $afternoonRemarks[] = 'Present';
+        if ($scheduleTimes['afternoon_in'] && strtotime($afternoonInRaw) > strtotime($scheduleTimes['afternoon_in']) + $graceSeconds) {
+            $afternoonRemarks[] = 'Late';
+        }
+        if ($scheduleTimes['afternoon_out'] && strtotime($afternoonOutRaw) < strtotime($scheduleTimes['afternoon_out'])) {
+            $afternoonRemarks[] = 'Early Out';
+        }
+    } elseif ($afternoonInRaw || $afternoonOutRaw) {
+        $afternoonRemarks[] = 'Incomplete';
+    }
+    if (empty($afternoonRemarks)) {
+        $afternoonRemarks[] = 'Absent';
+    }
+
+    $totalDayHours = $morningHours + $afternoonHours;
+
+    if ($totalDayHours >= 8) {
+        $worked = 8;
+        $dailyRemarks[] = 'Present';
+    } elseif ($totalDayHours >= 4) {
+        $worked = 4;
+        if ($morningHours && !$afternoonHours) {
+            $dailyRemarks[] = 'Halfday – AM Only';
+        } elseif (!$morningHours && $afternoonHours) {
+            $dailyRemarks[] = 'Halfday – PM Only';
+        } else {
+            $dailyRemarks[] = 'Halfday';
+        }
+    } elseif ($totalDayHours > 0) {
+        $worked = 0;
+        $dailyRemarks[] = 'Incomplete Day';
+    } else {
+        $worked = 0;
+        if (empty($dailyRemarks)) {
+            $dailyRemarks[] = 'Absent';
+        }
+    }
+
+    $totalHoursWorked += (int)$worked;
+}
+
+// Set "No Worked" for all weekend days (Sat/Sun), including future dates
+if ($isWeekend) {
+    $morningInDisplay = 'No Worked';
+    $morningOutDisplay = 'No Worked';
+    $afternoonInDisplay = 'No Worked';
+    $afternoonOutDisplay = 'No Worked';
+}
+
+$morningRemarkText = $isWeekend ? 'No Worked' : (($dateStr > $currentDate) ? '-' : implode(', ', array_unique($morningRemarks)));
+$afternoonRemarkText = $isWeekend ? 'No Worked' : (($dateStr > $currentDate) ? '-' : implode(', ', array_unique($afternoonRemarks)));
+$morningRemarkText = $morningRemarkText !== '' ? $morningRemarkText : '--';
+$afternoonRemarkText = $afternoonRemarkText !== '' ? $afternoonRemarkText : '-';
+$remarks = !empty($dailyRemarks) ? implode('; ', array_unique($dailyRemarks)) : (($isWeekend) ? 'No Worked' : (($dateStr > $currentDate) ? '' : ($worked === '' ? '' : 'Absent')));
+$workedDisplay = ($isWeekend || $worked === '' ? ($isWeekend ? '—' : '-') : $worked);
+$weekendRowStyle = $isWeekend ? 'background-color: #fef2f2; color: #dc2626;' : '';
+$weekendDayStyle = $isWeekend ? 'color: #dc2626; font-weight: 600;' : '';
 ?>
-<tr>
-    <td class="border border-black"><?= $day ?></td>
-    <td class="border border-black"><?= $morningIn ?></td>
-    <td class="border border-black"><?= $morningOut ?></td>
-    <td class="border border-black"><?= $afternoonIn ?></td>
-    <td class="border border-black"><?= $afternoonOut ?></td>
-    <td class="border border-black"><?= $worked !== '' ? $worked : '-' ?></td>
-    <td class="border border-black"><?= $remarks !== '' ? $remarks : '-' ?></td>
+<tr class="<?= $isWeekend ? 'weekend-row' : '' ?>" style="<?= $weekendRowStyle ?>">
+    <td class="border border-black <?= $isWeekend ? 'weekend-day' : '' ?>" style="<?= $weekendDayStyle ?>">
+        <div class="font-semibold" style="font-weight: 600;"><?= $day ?></div>
+        <div class="text-[10px] uppercase tracking-wide" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;"><?= substr($weekdayName, 0, 3) ?></div>
+        <?php if ($isWeekend): ?>
+            <div class="text-[10px] mt-1 font-semibold" style="font-size: 9px; margin-top: 2px; font-weight: 600; color: #dc2626;">No Worked</div>
+        <?php endif; ?>
+    </td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $morningInDisplay ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $morningOutDisplay ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $morningRemarkText ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $afternoonInDisplay ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $afternoonOutDisplay ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $afternoonRemarkText ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $workedDisplay ?></td>
+    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $remarks !== '' ? $remarks : '-' ?></td>
 </tr>
 <?php endfor; ?>
 <tr>
-    <td colspan="5" class="border border-black font-bold text-right pr-2">Total</td>
+    <td colspan="7" class="border border-black font-bold text-right pr-2">Total</td>
     <td class="border border-black font-bold"><?= $totalHoursWorked ?></td>
     <td class="border border-black"></td>
 </tr>
@@ -366,6 +544,16 @@ document.addEventListener('DOMContentLoaded', function () {
     padding: 4px;
     border: 1px solid black;
     text-align: center;
+}
+
+.weekend-row td {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+}
+
+.weekend-day {
+    color: #b91c1c !important;
+    font-weight: 600;
 }
 
 @media (max-width: 768px) {

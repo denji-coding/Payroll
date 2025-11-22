@@ -139,13 +139,27 @@ require_once views_path("partials/nav");
                                 <?php if (!empty($attendanceRecords)): ?>
                                     <?php foreach ($attendanceRecords as $index => $rec): ?>
                                         <?php 
-                                            $gender = strtolower($rec['sex'] ?? $rec['gender'] ?? '');
-                                            $defaultImage = in_array($gender, ['male', 'm'])
-                                                ? '../public/assets/image/default_men.png'
-                                                : '../public/assets/image/default_women.png';
-                                            $photo = !empty($rec['photo_path']) ? $rec['photo_path'] : $defaultImage;
-                                            $name  = ucwords(strtolower($rec['full_name']));
+                                            // Handle photo path - may be from employees, managers, or HR
+                                            $photoPath = $rec['photo_path'] ?? '';
+                                            if (!empty($photoPath)) {
+                                                // Check if path already includes upload/ or ../
+                                                if (strpos($photoPath, '../') === 0 || strpos($photoPath, 'upload/') === 0) {
+                                                    $photo = $photoPath;
+                                                } else {
+                                                    $photo = 'upload/' . $photoPath;
+                                                }
+                                            } else {
+                                                // Default image based on gender if available, otherwise use default
+                                                $gender = strtolower($rec['sex'] ?? $rec['gender'] ?? '');
+                                                $defaultImage = in_array($gender, ['male', 'm'])
+                                                    ? '../public/assets/image/default_men.png'
+                                                    : '../public/assets/image/default_women.png';
+                                                $photo = $defaultImage;
+                                            }
+                                            
+                                            $name  = ucwords(strtolower($rec['full_name'] ?? 'Unknown'));
                                             $pos   = $rec['position'] ?? '';
+                                            $empNo = $rec['employee_no'] ?? 'N/A';
                                             $date  = date('Y-m-d', strtotime($rec['date']));
                                             $min   = $rec['morning_in']   ? date('h:i A', strtotime($rec['morning_in']))   : '-';
                                             $mout  = $rec['morning_out']  ? date('h:i A', strtotime($rec['morning_out']))  : '-';
@@ -167,7 +181,7 @@ require_once views_path("partials/nav");
                                         <div class="flex items-center space-x-2">
                                             <div class="flex flex-col">
                                                         <span class="font-medium text-sm"><?= htmlspecialchars($name) ?></span>
-                                                        <span class="text-[11px] text-gray-500"><?= htmlspecialchars($rec['employee_no']) ?></span>
+                                                        <span class="text-[11px] text-gray-500"><?= htmlspecialchars($empNo) ?></span>
                                         </div>
                                         </div>
                                     </td>
@@ -201,13 +215,17 @@ require_once views_path("partials/nav");
                                 <p class="text-sm text-gray-400">Select another date or check back later</p>
                             </div>
                         </div>
-                        <div id="paginationBar" class="flex items-center justify-between mt-3 hidden">
-                            <div class="text-sm">
-                                Page <span id="pageNum">1</span> of <span id="pageTotal">1</span> — <span id="pageCount">0</span> records
+                        <div id="paginationBar" class="flex items-center justify-between mt-3 px-4 py-2 bg-[#f8fbf8] rounded-lg border border-green-200 hidden w-full">
+                            <div class="text-sm text-gray-700 font-medium">
+                                Page <span id="pageNum" class="text-[#16a249] font-semibold">1</span> of <span id="pageTotal" class="text-[#16a249] font-semibold">1</span> — <span id="pageCount" class="text-[#16a249] font-semibold">0</span> records
                             </div>
                             <div class="flex items-center gap-2">
-                                <button id="prevPageBtn" class="px-3 py-1 rounded border text-sm hover:bg-[#f2f8f2]" onclick="changePage(-1)">Previous</button>
-                                <button id="nextPageBtn" class="px-3 py-1 rounded border text-sm hover:bg-[#f2f8f2]" onclick="changePage(1)">Next</button>
+                                <button id="prevPageBtn" type="button" class="w-8 h-8 rounded border border-gray-300 text-sm hover:bg-[#16a249] hover:border-[#16a249] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-400 flex items-center justify-center" onclick="changePage(-1)" title="Previous Page">
+                                    <i class="bi bi-chevron-left text-base"></i>
+                                </button>
+                                <button id="nextPageBtn" type="button" class="w-8 h-8 rounded border border-gray-300 text-sm hover:bg-[#16a249] hover:border-[#16a249] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-400 flex items-center justify-center" onclick="changePage(1)" title="Next Page">
+                                    <i class="bi bi-chevron-right text-base"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -465,6 +483,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 let currentStatus = 'All Status';
+let isSearchMode = false; // Track if we're in API search mode
 
 function toggleStatusDropdown(button) {
     const dropdown = document.getElementById('statusDropdown');
@@ -531,9 +550,9 @@ function filterTableByStatus(status) {
         // Check status filter
         const statusMatches = status === 'All Status' || statusText === status;
         
-        // Check search filter
+        // Check search filter - skip if in API search mode (API already filtered)
         let searchMatches = true;
-        if (searchTerm.length > 0) {
+        if (!isSearchMode && searchTerm.length > 0) {
             const nameCell = row.querySelector('td:nth-child(3)');
             if (nameCell) {
                 const nameElement = nameCell.querySelector('.font-medium');
@@ -583,11 +602,6 @@ function filterTableByStatus(status) {
             <div class="flex flex-col items-center justify-center gap-4">
                 <i class="bi ${icon} text-4xl text-gray-400"></i>
                 <p class="text-lg font-medium text-gray-500">${message}</p>
-                <p class="text-sm text-gray-400">Try selecting a different status, date, or search term</p>
-                <button onclick="resetStatusFilter()" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#cde4cd] bg-[#f8fbf8] px-4 py-2 text-sm font-medium ring-offset-[#f8fbf8] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 hover:bg-[#16a249] hover:text-[#ffffff] disabled:pointer-events-none disabled:opacity-50">
-                    <i class="bi bi-arrow-counterclockwise h-4 w-4"></i>
-                    Reset Filter
-                </button>
             </div>
         `;
         // Keep pagination visible but disabled at the bottom when empty
@@ -609,6 +623,13 @@ async function resetStatusFilter() {
     }
     currentStatus = 'All Status';
 
+    // Reset search mode
+    isSearchMode = false;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    const clearButton = document.getElementById('clearButton');
+    if (clearButton) clearButton.classList.add('hidden');
+
     // Reset date to today and label
     const today = new Date();
     selectedDateGlobal = today;
@@ -626,7 +647,10 @@ async function resetStatusFilter() {
     
     try {
         window.__tr_state = { scope: dateParam, page: 1, per_page: 10 };
-        const res = await fetch(`../app/api/timerecords-api.php?date=${dateParam}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, { headers: { 'Accept': 'application/json' } });
+        const res = await fetch(`../app/api/timerecords-api.php?date=${dateParam}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, { 
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
         const raw = await res.text();
         const data = JSON.parse(raw);
         const tbody = document.getElementById('attendanceTableBody');
@@ -676,10 +700,20 @@ async function showAllAttendance() {
         return;
     }
     
+    // Reset search mode when showing all
+    isSearchMode = false;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    const clearButton = document.getElementById('clearButton');
+    if (clearButton) clearButton.classList.add('hidden');
+    
     // Currently showing date-specific, so show all
     try {
         window.__tr_state = { scope: 'all', page: 1, per_page: 10 };
-        const res = await fetch(`../app/api/timerecords-api.php?all=1&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, { headers: { 'Accept': 'application/json' } });
+        const res = await fetch(`../app/api/timerecords-api.php?all=1&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, { 
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
         const raw = await res.text();
         const data = JSON.parse(raw);
         const tbody = document.getElementById('attendanceTableBody');
@@ -714,6 +748,13 @@ async function showAllAttendance() {
 
 async function undoShowAll() {
     try {
+        // Reset search mode
+        isSearchMode = false;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = '';
+        const clearButton = document.getElementById('clearButton');
+        if (clearButton) clearButton.classList.add('hidden');
+        
         // Return to current date view
         const today = new Date();
         selectedDateGlobal = today;
@@ -728,7 +769,10 @@ async function undoShowAll() {
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
-        const res = await fetch(`../app/api/timerecords-api.php?date=${yyyy}-${mm}-${dd}`, { headers: { 'Accept': 'application/json' } });
+        const res = await fetch(`../app/api/timerecords-api.php?date=${yyyy}-${mm}-${dd}`, { 
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
         const raw = await res.text();
         const data = JSON.parse(raw);
         const tbody = document.getElementById('attendanceTableBody');
@@ -791,26 +835,83 @@ function updatePagination(meta) {
     const pageCount = document.getElementById('pageCount');
     const prev = document.getElementById('prevPageBtn');
     const next = document.getElementById('nextPageBtn');
+    
+    // Hide pagination bar if in search mode and no results, or if meta is null
+    if (!meta || (meta.is_search_mode && meta.total === 0)) {
+        if (bar) bar.classList.add('hidden');
+        return;
+    }
+    
     if (bar) bar.classList.remove('hidden');
+    
     if (!meta) {
         if (pageNum) pageNum.textContent = '1';
         if (pageTotal) pageTotal.textContent = '1';
         if (pageCount) pageCount.textContent = '0';
-        if (prev) prev.disabled = true;
-        if (next) next.disabled = true;
+        if (prev) {
+            prev.disabled = true;
+            prev.setAttribute('aria-disabled', 'true');
+        }
+        if (next) {
+            next.disabled = true;
+            next.setAttribute('aria-disabled', 'true');
+        }
         return;
     }
+    
+    // For search mode: always show as page 1
+    if (meta.is_search_mode) {
+        if (pageNum) pageNum.textContent = '1';
+        if (pageTotal) pageTotal.textContent = '1';
+        if (pageCount) pageCount.textContent = meta.total;
+        if (prev) {
+            prev.disabled = true;
+            prev.setAttribute('aria-disabled', 'true');
+        }
+        if (next) {
+            next.disabled = true;
+            next.setAttribute('aria-disabled', 'true');
+        }
+        return;
+    }
+    
     if (pageNum) pageNum.textContent = meta.page;
     if (pageTotal) pageTotal.textContent = meta.total_pages;
     if (pageCount) pageCount.textContent = meta.total;
-    if (prev) prev.disabled = meta.page <= 1 || meta.total === 0;
-    if (next) next.disabled = meta.page >= meta.total_pages || meta.total === 0;
+    
+    // Enable/disable previous button
+    if (prev) {
+        const prevDisabled = meta.page <= 1 || meta.total === 0;
+        prev.disabled = prevDisabled;
+        prev.setAttribute('aria-disabled', prevDisabled ? 'true' : 'false');
+    }
+    
+    // Enable/disable next button
+    if (next) {
+        const nextDisabled = meta.page >= meta.total_pages || meta.total === 0;
+        next.disabled = nextDisabled;
+        next.setAttribute('aria-disabled', nextDisabled ? 'true' : 'false');
+    }
 }
 
 async function changePage(delta) {
-    if (!window.__tr_state) return;
+    if (!window.__tr_state) {
+        console.warn('Pagination state not initialized');
+        return;
+    }
+    
     const newPage = Math.max(1, window.__tr_state.page + delta);
-    if (newPage === window.__tr_state.page) return;
+    if (newPage === window.__tr_state.page) {
+        return;
+    }
+    
+    // Prevent clicks on disabled buttons
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    if ((delta < 0 && prevBtn?.disabled) || (delta > 0 && nextBtn?.disabled)) {
+        return;
+    }
+    
     window.__tr_state.page = newPage;
     try {
         const scope = window.__tr_state.scope; // 'all' or 'date'
@@ -821,11 +922,17 @@ async function changePage(delta) {
             const d = scope; // YYYY-MM-DD
             url = `../app/api/timerecords-api.php?date=${d}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`;
         }
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const res = await fetch(url, { 
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
         const data = await res.json();
         const tbody = document.getElementById('attendanceTableBody');
+        
         if (data && data.status === 'success') {
-            if (tbody) tbody.innerHTML = data.html;
+            if (tbody) {
+                tbody.innerHTML = data.html;
+            }
             filterTableByStatus(currentStatus);
             updatePagination(data.meta || null);
             // Sync Show All button style with current scope
@@ -957,6 +1064,13 @@ async function selectDate(day, month, year) {
         day: 'numeric'
     });
     
+    // Reset search mode when selecting a date
+    isSearchMode = false;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    const clearButton = document.getElementById('clearButton');
+    if (clearButton) clearButton.classList.add('hidden');
+    
     // Update button text and active state
     const dateButton = document.querySelector('button[onclick="openCalendarModal()"]');
     dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
@@ -976,7 +1090,8 @@ async function selectDate(day, month, year) {
     try {
         window.__tr_state = { scope: dateParam, page: 1, per_page: 10 };
         const res = await fetch(`../app/api/timerecords-api.php?date=${dateParam}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, {
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
         });
         const raw = await res.text();
         let data;
@@ -1280,38 +1395,65 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize clear button state
     toggleClearButton();
     
-    // Initialize pagination for current date (even if no records)
-    const hasRecords = <?= !empty($attendanceRecords) ? 'true' : 'false' ?>;
+    // Initialize pagination state
+    window.__tr_state = { 
+        scope: initialDate, 
+        page: 1, 
+        per_page: 10 
+    };
     
+    // Use PHP-rendered records for initial display (they show all records correctly)
+    // Only use API for subsequent pagination/filtering
+    const hasRecords = <?= !empty($attendanceRecords) ? 'true' : 'false' ?>;
+    const totalRecords = <?= count($attendanceRecords) ?>;
+    
+    // Ensure all PHP-rendered rows are visible and not hidden by filters
+    const tbody = document.getElementById('attendanceTableBody');
+    if (tbody) {
+        const rows = tbody.querySelectorAll('tr');
+        
+        // Force all rows to be visible
+        rows.forEach((row, index) => {
+            row.style.display = '';
+            row.style.visibility = 'visible';
+            // Remove any inline styles that might hide rows
+            row.removeAttribute('hidden');
+        });
+        
+    }
+    
+    // Make sure tbody is visible
+    if (tbody) {
+        tbody.style.display = '';
+    }
+    
+    // Hide no records message
+    const noRecordsMessage = document.getElementById('noRecordsMessage');
+    if (noRecordsMessage) {
+        noRecordsMessage.classList.add('hidden');
+    }
+    
+    // Initialize pagination with actual record count from PHP
     if (!hasRecords) {
-        // If no records for current date, show pagination with 0 records
         updatePagination({
             total: 0,
             page: 1,
             per_page: 10,
             total_pages: 1
         });
-        // Set the state for pagination
-        window.__tr_state = { 
-            scope: initialDate, 
-            page: 1, 
-            per_page: 10 
-        };
     } else {
-        // If there are records, set the state for pagination
-        window.__tr_state = { 
-            scope: initialDate, 
-            page: 1, 
-            per_page: 10 
-        };
-        // Show pagination with actual data
         updatePagination({
-            total: <?= count($attendanceRecords) ?>,
+            total: totalRecords,
             page: 1,
             per_page: 10,
-            total_pages: 1
+            total_pages: Math.ceil(totalRecords / 10)
         });
     }
+    
+    // IMPORTANT: Do NOT apply status filter on initial load
+    // The status filter should only be applied when user explicitly changes it
+    // Reset status to 'All Status' to ensure all records are shown
+    currentStatus = 'All Status';
 });
 
 // Search functionality with debounce
@@ -1339,20 +1481,182 @@ function handleSearchInput() {
     }, 300);
 }
 
-function performSearch() {
-    // Re-apply the current status filter which now includes search functionality
-    filterTableByStatus(currentStatus);
+async function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.trim();
+    
+    // If search is empty, reload current view
+    if (!searchTerm) {
+        isSearchMode = false;
+        // Clear search - reload current date view
+        if (selectedDateGlobal) {
+            const dateStr = selectedDateGlobal.toISOString().split('T')[0];
+            await fetchTimeRecords(dateStr);
+        } else {
+            await fetchAllTimeRecords();
+        }
+        return;
+    }
+    
+    // Search mode: fetch from API across all dates
+    isSearchMode = true;
+    try {
+        const url = `../app/api/timerecords-api.php?search=${encodeURIComponent(searchTerm)}`;
+        const res = await fetch(url, {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
+        
+        if (!res.ok) {
+            throw new Error('Search failed');
+        }
+        
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            const tbody = document.getElementById('attendanceTableBody');
+            if (tbody) {
+                tbody.innerHTML = data.html;
+            }
+            
+            // Update pagination - hide it for search mode, or show as page 1 with all results
+            if (data.meta && data.meta.is_search_mode) {
+                // For search: show pagination but as page 1, disable navigation
+                updatePagination({
+                    page: 1,
+                    total_pages: 1,
+                    total: data.meta.total,
+                    is_search_mode: true
+                });
+                // Hide pagination buttons for search
+                const prev = document.getElementById('prevPageBtn');
+                const next = document.getElementById('nextPageBtn');
+                if (prev) {
+                    prev.disabled = true;
+                    prev.setAttribute('aria-disabled', 'true');
+                }
+                if (next) {
+                    next.disabled = true;
+                    next.setAttribute('aria-disabled', 'true');
+                }
+            } else {
+                updatePagination(data.meta);
+            }
+            
+            // Show/hide no records message
+            const noRecordsMessage = document.getElementById('noRecordsMessage');
+            if (data.meta && data.meta.total === 0) {
+                if (noRecordsMessage) {
+                    noRecordsMessage.classList.remove('hidden');
+                    noRecordsMessage.innerHTML = `
+                        <div class="flex flex-col items-center justify-center gap-4">
+                            <i class="bi bi-search text-4xl text-gray-400"></i>
+                            <p class="text-lg font-medium text-gray-500">No employees found for "${searchTerm}"</p>
+                            <p class="text-sm text-gray-400">Try a different search term</p>
+                        </div>
+                    `;
+                }
+                if (tbody) tbody.style.display = 'none';
+            } else {
+                if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+                if (tbody) tbody.style.display = '';
+            }
+            
+            // Apply status filter to search results (client-side, but skip search filtering)
+            if (currentStatus !== 'All Status') {
+                filterTableByStatus(currentStatus);
+            }
+        }
+    } catch (err) {
+        console.error('Search failed:', err);
+        isSearchMode = false;
+    }
 }
 
-function clearSearch() {
+async function fetchTimeRecords(dateStr) {
+    // dateStr format: YYYY-MM-DD
+    try {
+        window.__tr_state = { scope: dateStr, page: 1, per_page: 10 };
+        const res = await fetch(`../app/api/timerecords-api.php?date=${dateStr}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
+        const raw = await res.text();
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            console.error('Failed to parse JSON. Raw response:', raw);
+            return;
+        }
+        if (data && data.status === 'success') {
+            const tbody = document.getElementById('attendanceTableBody');
+            const noRecordsMessage = document.getElementById('noRecordsMessage');
+            if (tbody) tbody.innerHTML = data.html;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            filterTableByStatus(currentStatus);
+            updatePagination(data.meta || null);
+        } else {
+            const tbody = document.getElementById('attendanceTableBody');
+            const noRecordsMessage = document.getElementById('noRecordsMessage');
+            if (tbody) tbody.style.display = 'none';
+            if (noRecordsMessage) noRecordsMessage.classList.remove('hidden');
+            updatePagination(null);
+        }
+    } catch (e) {
+        console.error('Failed to fetch time records:', e);
+    }
+}
+
+async function fetchAllTimeRecords() {
+    try {
+        window.__tr_state = { scope: 'all', page: 1, per_page: 10 };
+        const res = await fetch(`../app/api/timerecords-api.php?all=1&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
+        const raw = await res.text();
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            console.error('Failed to parse JSON. Raw response:', raw);
+            return;
+        }
+        const tbody = document.getElementById('attendanceTableBody');
+        const noRecordsMessage = document.getElementById('noRecordsMessage');
+        if (data && data.status === 'success') {
+            if (tbody) tbody.innerHTML = data.html;
+            if (tbody) tbody.style.display = '';
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            filterTableByStatus(currentStatus);
+            updatePagination(data.meta || null);
+        } else {
+            if (tbody) tbody.style.display = 'none';
+            if (noRecordsMessage) noRecordsMessage.classList.remove('hidden');
+            updatePagination(null);
+        }
+    } catch (e) {
+        console.error('Failed to fetch all time records:', e);
+    }
+}
+
+async function clearSearch() {
     const searchInput = document.getElementById('searchInput');
     const clearButton = document.getElementById('clearButton');
     
     searchInput.value = '';
     clearButton.classList.add('hidden');
+    isSearchMode = false;
     
-    // Re-apply current status filter (which will now show all rows since search is cleared)
-    filterTableByStatus(currentStatus);
+    // Reload current view (date or all)
+    if (selectedDateGlobal) {
+        const dateStr = selectedDateGlobal.toISOString().split('T')[0];
+        await fetchTimeRecords(dateStr);
+    } else {
+        await fetchAllTimeRecords();
+    }
 }
 
 // Search bar clear button functions
