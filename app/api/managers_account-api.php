@@ -182,14 +182,17 @@ function addManager($conn) {
         }
     }
 
+    // Set role_id = 2 for managers (Manager role - can access employee and manager portals)
+    $roleId = 2;
+    
     $sql = "INSERT INTO managers (
         m_employee_id, m_branch, m_position, m_rfid_number, m_first_name, m_middle_name, m_last_name, m_full_name, m_dob,
         m_place_of_birth, m_sex, m_civil_status, m_contact_number, m_email, m_citizenship, m_blood_type,
-        m_address, m_base_salary, m_sss_number, m_pagibig_number, m_philhealth_number, m_photo_path, m_password
+        m_address, m_base_salary, m_sss_number, m_pagibig_number, m_philhealth_number, m_photo_path, m_password, role_id
     ) VALUES (
         :employeeId, :branchManager, :position, :rfidNumber, :firstName, :middleName, :lastName, :fullName, :dob,
         :placeOfBirth, :sex, :civilStatus, :contactNumber, :email, :citizenship, :bloodType,
-        :address, :baseSalary, :sssNumber, :pagibigNumber, :philhealthNumber, :photo, :password
+        :address, :baseSalary, :sssNumber, :pagibigNumber, :philhealthNumber, :photo, :password, :roleId
     )";
 
     $stmt = $conn->prepare($sql);
@@ -212,6 +215,7 @@ function addManager($conn) {
         ':bloodType' => $data['bloodType'],
         ':address' => $data['address'],
         ':baseSalary' => $data['baseSalary'],
+        ':roleId' => $roleId,
         ':sssNumber' => $data['sssNumber'],
         ':pagibigNumber' => $data['pagibigNumber'],
         ':philhealthNumber' => $data['philhealthNumber'],

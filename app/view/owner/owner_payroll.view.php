@@ -55,19 +55,69 @@ input[type="checkbox"].employeeCheckbox:checked::before {
     text-align: center;
     color: white;
     font-weight: bold;
-    font-size: 0.8rem;
-    line-height: 1.1rem;
+    font-size: 0.7rem;
+    line-height: 1rem;
+}
+
+@media (max-width: 640px) {
+    input[type="checkbox"].employeeCheckbox:checked::before {
+        font-size: 0.6rem;
+        line-height: 0.9rem;
+    }
+    
+    /* Ensure table cells don't break on mobile */
+    table td, table th {
+        white-space: nowrap;
+    }
+    
+    /* Better spacing for action buttons on mobile */
+    .flex.flex-col.gap-1.items-center button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Ensure heading is always visible on mobile */
+@media (max-width: 767px) {
+    main#mainContent {
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    header h1 {
+        display: block !important;
+        visibility: visible !important;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent {
+        padding-top: 0 !important;
+    }
+}
+
+/* Ensure heading is always visible */
+header h1 {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Ensure table container scrolls horizontally on small screens */
+@media (max-width: 768px) {
+    section.overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
 }
 </style>
 
-<main class="ml-64 mt-12 p-6 bg-gray-50 min-h-screen">
-  <div class="max-w-7xl mx-auto space-y-6">
+<main id="mainContent" class="ml-0 md:ml-64 p-3 sm:p-4 md:p-6 bg-gray-50 min-h-screen">
+  <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
 
     <!-- Page Title -->
-    <header class="mb-6">
+    <header class="mb-4 md:mb-6 pt-2 sm:pt-0">
       <div>
-        <span class="text-2xl font-bold tracking-tight text-[#133913]">Payroll HR</span>
-        <p class="text-[#478547]">Select HR and calculate net pay</p>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-[#133913] block" style="display: block !important; visibility: visible !important;">Payroll HR</h1>
+        <p class="text-sm sm:text-base text-[#478547] mt-1">Select HR and calculate net pay</p>
       </div>
     </header>
 
@@ -75,15 +125,15 @@ input[type="checkbox"].employeeCheckbox:checked::before {
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
 <!-- Payroll Period Container -->
-<section class="bg-white shadow-sm rounded-lg border-2 border-green-200 p-6 space-y-6">
+<section class="bg-white shadow-sm rounded-lg border-2 border-green-200 p-4 sm:p-6 space-y-4 md:space-y-6">
   <!-- Header -->
-  <div class="pb-4 border-b border-gray-200 sm:text-left">
-    <span class="text-lg font-semibold text-green-700 uppercase tracking-wide">Payroll Period</span>
-    <p class="text-sm text-gray-500">Set the range, type, and notes for this payroll run</p>
+  <div class="pb-3 md:pb-4 border-b border-gray-200 text-left">
+    <span class="text-base sm:text-lg font-semibold text-green-700 uppercase tracking-wide">Payroll Period</span>
+    <p class="text-xs sm:text-sm text-gray-500">Set the range, type, and notes for this payroll run</p>
   </div>
 
   <!-- Date Inputs + Decorations -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
     <div>
       <label for="start_date" class="block text-sm font-medium text-green-700 mb-1 ml-2">Start Date <span class="text-red-500">*</span></label>
       <div class="relative">
@@ -119,30 +169,30 @@ input[type="checkbox"].employeeCheckbox:checked::before {
 </section>
 
 <!-- Payroll Summary Container -->
-<section class="bg-white shadow-sm rounded-lg border-2 border-green-200 p-6 space-y-6">
-  <div class="pb-4 border-b border-gray-200">
-    <span class="text-lg font-semibold text-green-700 uppercase tracking-wide">Payroll Summary</span>
-    <p class="text-sm text-gray-500">Overview of selected employees and estimated gross</p>
+<section class="bg-white shadow-sm rounded-lg border-2 border-green-200 p-4 sm:p-6 space-y-4 md:space-y-6">
+  <div class="pb-3 md:pb-4 border-b border-gray-200">
+    <span class="text-base sm:text-lg font-semibold text-green-700 uppercase tracking-wide">Payroll Summary</span>
+    <p class="text-xs sm:text-sm text-gray-500">Overview of selected employees and estimated gross</p>
   </div>
 
   <!-- Grid: 2 on top, 1 below -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 text-center">
     <!-- Total Employees -->
-    <div class="flex flex-col items-center justify-center p-3 border-1 border-green-200 rounded-md">
-      <span class="text-sm font-medium text-green-700 mb-1">Total Employees</span>
-      <p id="totalEmployees" class="text-2xl font-bold text-gray-800">0</p>
+    <div class="flex flex-col items-center justify-center p-2 sm:p-3 border-1 border-green-200 rounded-md">
+      <span class="text-xs sm:text-sm font-medium text-green-700 mb-1">Total Employees</span>
+      <p id="totalEmployees" class="text-xl sm:text-2xl font-bold text-gray-800">0</p>
     </div>
 
     <!-- Selected for Processing -->
-    <div class="flex flex-col items-center justify-center p-3 border-1 border-green-200 rounded-md">
-      <span class="text-sm font-medium text-green-700 mb-1">Selected for Processing</span>
-      <p id="selectedEmployees" class="text-2xl font-bold text-gray-800">0</p>
+    <div class="flex flex-col items-center justify-center p-2 sm:p-3 border-1 border-green-200 rounded-md">
+      <span class="text-xs sm:text-sm font-medium text-green-700 mb-1">Selected for Processing</span>
+      <p id="selectedEmployees" class="text-xl sm:text-2xl font-bold text-gray-800">0</p>
     </div>
 
     <!-- Estimated Gross Pay (spans full width) -->
-    <div class="sm:col-span-2 flex flex-col items-center justify-center p-3 border-1 border-green-200 rounded-md">
-      <span class="text-sm font-medium text-green-700 mb-1">Estimated Gross Payroll</span>
-      <p id="estimatedGross" class="text-2xl font-bold text-gray-800">₱0.00</p>
+    <div class="sm:col-span-2 flex flex-col items-center justify-center p-2 sm:p-3 border-1 border-green-200 rounded-md">
+      <span class="text-xs sm:text-sm font-medium text-green-700 mb-1">Estimated Gross Payroll</span>
+      <p id="estimatedGross" class="text-xl sm:text-2xl font-bold text-gray-800">₱0.00</p>
     </div>
   </div>
 
@@ -160,13 +210,13 @@ input[type="checkbox"].employeeCheckbox:checked::before {
 </div>
 
 <!-- Payroll Table Card -->
-<section class="bg-white shadow-sm rounded-lg border-2 border-green-200 overflow-x-auto p-4">
+<section class="bg-white shadow-sm rounded-lg border-2 border-green-200 overflow-x-auto p-3 sm:p-4">
   <!-- Search Bar -->
-  <div class="flex justify-between items-center mb-4">
-    <span class="text-lg font-semibold text-[#478547]">Select HR for Payroll</span>
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-3 sm:mb-4">
+    <span class="text-base sm:text-lg font-semibold text-[#478547]">Select HR for Payroll</span>
 
     <!-- Search Bar (Right Side) -->
-    <div class="relative w-64">
+    <div class="relative w-full sm:w-64">
       <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle>
         <path d="m21 21-4.3-4.3"></path>
@@ -174,7 +224,7 @@ input[type="checkbox"].employeeCheckbox:checked::before {
       <input
         type="text"
         id="searchInput"
-        class="flex h-10 w-full placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8 text-base placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
+        class="flex h-9 sm:h-10 w-full placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8 text-sm placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50"
         placeholder="Search HR..."
         onkeyup="filterTable(); toggleClearButton();"
       >
@@ -182,23 +232,23 @@ input[type="checkbox"].employeeCheckbox:checked::before {
     </div>
   </div>
 
-  <table class="w-full caption-bottom text-sm">
+  <table class="w-full caption-bottom text-xs sm:text-sm">
     <thead class="[&_tr]:border-b bg-[#f2f8f2] sticky top-0 z-10">
       <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">
-          <input type="checkbox" id="selectAll" disabled class="employeeCheckbox h-5 w-5 rounded-md appearance-none border-2 border-gray-500 checked:bg-[#478547] checked:border-[#478547] checked:text-white focus:ring-2 focus:ring-[#478547] flex items-center justify-center">
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm">
+          <input type="checkbox" id="selectAll" disabled class="employeeCheckbox h-4 w-4 sm:h-5 sm:w-5 rounded-md appearance-none border-2 border-gray-500 checked:bg-[#478547] checked:border-[#478547] checked:text-white focus:ring-2 focus:ring-[#478547] flex items-center justify-center">
         </th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Employee ID</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Name</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Total Hours</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Present</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Absent</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Leave</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Benefit Deduction</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Leave Deduction</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Gross Pay</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Net Pay</th>
-        <th class="h-12 px-3 text-left align-middle font-bold text-[#478547] bg-white">Action</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Employee ID</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Name</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Total Hours</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Present</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Absent</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Leave</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Benefit Deduction</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Leave Deduction</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Gross Pay</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Net Pay</th>
+        <th class="h-10 sm:h-12 px-2 sm:px-3 text-left align-middle font-bold text-[#478547] bg-white text-xs sm:text-sm whitespace-nowrap">Action</th>
       </tr>
     </thead>
 
@@ -308,30 +358,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
             html += `
               <tr class="border-b hover:bg-[#f2f8f2] even:bg-[#cde4cd] fade-in-slide" data-employee="${emp.employee_no}" data-hr-id="${emp.hr_id || ''}">
-                <td class="p-3 align-middle font-medium">
+                <td class="p-2 sm:p-3 align-middle font-medium">
                   <input 
                   type="checkbox" 
-                  class="employeeCheckbox h-5 w-5 rounded-md appearance-none border-2 border-gray-500 checked:bg-[#478547] checked:border-[#478547] checked:text-white focus:ring-2 focus:ring-[#478547]"
+                  class="employeeCheckbox h-4 w-4 sm:h-5 sm:w-5 rounded-md appearance-none border-2 border-gray-500 checked:bg-[#478547] checked:border-[#478547] checked:text-white focus:ring-2 focus:ring-[#478547]"
                   ${isProcessed ? 'checked disabled' : ''}
                   data-processed="${isProcessed ? '1' : '0'}">
                 </td>
-                <td class="p-3 align-middle font-medium">${emp.employee_no}</td>
-                <td class="p-3 align-middle font-medium">${emp.full_name}</td>
-                <td class="p-3 align-middle text-left font-medium">${emp.total_hours ?? 0}</td>
-                <td class="p-3 align-middle text-left font-medium">${emp.present_days ?? 0}</td>
-                <td class="p-3 align-middle text-left font-medium">${emp.absent_days ?? 0}</td>
-                <td class="p-3 align-middle text-left font-medium">${emp.leave_days ?? 0}</td>
-                <td class="p-3 align-middle text-left font-medium benefit"
+                <td class="p-2 sm:p-3 align-middle font-medium text-xs sm:text-sm">${emp.employee_no}</td>
+                <td class="p-2 sm:p-3 align-middle font-medium text-xs sm:text-sm">${emp.full_name}</td>
+                <td class="p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm">${emp.total_hours ?? 0}</td>
+                <td class="p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm">${emp.present_days ?? 0}</td>
+                <td class="p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm">${emp.absent_days ?? 0}</td>
+                <td class="p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm">${emp.leave_days ?? 0}</td>
+                <td class="p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm benefit"
                     data-sss="${sss.toFixed(2)}"
                     data-pagibig="${pagibig.toFixed(2)}"
                     data-philhealth="${philhealth.toFixed(2)}"
                     data-leave="${leaveDeduction.toFixed(2)}">
                     ${isProcessed ? totalBenefits.toFixed(2) : '--'}
                 </td>
-                <td class="totalDeductions p-3 align-middle text-left font-medium">${showValue(leaveDeduction)}</td>
-                <td class="gross p-3 align-middle text-left font-medium">${showValue(gross)}</td>
-                <td class="net font-semibold text-green-700 p-3 align-middle text-left">${showValue(net)}</td>
-                <td>
+                <td class="totalDeductions p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm">${showValue(leaveDeduction)}</td>
+                <td class="gross p-2 sm:p-3 align-middle text-left font-medium text-xs sm:text-sm">${showValue(gross)}</td>
+                <td class="net font-semibold text-green-700 p-2 sm:p-3 align-middle text-left text-xs sm:text-sm">${showValue(net)}</td>
+                <td class="p-2 sm:p-3">
                   <div class="flex flex-col gap-1 items-center">
                     ${isProcessed ? `
                       <span 
@@ -819,8 +869,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Manual Calculation Modal -->
 <div class="modal fade" id="calculatePayModal" tabindex="-1" aria-labelledby="calculatePayModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content mt-5">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content mt-3 sm:mt-5">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title" id="calculatePayModalLabel">Manual Calculation</h5>
         <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -843,63 +893,63 @@ document.addEventListener('DOMContentLoaded', () => {
                   <strong>Full Name:</strong> <span id="summaryFullname">Juan Dela Cruz</span>
                 </div>
               </div>
-              <div class="row">
-                <div class="col-md-3">
+              <div class="row g-2">
+                <div class="col-6 col-md-3">
                   <strong>Present:</strong> <span id="summaryPresent">0</span> days
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                   <strong>Total Hours:</strong> <span id="summaryTotalHours">0</span> hrs
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                   <strong>Absent:</strong> <span id="summaryAbsent">0</span> days
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                   <strong>Leave:</strong> <span id="summaryLeave">0</span> day(s)
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="row mb-3">
-            <div class="col-sm-4">
+          <div class="row mb-3 g-2">
+            <div class="col-12 col-sm-4">
               <label for="daysWorked" class="form-label">Total Hours <span class="text-danger">*</span></label>
               <input type="number" class="form-control" id="daysWorked" name="daysWorked" required />
             </div>
-            <div class="col-sm-4">
+            <div class="col-12 col-sm-4">
               <label for="hoursPerDay" class="form-label">Absent <span class="text-danger">*</span></label>
               <input type="number" class="form-control" id="hoursPerDay" name="hoursPerDay" required />
             </div>
-            <div class="col-sm-4">
+            <div class="col-12 col-sm-4">
               <label for="leaveDays" class="form-label">Leave <span class="text-danger">*</span></label>
               <input type="number" class="form-control" id="leaveDays" name="leaveDays" value="" required />
             </div>
           </div>
 
           <div class="d-flex justify-content-center align-items-center mb-4">
-            <button type="button" class="btn btn-success w-50" id="calculatePayBtn" onclick="calculatePayroll()">Calculate</button>
+            <button type="button" class="btn btn-success w-full sm:w-50" id="calculatePayBtn" onclick="calculatePayroll()">Calculate</button>
           </div>
 
-          <div class="row mb-3">
-            <div class="col-sm-4">
+          <div class="row mb-3 g-2">
+            <div class="col-12 col-sm-4">
               <label for="sssDeduct" class="form-label">SSS Deduction</label>
               <input type="text" class="form-control" id="sssDeduct" name="sssDeduct" readonly />
             </div>
-            <div class="col-sm-4">
+            <div class="col-12 col-sm-4">
               <label for="pagibigDeduct" class="form-label">Pag-IBIG Deduction</label>
               <input type="text" class="form-control" id="pagibigDeduct" name="pagibigDeduct" readonly />
             </div>
-            <div class="col-sm-4">
+            <div class="col-12 col-sm-4">
               <label for="philhealthDeduct" class="form-label">PhilHealth Deduction</label>
               <input type="text" class="form-control" id="philhealthDeduct" name="philhealthDeduct" readonly />
             </div>
           </div>
 
-          <div class="row mb-3">
-            <div class="col-sm-6">
+          <div class="row mb-3 g-2">
+            <div class="col-12 col-sm-6">
               <label for="grossPay" class="form-label">Gross Pay</label>
               <input type="text" class="form-control" id="grossPay" name="grossPay" readonly />
             </div>
-            <div class="col-sm-6">
+            <div class="col-12 col-sm-6">
               <label for="netPay" class="form-label">Net Pay</label>
               <input type="text" class="form-control" id="netPay" name="netPay" readonly />
             </div>
@@ -907,9 +957,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </form>
       </div>
 
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-success w-25" id="savePayBtn" form="calculatePayForm">Save</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-footer flex-col sm:flex-row gap-2 sm:gap-0">
+        <button type="submit" class="btn btn-success w-full sm:w-25" id="savePayBtn" form="calculatePayForm">Save</button>
+        <button type="button" class="btn btn-secondary w-full sm:w-auto" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

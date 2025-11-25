@@ -50,6 +50,46 @@
     <!-- ✅ JS -->
     <script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
     <script src="../public/assets/js/flatpickr/monthSelect/index.js"></script>
+    
+    <!-- Suppress console warnings before loading Tailwind -->
+    <script>
+        (function() {
+            const originalWarn = console.warn;
+            const originalLog = console.log;
+            const originalError = console.error;
+            
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                // Suppress Tailwind CDN production warning
+                if (message.includes('cdn.tailwindcss.com') && message.includes('should not be used in production')) {
+                    return;
+                }
+                originalWarn.apply(console, args);
+            };
+            
+            console.log = function(...args) {
+                const message = args.join(' ');
+                // Suppress content-script.js messages
+                if (message.includes('content-script.js') || 
+                    message.includes('Document already loaded') ||
+                    message.includes('Attempting to initialize') ||
+                    message.includes('AdUnit initialized')) {
+                    return;
+                }
+                originalLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                const message = args.join(' ');
+                // Suppress content-script.js errors
+                if (message.includes('content-script.js')) {
+                    return;
+                }
+                originalError.apply(console, args);
+            };
+        })();
+    </script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Removed Tailwind CDN to use offline build (src/output.css) -->
     <script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>

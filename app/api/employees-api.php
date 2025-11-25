@@ -13,6 +13,7 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../Model/Employees.php';
 require_once __DIR__ . '/../core/SecureAPIMiddleware.php';
+require_once __DIR__ . '/../core/SecureAuth.php';
 
 // === Apply API Middleware ===
 applyAPIMiddleware('employees');
@@ -312,16 +313,32 @@ if ($method === 'POST') {
 
             $sql .= " WHERE employee_no = :employeeId";
         } else {
+            // Hash the employee ID as the default password (similar to managers and HR)
+            $auth = new SecureAuth();
+            $hashedPassword = $auth->hashPassword($data['employeeId']);
+            
+            // Fallback to bcrypt if Argon2ID is not available
+            if (empty($hashedPassword) || (!str_starts_with($hashedPassword, '$argon2id$') && !str_starts_with($hashedPassword, '$2y$') && !str_starts_with($hashedPassword, '$2a$'))) {
+                $hashedPassword = password_hash($data['employeeId'], PASSWORD_BCRYPT, ['cost' => 12]);
+            }
+            
+            // Set role_id based on position (Staff and Driver get Employee role = 1)
+            $roleId = 1; // Default: Employee role (can access employee portal)
+            // Staff and Driver positions get Employee role (role_id = 1)
+            if (in_array(strtolower($data['position']), ['staff', 'driver'])) {
+                $roleId = 1; // Employee role
+            }
+            
             $sql = "INSERT INTO employees (
                 employee_no, rfid_number, first_name, middle_name, last_name, dob,
                 place_of_birth, sex, civil_status, contact_number, email,
                 citizenship, position, address, base_salary,
-                sss_number, pagibig_number, philhealth_number, branch_manager, photo_path
+                sss_number, pagibig_number, philhealth_number, branch_manager, photo_path, password, role_id
             ) VALUES (
                 :employeeId, :rfidNumber, :firstName, :middleName, :lastName, :dob,
                 :placeOfBirth, :sex, :civilStatus, :contactNumber, :email,
                 :citizenship, :position, :address, :baseSalary,
-                :sssNumber, :pagibigNumber, :philhealthNumber, :branchManager, :photo_path
+                :sssNumber, :pagibigNumber, :philhealthNumber, :branchManager, :photo_path, :password, :roleId
             )";
         }
 
@@ -341,6 +358,12 @@ if ($method === 'POST') {
 
         if ($photoPath || !$existing) {
             $stmt->bindValue(":photo_path", $photoPath ?? null);
+        }
+        
+        // Bind password and role_id only for new employees
+        if (!$existing) {
+            $stmt->bindValue(":password", $hashedPassword ?? null);
+            $stmt->bindValue(":roleId", $roleId ?? 1);
         }
 
         $stmt->execute();

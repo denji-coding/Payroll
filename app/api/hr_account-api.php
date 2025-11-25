@@ -137,8 +137,8 @@ function addHr($conn) {
             hr_email, hr_position, hr_rfid_number, hr_dob, hr_place_of_birth, 
             hr_sex, hr_civil_status, hr_contact_number, hr_citizenship, hr_blood_type, 
             hr_address, hr_base_salary, hr_sss_number, hr_pagibig_number, hr_philhealth_number, 
-            hr_password
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            hr_password, role_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $stmt->execute([
             sanitize($_POST['employeeId']),
@@ -161,7 +161,8 @@ function addHr($conn) {
             sanitize($_POST['sssNumber']),
             sanitize($_POST['pagibigNumber']),
             sanitize($_POST['philhealthNumber']),
-            $defaultPassword
+            $defaultPassword,
+            $roleId
         ]);
 
         // Send welcome email to HR

@@ -233,11 +233,12 @@ if ($method === 'POST') {
         
         if ($credit) {
             $available = $credit['default_allowed'] - $credit['taken'];
-            if ($available < $duration) {
+            // Check if at least 1 credit is available (not based on duration)
+            if ($available < 1) {
                 http_response_code(400);
                 echo json_encode([
                     'status' => 'error', 
-                    'message' => "Insufficient leave credits. Available: {$available} days, Requested: {$duration} days."
+                    'message' => "Insufficient leave credits. Available: {$available} credit(s)."
                 ]);
                 exit;
             }
@@ -279,13 +280,49 @@ if ($method === 'POST') {
             $defaultStmt->execute([':type_id' => $leaveTypeId]);
             $defaultAllowed = $defaultStmt->fetchColumn();
             
-            if ($defaultAllowed < $duration) {
+            // Check if at least 1 credit is available
+            if ($defaultAllowed < 1) {
                 http_response_code(400);
                 echo json_encode([
                     'status' => 'error', 
-                    'message' => "Insufficient leave credits. Available: {$defaultAllowed} days, Requested: {$duration} days."
+                    'message' => "Insufficient leave credits. Available: {$defaultAllowed} credit(s)."
                 ]);
                 exit;
+            }
+        }
+        
+        // ✅ Deduct 1 credit per application (not based on duration)
+        if ($leaveTypeId) {
+            if ($user_type === 'employee') {
+                $deductStmt = $db->getConnection()->prepare("
+                    UPDATE leave_credits 
+                    SET taken = taken + 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE employee_id = :user_id AND leave_type_id = :type_id AND user_type = 'employee'
+                ");
+                $deductStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            } elseif ($user_type === 'manager') {
+                $deductStmt = $db->getConnection()->prepare("
+                    UPDATE leave_credits 
+                    SET taken = taken + 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE manager_id = :user_id AND leave_type_id = :type_id AND user_type = 'manager'
+                ");
+                $deductStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            } elseif ($user_type === 'hr') {
+                $deductStmt = $db->getConnection()->prepare("
+                    UPDATE leave_credits 
+                    SET taken = taken + 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE hr_id = :user_id AND leave_type_id = :type_id AND user_type = 'hr'
+                ");
+                $deductStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
             }
         }
     }
@@ -398,18 +435,33 @@ if ($method === 'DELETE') {
         exit;
     }
 
-    // Build check query based on user type
+    // First, get the leave details to restore credits
     if ($user_type === 'employee') {
+        $leaveStmt = $db->getConnection()->prepare("
+            SELECT leave_type FROM leaves 
+            WHERE id = :id AND employee_id = :user_id AND applicant_type = 'employee' AND status = 'Pending'
+        ");
+        $leaveStmt->execute([':id' => $id, ':user_id' => $user_id]);
         $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND employee_id = :user_id AND applicant_type = 'employee' AND status = 'Pending'", [
             ':id' => $id, ':user_id' => $user_id
         ]);
         $deleteQuery = "DELETE FROM leaves WHERE id = :id AND employee_id = :user_id";
     } elseif ($user_type === 'manager') {
+        $leaveStmt = $db->getConnection()->prepare("
+            SELECT leave_type FROM leaves 
+            WHERE id = :id AND applicant_manager_id = :user_id AND applicant_type = 'manager' AND status = 'Pending'
+        ");
+        $leaveStmt->execute([':id' => $id, ':user_id' => $user_id]);
         $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND applicant_manager_id = :user_id AND applicant_type = 'manager' AND status = 'Pending'", [
             ':id' => $id, ':user_id' => $user_id
         ]);
         $deleteQuery = "DELETE FROM leaves WHERE id = :id AND applicant_manager_id = :user_id";
     } elseif ($user_type === 'hr') {
+        $leaveStmt = $db->getConnection()->prepare("
+            SELECT leave_type FROM leaves 
+            WHERE id = :id AND applicant_hr_id = :user_id AND applicant_type = 'hr' AND status = 'Pending'
+        ");
+        $leaveStmt->execute([':id' => $id, ':user_id' => $user_id]);
         $check = $db->query("SELECT 1 FROM leaves WHERE id = :id AND applicant_hr_id = :user_id AND applicant_type = 'hr' AND status = 'Pending'", [
             ':id' => $id, ':user_id' => $user_id
         ]);
@@ -420,6 +472,54 @@ if ($method === 'DELETE') {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Cannot delete this leave']);
         exit;
+    }
+
+    // Restore 1 credit when deleting pending leave
+    $leaveData = $leaveStmt->fetch(PDO::FETCH_ASSOC);
+    if ($leaveData) {
+        $leaveTypeMapping = [
+            'Sick Leave' => 1,
+            'Emergency Leave' => 2,
+            'Vacation Leave' => 3,
+            'Personal Leave' => 4,
+            'Maternity/Paternity Leave' => 5
+        ];
+        $leaveTypeId = $leaveTypeMapping[$leaveData['leave_type']] ?? null;
+        
+        if ($leaveTypeId) {
+            // Restore 1 credit when deleting pending leave
+            if ($user_type === 'employee') {
+                $restoreStmt = $db->getConnection()->prepare("
+                    UPDATE leave_credits 
+                    SET taken = GREATEST(0, taken - 1), updated_at = CURRENT_TIMESTAMP
+                    WHERE employee_id = :user_id AND leave_type_id = :type_id AND user_type = 'employee'
+                ");
+                $restoreStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            } elseif ($user_type === 'manager') {
+                $restoreStmt = $db->getConnection()->prepare("
+                    UPDATE leave_credits 
+                    SET taken = GREATEST(0, taken - 1), updated_at = CURRENT_TIMESTAMP
+                    WHERE manager_id = :user_id AND leave_type_id = :type_id AND user_type = 'manager'
+                ");
+                $restoreStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            } elseif ($user_type === 'hr') {
+                $restoreStmt = $db->getConnection()->prepare("
+                    UPDATE leave_credits 
+                    SET taken = GREATEST(0, taken - 1), updated_at = CURRENT_TIMESTAMP
+                    WHERE hr_id = :user_id AND leave_type_id = :type_id AND user_type = 'hr'
+                ");
+                $restoreStmt->execute([
+                    ':user_id' => $user_id,
+                    ':type_id' => $leaveTypeId
+                ]);
+            }
+        }
     }
 
     $delete = $db->query($deleteQuery, [

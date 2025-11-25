@@ -52,22 +52,96 @@ try {
     // Aggregate counts
     // Total Employees (fallback safe)
     try {
-        $totalEmployees = (int)$conn->query("SELECT COUNT(*) FROM employees")->fetchColumn();
+        $totalEmployees = (int)$conn->query("SELECT COUNT(*) FROM employees WHERE deleted_at IS NULL AND approved_by_manager = 1")->fetchColumn();
     } catch (Throwable $e) {
         $totalEmployees = 0;
     }
 
     // Total Managers: try managers table; fallback to employees with position like manager
     try {
-        $totalManagers = (int)$conn->query("SELECT COUNT(*) FROM managers")->fetchColumn();
+        $totalManagers = (int)$conn->query("SELECT COUNT(*) FROM managers WHERE deleted_at IS NULL")->fetchColumn();
     } catch (Throwable $e) {
         try {
-            $stmtMgr = $conn->prepare("SELECT COUNT(*) FROM employees WHERE LOWER(position) LIKE '%manager%'");
+            $stmtMgr = $conn->prepare("SELECT COUNT(*) FROM employees WHERE LOWER(position) LIKE '%manager%' AND deleted_at IS NULL");
             $stmtMgr->execute();
             $totalManagers = (int)$stmtMgr->fetchColumn();
         } catch (Throwable $e2) {
             $totalManagers = 0;
         }
+    }
+    
+    // Total HR/Admins
+    try {
+        $totalHR = (int)$conn->query("SELECT COUNT(*) FROM admins WHERE deleted_at IS NULL")->fetchColumn();
+    } catch (Throwable $e) {
+        $totalHR = 0;
+    }
+    
+    // Total active users (employees + managers + HR)
+    $totalActiveUsers = $totalEmployees + $totalManagers + $totalHR;
+    
+    // Today's date
+    $today = date('Y-m-d');
+    
+    // Get today's attendance statistics
+    $presentToday = 0;
+    $lateToday = 0;
+    $absentToday = 0;
+    
+    try {
+        // Count Present: Has morning_in for today (or status = 'Present')
+        $presentStmt = $conn->prepare("
+            SELECT COUNT(DISTINCT 
+                CASE 
+                    WHEN employee_id IS NOT NULL THEN CONCAT('emp_', employee_id)
+                    WHEN manager_id IS NOT NULL THEN CONCAT('mgr_', manager_id)
+                    WHEN hr_id IS NOT NULL THEN CONCAT('hr_', hr_id)
+                END
+            ) as present_count
+            FROM attendance 
+            WHERE date = :today 
+            AND (morning_in IS NOT NULL OR status = 'Present')
+        ");
+        $presentStmt->execute([':today' => $today]);
+        $presentToday = (int)$presentStmt->fetchColumn();
+        
+        // Count Late: Status = 'Late' OR check if morning_in is late based on schedule
+        // For now, we'll use status = 'Late' or morning_in > 08:00:00 as a general threshold
+        // (In a more sophisticated system, we'd join with schedules table to get per-user scheduled times)
+        $lateStmt = $conn->prepare("
+            SELECT COUNT(DISTINCT 
+                CASE 
+                    WHEN employee_id IS NOT NULL THEN CONCAT('emp_', employee_id)
+                    WHEN manager_id IS NOT NULL THEN CONCAT('mgr_', manager_id)
+                    WHEN hr_id IS NOT NULL THEN CONCAT('hr_', hr_id)
+                END
+            ) as late_count
+            FROM attendance 
+            WHERE date = :today 
+            AND (
+                status = 'Late' 
+                OR (morning_in IS NOT NULL AND morning_in > '08:15:00')
+            )
+        ");
+        $lateStmt->execute([':today' => $today]);
+        $lateToday = (int)$lateStmt->fetchColumn();
+        
+        // Calculate Absent: Total active users - Present
+        $absentToday = max(0, $totalActiveUsers - $presentToday);
+        
+        // Calculate percentage
+        $presentPercentage = $totalActiveUsers > 0 ? round(($presentToday / $totalActiveUsers) * 100) : 0;
+        $latePercentage = $totalActiveUsers > 0 ? round(($lateToday / $totalActiveUsers) * 100) : 0;
+        $absentPercentage = $totalActiveUsers > 0 ? round(($absentToday / $totalActiveUsers) * 100) : 0;
+        
+    } catch (Throwable $e) {
+        error_log("Attendance stats error: " . $e->getMessage());
+        $presentToday = 0;
+        $lateToday = 0;
+        $absentToday = 0;
+        $presentPercentage = 0;
+        $latePercentage = 0;
+        $absentPercentage = 0;
     }
 
 } catch (PDOException $e) {
@@ -130,8 +204,8 @@ try {
                     data-aos-duration="500">
                 <div class="-mt-3">
                     <span class="text-sm -mt-2 font-medium text-[#396A39]">Present Today</span>
-                    <p class="text-2xl font-bold mt-2">0</p>
-                    <span class="text-xs text-gray-500">0% of employees</span>
+                    <p class="text-2xl font-bold mt-2"><?= $presentToday ?></p>
+                    <span class="text-xs text-gray-500"><?= $presentPercentage ?>% of active users</span>
                 </div>
                     <i class="bi bi-person-check absolute top-2 right-3 text-green-600"></i>
                 </div>
@@ -142,8 +216,8 @@ try {
                     data-aos-duration="500">
                 <div class="-mt-3">
                     <span class="text-sm -mt-2 font-medium text-[#396A39]">Late Today</span>
-                    <p class="text-2xl font-bold mt-2">0</p>
-                    <span class="text-xs text-gray-500">0% of employees</span>
+                    <p class="text-2xl font-bold mt-2"><?= $lateToday ?></p>
+                    <span class="text-xs text-gray-500"><?= $latePercentage ?>% of active users</span>
                 </div>
                     <i class="bi bi-clock absolute top-2 right-3 text-green-600"></i>
                 </div>
@@ -154,8 +228,8 @@ try {
                     data-aos-duration="500">
                 <div class="-mt-3">
                     <span class="text-sm -mt-2 font-medium text-[#396A39]">Absent Today</span>
-                    <p class="text-2xl font-bold mt-2">3</p>
-                    <span class="text-xs text-gray-500">100% of employees</span>
+                    <p class="text-2xl font-bold mt-2"><?= $absentToday ?></p>
+                    <span class="text-xs text-gray-500"><?= $absentPercentage ?>% of active users</span>
                 </div>
                     <i class="bi bi-person-x absolute top-2 right-3 text-green-600"></i>
                 </div>

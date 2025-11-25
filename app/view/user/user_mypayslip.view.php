@@ -14,13 +14,13 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
 
 <div class="flex min-h-screen overflow-hidden <?= $isMobile ? 'bg-gray-100' : '' ?>">    
 
-    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-all duration-300 ease-in-out ">
+    <main id="mainContent" class="flex-1 p-3 sm:p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out md:ml-64">
 
         <?php require_once views_path("partials/user_sidebar"); ?>
 
-        <div class="mt-6">
-            <span class="text-2xl font-bold tracking-tight">My Payslips</span>
-            <p class="text-gray-600">A detailed summary of your salary, deductions, and net pay for the selected period.</p>
+        <div class="mb-4 md:mb-6 pt-2 sm:pt-4">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-800">My Payslips</h1>
+            <p class="text-sm sm:text-base text-gray-600 mt-1 md:mt-2">A detailed summary of your salary, deductions, and net pay for the selected period.</p>
         </div>
 
         <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">
@@ -169,6 +169,32 @@ $isMobile = '<script>document.write(window.innerWidth < 768 ? "true" : "false");
       outline: none;
       box-shadow: none;
   }
+
+/* Responsive adjustments for payslip page */
+@media (max-width: 767px) {
+    main#mainContent {
+        margin-left: 0 !important;
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    /* Ensure heading is visible on mobile */
+    main#mainContent > div:first-of-type {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent:not(.ml-\[64px\]) {
+        margin-left: 256px;
+    }
+}
+
+/* Make sure heading is always visible */
+h1.text-xl {
+    display: block !important;
+    visibility: visible !important;
+}
 </style>
 
 <!-- Modal markup -->

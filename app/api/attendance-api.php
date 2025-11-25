@@ -438,7 +438,7 @@ if ($method === 'GET') {
                     <td class="py-3 text-sm text-center px-4"><?= $record['morning_out'] ? date('h:i A', strtotime($record['morning_out'])) : '--:--' ?></td>
                     <td class="py-3 text-sm text-center px-4"><?= $record['afternoon_in'] ? date('h:i A', strtotime($record['afternoon_in'])) : '--:--' ?></td>
                     <td class="py-3 text-sm text-center px-4"><?= $record['afternoon_out'] ? date('h:i A', strtotime($record['afternoon_out'])) : '--:--' ?></td>
-                    <td class="py-3 px-4 text-sm text-center"><?= htmlspecialchars(date('F j, Y', strtotime($record['date']))) ?></td>
+                    <td class="py-3 px-4 text-sm text-center"><?= htmlspecialchars(date('d-M-Y', strtotime($record['date']))) ?></td>
                 </tr>
                 <?php
             }

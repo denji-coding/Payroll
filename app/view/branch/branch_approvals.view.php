@@ -32,7 +32,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                     >
                     <button
                         id="clearSearch"
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 hidden"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 cursor-pointer transition-colors hidden"
                         aria-label="Clear search"
                         type="button"
                     >
@@ -42,7 +42,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
             </div>
 
             <div class="relative w-full max-h-[calc(100vh-220px)] overflow-y-auto">
-                  <table class="min-w-full divide-y divide-gray-200 text-sm">
+                  <table id="employeeTable" class="min-w-full divide-y divide-gray-200 text-sm">
                       <thead>
                           <tr>
                               <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Photo</th>
@@ -115,10 +115,13 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                                   </tr>
                               <?php endforeach; ?>
                           <?php else: ?>
-                              <tr>
+                              <tr id="noEmployeesRow">
                                   <td colspan="7" class="text-center px-6 py-4 text-gray-500">No employees found.</td>
                               </tr>
                           <?php endif; ?>
+                          <tr id="noSearchResults" style="display: none;">
+                              <td colspan="7" class="text-center px-6 py-4 text-gray-500">No search results found.</td>
+                          </tr>
                       </tbody>
                   </table>
               </div>
@@ -129,6 +132,65 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Search functionality
+  const searchInput = document.getElementById('employeeSearch');
+  const clearBtn = document.getElementById('clearSearch');
+  const table = document.getElementById('employeeTable');
+  const noEmployeesRow = document.getElementById('noEmployeesRow');
+  const noSearchResults = document.getElementById('noSearchResults');
+
+  if (searchInput && table) {
+    searchInput.addEventListener('input', () => {
+      // Show/hide clear button
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !searchInput.value);
+      }
+
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const tbody = table.querySelector('tbody');
+      
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => 
+        row.id !== 'noEmployeesRow' && row.id !== 'noSearchResults'
+      );
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        const match = searchTerm === '' || rowText.includes(searchTerm);
+        row.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      });
+
+      // Show/hide "no search results" message
+      if (noSearchResults) {
+        if (searchTerm !== '' && visibleCount === 0) {
+          noSearchResults.style.display = '';
+          // Hide the original "no employees" row when searching
+          if (noEmployeesRow) {
+            noEmployeesRow.style.display = 'none';
+          }
+        } else {
+          noSearchResults.style.display = 'none';
+          // Show the original "no employees" row if no search and no data
+          if (noEmployeesRow && searchTerm === '') {
+            noEmployeesRow.style.display = rows.length === 0 ? '' : 'none';
+          }
+        }
+      }
+    });
+  }
+
+  if (clearBtn && searchInput) {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      searchInput.dispatchEvent(new Event('input'));
+      searchInput.focus();
+    });
+  }
+
   // Approve buttons
   document.querySelectorAll('.approve-btn').forEach(btn => {
     btn.addEventListener('click', () => {

@@ -147,20 +147,83 @@ try {
 /* Show dropdown when not hidden */
 .custom-dropdown-list:not(.hidden) {
     display: block !important;
+    }
+}
+
+/* Mobile-specific fixes for HR Management heading visibility */
+@media (max-width: 767px) {
+    /* Override sidebar padding - must override sidebar CSS which sets padding-top: var(--mobile-navbar-height) */
+    body main#mainContent {
+        padding-top: 0 !important; /* Remove sidebar padding, we use spacer div instead */
+        position: relative !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure first container has padding */
+    body main#mainContent > div.space-y-4,
+    body main#mainContent > div.space-y-6,
+    body main#mainContent > div:first-child {
+        padding-top: 1rem !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Force heading visibility with very specific selector */
+    body main#mainContent h1.text-xl,
+    body main#mainContent h1 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0.5rem !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        position: relative !important;
+        z-index: 10 !important;
+        height: auto !important;
+        min-height: 2.5rem !important;
+        line-height: 1.5 !important;
+        color: #133913 !important;
+        background-color: transparent !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        transform: none !important;
+        clip: auto !important;
+        clip-path: none !important;
+    }
+    
+    /* Ensure parent div doesn't hide it */
+    body main#mainContent > div > div:first-child > div:first-child {
+        display: block !important;
+        visibility: visible !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        overflow: visible !important;
+    }
+}
+
+@media (min-width: 768px) {
+    body main#mainContent {
+        padding-top: 0 !important;
+    }
 }
 </style>
 
-<main id="mainContent" class="ml-[256px] p-4 md:p-6 bg-[#f8fbf8] min-h-screen">
-    <div class="space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<main id="mainContent" class="ml-0 md:ml-[256px] p-3 sm:p-4 md:p-6 bg-[#f8fbf8] min-h-screen" style="scroll-margin-top: calc(var(--mobile-navbar-height, 3.5rem) + 1rem);">
+    <!-- Mobile Spacer for Navbar - ensures content starts below navbar -->
+    <div class="block md:hidden" style="height: calc(var(--mobile-navbar-height, 3.5rem) + 1rem); min-height: calc(var(--mobile-navbar-height, 3.5rem) + 1rem);"></div>
+    
+    <div class="space-y-4 md:space-y-6">
+            <!-- Page Title and Add Button -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
                 <div>
-                        <span class="text-2xl font-bold tracking-tight text-[#133913]">HR Management</span>
-                        <p class="text-[#478547]">Manage HR personnel</p>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-[#133913]" style="display: block !important; visibility: visible !important; opacity: 1 !important; margin: 0 !important; padding: 0 !important;">HR Management</h1>
+                        <p class="text-sm sm:text-base text-[#478547] mt-1">Manage HR personnel</p>
                 </div>
                 
                 <div>
                     <button id="showAddEmployeeModal" 
-                            class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " 
+                            class="btn btn-success d-inline-flex align-items-center h-10 px-3 sm:px-4 py-2 text-sm sm:text-base w-full sm:w-auto" 
                             data-bs-toggle="modal" 
                             data-bs-target="#addHrAccountModal">
                     <i class="fas fa-plus me-2"></i>
@@ -608,11 +671,31 @@ document.addEventListener("DOMContentLoaded", () => {
         setDropdownValue('editHrCitizenshipDropdownSelected', 'h_edit_citizenship', data.hr_citizenship);
         setDropdownValue('editHrBloodTypeDropdownSelected', 'h_edit_bloodType', data.hr_blood_type);
 
-        // Set photo preview
-        if (data.hr_photo_path) {
-          document.getElementById('edit_hrPhotoPreview').src = '../public/' + data.hr_photo_path;
-          document.getElementById('edit_hrPhotoPreview').style.display = 'block';
-          document.getElementById('edit_photoPlaceholder').style.display = 'none';
+        // Reset and set photo preview
+        const photoPreview = document.getElementById('edit_hrPhotoPreview');
+        const photoPlaceholder = document.getElementById('edit_photoPlaceholder');
+        const photoInput = document.getElementById('hrEditPhoto');
+        
+        // Reset file input
+        if (photoInput) {
+          photoInput.value = '';
+        }
+        
+        // Reset photo preview
+        if (photoPreview && photoPlaceholder) {
+          if (data.hr_photo_path) {
+            photoPreview.src = '../public/' + data.hr_photo_path;
+            photoPreview.style.display = 'block';
+            photoPlaceholder.style.display = 'none';
+          } else {
+            // Show default image based on sex
+            const defaultImg = data.hr_sex?.toLowerCase() === 'female'
+              ? '../public/assets/image/default_women.png'
+              : '../public/assets/image/default_men.png';
+            photoPreview.src = defaultImg;
+            photoPreview.style.display = 'block';
+            photoPlaceholder.style.display = 'none';
+          }
         }
 
       } catch (e) {
@@ -1137,6 +1220,31 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log('Modal closed:', e.target.id);
     // Reset all dropdowns when modal closes
     resetAllDropdowns();
+    
+    // Reset edit HR photo preview when edit modal closes
+    if (e.target.id === 'updateHrAccountModal') {
+      const photoPreview = document.getElementById('edit_hrPhotoPreview');
+      const photoPlaceholder = document.getElementById('edit_photoPlaceholder');
+      const photoInput = document.getElementById('hrEditPhoto');
+      const photoFileName = document.getElementById('edit_photoFileName');
+      
+      // Reset file input
+      if (photoInput) {
+        photoInput.value = '';
+      }
+      
+      // Reset photo preview to placeholder
+      if (photoPreview && photoPlaceholder) {
+        photoPreview.style.display = 'none';
+        photoPlaceholder.style.display = 'flex';
+        photoPreview.src = '';
+      }
+      
+      // Clear file name display
+      if (photoFileName) {
+        photoFileName.textContent = '';
+      }
+    }
   });
 
   // Function to attach event listeners to citizenship dropdowns after dynamic loading
@@ -1331,11 +1439,31 @@ document.addEventListener("DOMContentLoaded", () => {
       setDropdownValue('editHrCitizenshipDropdownSelected', 'h_edit_citizenship', hrData.hr_citizenship);
       setDropdownValue('editHrBloodTypeDropdownSelected', 'h_edit_bloodType', hrData.hr_blood_type);
 
-      // Set photo preview
-      if (hrData.hr_photo_path) {
-        document.getElementById('edit_hrPhotoPreview').src = '../public/' + hrData.hr_photo_path;
-        document.getElementById('edit_hrPhotoPreview').style.display = 'block';
-        document.getElementById('edit_photoPlaceholder').style.display = 'none';
+      // Reset and set photo preview
+      const photoPreview = document.getElementById('edit_hrPhotoPreview');
+      const photoPlaceholder = document.getElementById('edit_photoPlaceholder');
+      const photoInput = document.getElementById('hrEditPhoto');
+      
+      // Reset file input
+      if (photoInput) {
+        photoInput.value = '';
+      }
+      
+      // Reset photo preview
+      if (photoPreview && photoPlaceholder) {
+        if (hrData.hr_photo_path) {
+          photoPreview.src = '../public/' + hrData.hr_photo_path;
+          photoPreview.style.display = 'block';
+          photoPlaceholder.style.display = 'none';
+        } else {
+          // Show default image based on sex
+          const defaultImg = hrData.hr_sex?.toLowerCase() === 'female'
+            ? '../public/assets/image/default_women.png'
+            : '../public/assets/image/default_men.png';
+          photoPreview.src = defaultImg;
+          photoPreview.style.display = 'block';
+          photoPlaceholder.style.display = 'none';
+        }
       }
 
     } catch (e) {

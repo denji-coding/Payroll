@@ -453,7 +453,10 @@ function updateLeaveCreditsOnApproval($pdo, $leaveId, $action) {
         }
         
         if ($action === 'approve') {
-            // Check if leave credits exist for this employee and leave type
+            // Note: Credits are already deducted when the leave application was submitted
+            // No need to deduct again on approval
+        } elseif ($action === 'reject') {
+            // Restore 1 credit when rejecting a leave (credits are deducted per application, not per day)
             $creditsStmt = $pdo->prepare("
                 SELECT id, taken 
                 FROM leave_credits 
@@ -463,17 +466,8 @@ function updateLeaveCreditsOnApproval($pdo, $leaveId, $action) {
             $credits = $creditsStmt->fetch(PDO::FETCH_ASSOC);
             
             if ($credits) {
-                // Update taken days
-                $newTaken = $credits['taken'] + $leave['duration'];
-                
-                // Check if employee has enough leave credits
-                $leaveTypeStmt = $pdo->prepare("SELECT default_allowed FROM leave_types WHERE id = ?");
-                $leaveTypeStmt->execute([$leaveTypeId]);
-                $leaveType = $leaveTypeStmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($newTaken > $leaveType['default_allowed']) {
-                    throw new Exception('Employee does not have enough leave credits');
-                }
+                // Restore 1 credit (not based on duration)
+                $newTaken = max(0, $credits['taken'] - 1);
                 
                 $updateStmt = $pdo->prepare("
                     UPDATE leave_credits 
@@ -481,37 +475,6 @@ function updateLeaveCreditsOnApproval($pdo, $leaveId, $action) {
                     WHERE id = ?
                 ");
                 $updateStmt->execute([$newTaken, $credits['id']]);
-                
-            } else {
-                // Create new leave credits record
-                $insertStmt = $pdo->prepare("
-                    INSERT INTO leave_credits (employee_id, leave_type_id, taken) 
-                    VALUES (?, ?, ?)
-                ");
-                $insertStmt->execute([$leave['employee_id'], $leaveTypeId, $leave['duration']]);
-            }
-            
-        } elseif ($action === 'reject') {
-            // If rejecting a previously approved leave, decrease taken days
-            if ($leave['status'] === 'Approved') {
-                $creditsStmt = $pdo->prepare("
-                    SELECT id, taken 
-                    FROM leave_credits 
-                    WHERE employee_id = ? AND leave_type_id = ?
-                ");
-                $creditsStmt->execute([$leave['employee_id'], $leaveTypeId]);
-                $credits = $creditsStmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($credits) {
-                    $newTaken = max(0, $credits['taken'] - $leave['duration']);
-                    
-                    $updateStmt = $pdo->prepare("
-                        UPDATE leave_credits 
-                        SET taken = ?, updated_at = CURRENT_TIMESTAMP 
-                        WHERE id = ?
-                    ");
-                    $updateStmt->execute([$newTaken, $credits['id']]);
-                }
             }
         }
         

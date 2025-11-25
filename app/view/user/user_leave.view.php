@@ -152,12 +152,30 @@ $isMobile = false;
     table {
     margin-bottom: 0 !important;
   }
-.fade-in {
-  opacity: 0;
-  transition: opacity 0.5s ease;
+/* Responsive adjustments for leave page */
+@media (max-width: 767px) {
+    main#mainContent {
+        margin-left: 0 !important;
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    /* Ensure heading is visible on mobile */
+    main#mainContent > div:first-of-type {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
 }
-.fade-in.show {
-  opacity: 1;
+
+@media (min-width: 768px) {
+    main#mainContent:not(.ml-\[64px\]) {
+        margin-left: 256px;
+    }
+}
+
+/* Make sure heading is always visible */
+h1.text-xl {
+    display: block !important;
+    visibility: visible !important;
 }
 
 
@@ -302,27 +320,24 @@ $isMobile = false;
 
 
 
-<div class="flex min-h-screen overflow-hidden <?= $isMobile ? 'bg-gray-100' : '' ?>">    
-
-    <div class="flex flex-col lg:flex-row min-h-screen overflow-hidden bg-gray-100">
-
-<main id="mainContent" class="flex-1 p-4 sm:p-6 transition-all duration-300 ease-in-out">
+<div class="flex min-h-screen overflow-hidden bg-gray-100">    
+    <main id="mainContent" class="flex-1 p-3 sm:p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out md:ml-64">
   <?php require_once views_path("partials/user_sidebar"); ?>
 
   <div class="space-y-6 max-w-7xl mx-auto">
     
     <!-- Page Header -->
-    <div class="space-y-1 mt-14 lg:mt-0 animate-fade-in">
-      <span class="text-2xl sm:text-2xl font-bold text-gray-900">Leave Applications</span>
-      <p class="text-sm sm:text-base text-gray-600">View and track your leave requests and remaining days.</p>
+    <div class="mb-4 md:mb-6 pt-2 sm:pt-4">
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-800">Leave Applications</h1>
+      <p class="text-sm sm:text-base text-gray-600 mt-1 md:mt-2">View and track your leave requests and remaining days.</p>
     </div>
 
 
 
     <!-- 📦 Leave Credits Display -->
 <div id="leaveCredits">
-  <div class="animate-fade-in">
-      <span class="text-base sm:text-lg font-semibold text-gray-800 mb-2 block">Leave Credits</span>
+  <div>
+      <span class="text-base sm:text-lg font-semibold text-gray-800 mb-2 block">Leave Records</span>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           <?php foreach ($leaveSummary as $type => $data): 
               $remaining = max(0, $data['allowed'] - $data['taken']);
@@ -330,7 +345,7 @@ $isMobile = false;
           ?>
           <div class="bg-white rounded-lg shadow-sm p-3 hover:shadow-md transition text-center border-l-4 <?= $borderColor ?>">
               <span class="text-xs sm:text-sm font-medium text-gray-600"><?= htmlspecialchars($type) ?></span>
-              <p class="text-lg sm:text-base mt-2 font-bold text-green-600"><?= $remaining ?></p>
+              <p class="text-lg sm:text-base mt-2 font-bold text-green-600"><?= $data['taken'] ?></p>
               <p class="text-xs text-gray-500 mt-1">Used: <?= $data['taken'] ?> / <?= $data['allowed'] ?></p>
           </div>
           <?php endforeach; ?>
@@ -341,7 +356,7 @@ $isMobile = false;
 
 
     <!-- Leave Application Table -->
-    <div class="bg-white rounded-lg shadow p-3 sm:p-4 animate-fade-in">
+    <div class="bg-white rounded-lg shadow p-3 sm:p-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <div>
                     <span class="text-lg sm:text-xl font-semibold">Your Leave Applications</span>
@@ -390,7 +405,9 @@ $isMobile = false;
                                                     <div class="modal-content mx-auto" style="width: 90vh; max-height: 80vh; overflow-y: auto;">
                                                         <div class="modal-header bg-success text-white">
                                                             <h5 class="modal-title">Leave Details</h5>
-                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                                                              <span aria-hidden="true">&times;</span>
+                                                            </button>
                                                         </div>
 
                                                         <div class="modal-body px-3 py-3 d-flex flex-column gap-3">
@@ -531,7 +548,6 @@ $isMobile = false;
 </div>
 </main>
 </div>
-</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -564,9 +580,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const defaultOpts = {
+  // Options for leave types that allow past dates (Sick Leave)
+  const sickOpts = {
     dateFormat: 'Y-m-d',
     disableMobile: true,
+    disable: [d => d > today], // Disable future dates only
     onChange: sel => {
       s = sel[0];
       fpEnd.set('minDate', s);
@@ -575,9 +593,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const endOpts = {
+  const sickEndOpts = {
     dateFormat: 'Y-m-d',
     disableMobile: true,
+    disable: [d => d > today], // Disable future dates only
     onChange: sel => {
       e = sel[0];
       markDates();
@@ -585,11 +604,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const sickOpts = { ...defaultOpts, disable: [d => d > today] };
-  const sickEndOpts = { ...endOpts, disable: [d => d > today] };
+  // Options for leave types that disable past dates (Emergency, Vacation, Personal, Maternity/Paternity)
+  const futureOnlyOpts = {
+    dateFormat: 'Y-m-d',
+    disableMobile: true,
+    minDate: 'today', // Disable past dates
+    onChange: sel => {
+      s = sel[0];
+      fpEnd.set('minDate', s);
+      markDates();
+      calc();
+    }
+  };
 
-  let fpStart = flatpickr(sd, defaultOpts);
-  let fpEnd = flatpickr(ed, endOpts);
+  const futureOnlyEndOpts = {
+    dateFormat: 'Y-m-d',
+    disableMobile: true,
+    minDate: 'today', // Disable past dates
+    onChange: sel => {
+      e = sel[0];
+      markDates();
+      calc();
+    }
+  };
+
+  let fpStart = flatpickr(sd, futureOnlyOpts);
+  let fpEnd = flatpickr(ed, futureOnlyEndOpts);
 
   typeEl.addEventListener('change', () => {
     fpStart.destroy();
@@ -601,8 +641,9 @@ document.addEventListener('DOMContentLoaded', () => {
       fpStart = flatpickr(sd, sickOpts);
       fpEnd = flatpickr(ed, sickEndOpts);
     } else {
-      fpStart = flatpickr(sd, defaultOpts);
-      fpEnd = flatpickr(ed, endOpts);
+      // Emergency, Vacation, Personal, Maternity/Paternity - disable past dates
+      fpStart = flatpickr(sd, futureOnlyOpts);
+      fpEnd = flatpickr(ed, futureOnlyEndOpts);
     }
     updateFields();
   });
@@ -625,8 +666,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function calc() {
     if (s && e && e >= s) {
-      const diff = Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
-      durEl.value = diff;
+      // Count only weekdays (Monday-Friday), excluding weekends
+      let count = 0;
+      const currentDate = new Date(s);
+      const endDate = new Date(e);
+      
+      // Iterate through each day from start to end
+      while (currentDate <= endDate) {
+        const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+        // Only count if it's not Saturday (6) or Sunday (0)
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          count++;
+        }
+        // Move to next day
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      durEl.value = count;
     } else {
       durEl.value = 0;
     }

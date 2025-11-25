@@ -26,7 +26,7 @@
                 <div class="relative inline-block" id="datepicker-container">
                     <!-- Hidden input for datepicker -->
                     <input type="text" id="datepicker-input" class="hidden" />
-                    
+
                     <!-- Button to trigger datepicker -->
                     <button 
                         type="button" 
@@ -37,8 +37,8 @@
                         </svg>
                         Select Date
                     </button>
-                </div>
-            </div>
+    </div>
+</div>
 
             <!-- Selected Date Display -->
             <div class="mt-6 text-center">
@@ -52,7 +52,7 @@
     <script src="node_modules/flowbite/dist/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite-datepicker@1.2.0/dist/js/flowbite-datepicker.min.js"></script>
 
-    <script>
+<script>
         // Get elements
         const datepickerInput = document.getElementById('datepicker-input');
         const datepickerButton = document.getElementById('datepicker-button');
@@ -212,7 +212,7 @@
 
             // Get picker element (try multiple ways to find it)
             const pickerElement = datepicker.picker?.element || document.querySelector('.datepicker-picker');
-            
+
             // Check if click is on the button or inside the picker
             const clickedButton = datepickerButton.contains(e.target) || e.target === datepickerButton;
             const clickedPicker = pickerElement && (pickerElement.contains(e.target) || pickerElement === e.target);
@@ -266,7 +266,7 @@
                 `;
             }
         }
-    </script>
+</script>
 
     <style>
         /* Container for button and datepicker */

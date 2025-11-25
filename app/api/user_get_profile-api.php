@@ -1,10 +1,10 @@
 <?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../core/database.php';
-require_once __DIR__ . '/../core/session_helper.php';
+require_once __DIR__ . '/../core/secure_session.php';
 
-// Start session to get user data
-session_start();
+// Start secure session to get user data
+startSecureSession();
 
 // Check if user is logged in (employee, manager, or HR)
 $isEmployee = isset($_SESSION['employee_no']) || isset($_SESSION['employee_id']);
@@ -95,8 +95,8 @@ try {
     // Fetch Employee data
     else {
         $employeeNo = $_SESSION['employee_no'] ?? $_SESSION['employee_id'];
-        $stmt = $conn->prepare("SELECT first_name, middle_name, last_name, email, contact_number, position, address, dob, place_of_birth, sex, civil_status, citizenship, blood_type, photo_path, created_at, updated_at FROM employees WHERE employee_no = :employee_no OR id = :employee_id");
-        $stmt->execute([':employee_no' => $employeeNo, ':employee_id' => $employeeNo]);
+        $stmt = $conn->prepare("SELECT first_name, middle_name, last_name, email, contact_number, position, address, dob, place_of_birth, sex, civil_status, citizenship, blood_type, photo_path, created_at, updated_at FROM employees WHERE employee_no = :employee_no1 OR id = :employee_id");
+        $stmt->execute([':employee_no1' => $employeeNo, ':employee_id' => $employeeNo]);
         $userData = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($userData) {

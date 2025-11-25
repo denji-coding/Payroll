@@ -5,6 +5,24 @@ require_once views_path("owner/owner_sidebar");
 ?>
 
 <style>
+@media (max-width: 767px) {
+    main#mainContent {
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    header h1 {
+        display: block !important;
+        visibility: visible !important;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent {
+        padding-top: 0 !important;
+    }
+}
+
     /* Ensure close button is visible */
 .btn-close {
     background: transparent;
@@ -32,15 +50,14 @@ require_once views_path("owner/owner_sidebar");
     box-shadow: none;
 }
 </style>
-<!-- h-[calc(100vh-3rem)] overflow-hidden p-4 md:p-6 sm:ml-64 mt-12 bg-[#f8fbf8] -->
-<main id="mainContent" class="h-[calc(100vh-3rem)] overflow-hidden p-4 md:p-6 sm:ml-64 bg-[#f8fbf8] min-h-screen">
-    <header class="mb-6">
-        <div class="flex items-center justify-between">
+<main id="mainContent" class="ml-0 md:ml-[256px] p-3 sm:p-4 md:p-6 bg-[#f8fbf8] min-h-screen">
+    <header class="mb-4 md:mb-6 pt-2 sm:pt-0">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <div>
-                <span class="text-2xl font-bold tracking-tight text-[#133913]">Branches</span>
-                <p class="text-[#478547]">Manage company branches: add, update, delete.</p>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-[#133913] block" style="display: block !important; visibility: visible !important;">Branches</h1>
+                <p class="text-sm sm:text-base text-[#478547] mt-1">Manage company branches: add, update, delete.</p>
             </div>
-            <button id="addBranchBtn" class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " data-bs-toggle="modal" data-bs-target="#addBranchModal">
+            <button id="addBranchBtn" class="btn btn-success d-inline-flex align-items-center h-10 px-3 sm:px-4 py-2 text-sm sm:text-base" data-bs-toggle="modal" data-bs-target="#addBranchModal">
               <i class="fas fa-plus me-2"></i> 
               <span class="font-semibold">Add Branch</span>
             </button>

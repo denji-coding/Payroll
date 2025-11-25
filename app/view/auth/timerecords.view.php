@@ -5,6 +5,23 @@ require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
 ?>
 
+<style>
+/* Flatpickr positioning for date picker button */
+.flatpickr-calendar[data-time-records] {
+    position: absolute !important;
+    top: 100% !important;
+    left: -15px !important;
+    margin-top: 5px !important;
+    z-index: 9999 !important;
+    transform: none !important;
+}
+
+/* Ensure parent container is relative for absolute positioning */
+#datePickerButton {
+    position: relative;
+}
+</style>
+
 <main class="flex-1 overflow-auto p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8] min-h-[calc(100vh-3rem)] h-full">
     <div class="space-y-6 h-full">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -76,8 +93,10 @@ require_once views_path("partials/nav");
                             </div>
                         </div>
                     </div>
-                    <div class="relative">
-                        <button type="button" class="flex h-10 items-center justify-between rounded  border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:ring-offset-2 transition-all duration-200" onclick="openCalendarModal()">
+                    <div class="relative" style="position: relative;">
+                        <!-- Hidden input for Flatpickr -->
+                        <input type="text" id="datePickerInput" class="sr-only" value="<?= htmlspecialchars($_GET['date'] ?? date('Y-m-d')) ?>">
+                        <button type="button" id="datePickerButton" class="flex h-10 items-center justify-between rounded  border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-[#16a249] focus:ring-offset-2 transition-all duration-200 cursor-pointer" style="position: relative;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar mr-2 h-4 w-4">
                                 <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
                                 <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -150,17 +169,17 @@ require_once views_path("partials/nav");
                                                 }
                                             } else {
                                                 // Default image based on gender if available, otherwise use default
-                                                $gender = strtolower($rec['sex'] ?? $rec['gender'] ?? '');
-                                                $defaultImage = in_array($gender, ['male', 'm'])
-                                                    ? '../public/assets/image/default_men.png'
-                                                    : '../public/assets/image/default_women.png';
+                                            $gender = strtolower($rec['sex'] ?? $rec['gender'] ?? '');
+                                            $defaultImage = in_array($gender, ['male', 'm'])
+                                                ? '../public/assets/image/default_men.png'
+                                                : '../public/assets/image/default_women.png';
                                                 $photo = $defaultImage;
                                             }
                                             
                                             $name  = ucwords(strtolower($rec['full_name'] ?? 'Unknown'));
                                             $pos   = $rec['position'] ?? '';
                                             $empNo = $rec['employee_no'] ?? 'N/A';
-                                            $date  = date('Y-m-d', strtotime($rec['date']));
+                                            $date  = date('d-M-Y', strtotime($rec['date']));
                                             $min   = $rec['morning_in']   ? date('h:i A', strtotime($rec['morning_in']))   : '-';
                                             $mout  = $rec['morning_out']  ? date('h:i A', strtotime($rec['morning_out']))  : '-';
                                             $ain   = $rec['afternoon_in'] ? date('h:i A', strtotime($rec['afternoon_in'])) : '-';
@@ -301,39 +320,6 @@ require_once views_path("partials/nav");
     </div>
 </div>
 
-<!-- Calendar Modal -->
-<div id="calendarModalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 opacity-0 transition-opacity duration-500" onclick="closeCalendarModal()"></div>
-<div id="calendarModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="bg-white p-6 rounded-md w-full max-w-md shadow-lg">
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-[#16a249] text-center">Select Date</h2>
-                <button onclick="closeCalendarModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="bi bi-x-lg h-5 w-5"></i>
-                </button>
-            </div>
-            <div class="flex justify-between items-center mb-4">
-                <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full">
-                    <i class="bi bi-chevron-left h-5 w-5"></i>
-                </button>
-                <span id="currentMonth" class="text-lg font-medium text-[#16a249]"></span>
-                <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full">
-                    <i class="bi bi-chevron-right h-5 w-5"></i>
-                </button>
-            </div>
-            <div class="grid grid-cols-7 gap-1 text-center text-sm font-medium text-gray-500 mb-2">
-                <div>Su</div>
-                <div>Mo</div>
-                <div>Tu</div>
-                <div>We</div>
-                <div>Th</div>
-                <div>Fr</div>
-                <div>Sa</div>
-            </div>
-            <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
-        </div>
-    </div>
-</div>
 
 <!-- Export Modal -->
 <div id="exportModalOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 opacity-0 transition-opacity duration-500" onclick="closeExportModal()"></div>
@@ -426,6 +412,9 @@ require_once views_path("partials/nav");
 </div>
 
 <script>
+// Flatpickr initialization for date picker
+let timeRecordsFlatpickr = null;
+
 // Modal Functions
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -728,7 +717,6 @@ async function showAllAttendance() {
             const selectedSpan = document.getElementById('selectedDate');
             if (selectedSpan) selectedSpan.textContent = 'All Dates';
             selectedDateGlobal = null;
-            if (typeof updateCalendar === 'function') updateCalendar();
             updatePagination(data.meta || null);
             // Activate Show All button style
             if (showAllBtn) {
@@ -763,7 +751,6 @@ async function undoShowAll() {
         if (selectedSpan) selectedSpan.textContent = formattedDate;
         
         // Refresh calendar highlight
-        if (typeof updateCalendar === 'function') updateCalendar();
         
         // Fetch today's records
         const yyyy = today.getFullYear();
@@ -955,170 +942,7 @@ async function changePage(delta) {
     }
 }
 
-let currentDate = new Date();
 let selectedDateGlobal = null; // currently selected date (for active highlight)
-
-function openCalendarModal() {
-    const modal = document.getElementById('calendarModal');
-    const overlay = document.getElementById('calendarModalOverlay');
-    
-    if (modal && overlay) {
-        modal.classList.remove('hidden');
-        overlay.classList.remove('hidden');
-        
-        setTimeout(() => {
-            modal.classList.remove('opacity-0', 'scale-75');
-            modal.classList.add('opacity-100', 'scale-100');
-            overlay.classList.add('opacity-100');
-        }, 10);
-        
-        updateCalendar();
-    }
-}
-
-function closeCalendarModal() {
-    const modal = document.getElementById('calendarModal');
-    const overlay = document.getElementById('calendarModalOverlay');
-    
-    if (modal && overlay) {
-        modal.classList.add('opacity-0', 'scale-75');
-        modal.classList.remove('opacity-100', 'scale-100');
-        overlay.classList.remove('opacity-100');
-        
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            overlay.classList.add('hidden');
-        }, 300);
-    }
-}
-
-function updateCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    
-    // Update month display
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
-    
-    // Get first day of month
-    const firstDay = new Date(year, month, 1);
-    const startingDay = firstDay.getDay();
-    
-    // Get last day of month
-    const lastDay = new Date(year, month + 1, 0);
-    const totalDays = lastDay.getDate();
-    
-    // Clear previous calendar
-    const calendarDays = document.getElementById('calendarDays');
-    calendarDays.innerHTML = '';
-    
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < startingDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'p-2';
-        calendarDays.appendChild(emptyCell);
-    }
-    
-    // Add days of the month
-    for (let day = 1; day <= totalDays; day++) {
-        const dayCell = document.createElement('div');
-        dayCell.className = 'p-2 cursor-pointer rounded text-center transition-colors transition-transform duration-150 ease-out hover:bg-[#f2f8f2] hover:-translate-y-0.5 hover:shadow-sm hover:ring-1 hover:ring-[#16a249]/40';
-        dayCell.textContent = day;
-        
-        // Highlight logic for today vs selected date
-        const today = new Date();
-        const isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
-        const isSelected = (selectedDateGlobal &&
-            day === selectedDateGlobal.getDate() &&
-            month === selectedDateGlobal.getMonth() &&
-            year === selectedDateGlobal.getFullYear());
-
-        if (isSelected) {
-            // Active selected date: stronger ring, soft green bg, darker green text
-            dayCell.classList.add('ring-2', 'ring-[#16a249]', 'bg-[#eaf7ea]', 'text-[#0f6b2f]', 'shadow-sm');
-        } else if (isToday) {
-            // Today (not selected): subtle ring and soft background to match hover tone
-            dayCell.classList.add('ring-1', 'ring-[#16a249]/60', 'bg-[#f2f8f2]', 'text-[#16a249]', 'font-semibold');
-        }
-        
-        dayCell.onclick = () => selectDate(day, month, year);
-        calendarDays.appendChild(dayCell);
-    }
-}
-
-function prevMonth() {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    updateCalendar();
-}
-
-function nextMonth() {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    updateCalendar();
-}
-
-async function selectDate(day, month, year) {
-    const selectedDate = new Date(year, month, day);
-    const formattedDate = selectedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    // Reset search mode when selecting a date
-    isSearchMode = false;
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) searchInput.value = '';
-    const clearButton = document.getElementById('clearButton');
-    if (clearButton) clearButton.classList.add('hidden');
-    
-    // Update button text and active state
-    const dateButton = document.querySelector('button[onclick="openCalendarModal()"]');
-    dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
-    document.getElementById('selectedDate').textContent = formattedDate;
-    // Set active selected date and refresh calendar grid highlight
-    selectedDateGlobal = selectedDate;
-    updateCalendar();
-    
-    // Close modal
-    closeCalendarModal();
-    
-    // Fetch rows via AJAX without reloading
-    const yyyy = selectedDate.getFullYear();
-    const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(selectedDate.getDate()).padStart(2, '0');
-    const dateParam = `${yyyy}-${mm}-${dd}`;
-    try {
-        window.__tr_state = { scope: dateParam, page: 1, per_page: 10 };
-        const res = await fetch(`../app/api/timerecords-api.php?date=${dateParam}&page=${window.__tr_state.page}&per_page=${window.__tr_state.per_page}`, {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'same-origin'
-        });
-        const raw = await res.text();
-        let data;
-        try {
-            data = JSON.parse(raw);
-        } catch (e) {
-            console.error('Failed to parse JSON. Raw response:', raw);
-            return;
-        }
-        if (data && data.status === 'success') {
-            const tbody = document.getElementById('attendanceTableBody');
-            tbody.innerHTML = data.html;
-            // Re-apply current status filter
-        filterTableByStatus(currentStatus);
-            updatePagination(data.meta);
-            // Deactivate Show All button style
-            const showAllBtn = document.getElementById('showAllBtn');
-            if (showAllBtn) {
-                showAllBtn.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
-            }
-        } else if (data && data.status === 'error') {
-            console.error('Server error:', data.message || 'Unknown error');
-        }
-    } catch (err) {
-        console.error('Failed to fetch time records:', err);
-    }
-}
 
 // Add status handling functions
 function getStatusStyle(status) {
@@ -1376,22 +1200,121 @@ function getMonthName(month) {
 
 // Initialize with current date
 document.addEventListener('DOMContentLoaded', () => {
-    // Highlight date button and show server-selected date (or today)
-    const dateButton = document.querySelector('button[onclick="openCalendarModal()"]');
-    if (dateButton) {
-    dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
-    }
+    // Initialize Flatpickr
+    const dateInput = document.getElementById('datePickerInput');
+    const dateButton = document.getElementById('datePickerButton');
+    const selectedDateSpan = document.getElementById('selectedDate');
     const initialDate = '<?= htmlspecialchars($_GET['date'] ?? date('Y-m-d')) ?>';
-    const dateObj = new Date(initialDate + 'T00:00:00');
-    const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const selectedSpan = document.getElementById('selectedDate');
-    if (selectedSpan) selectedSpan.textContent = formattedDate;
-    // Initialize active date highlight to the server-provided date
-    selectedDateGlobal = dateObj;
     
-    // Initialize calendar
-    updateCalendar();
-
+    if (dateInput && dateButton) {
+        // Get parent container for positioning
+        const buttonParent = dateButton.parentElement;
+        
+        // Initialize Flatpickr on hidden input
+        timeRecordsFlatpickr = flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            altInput: false,
+            defaultDate: initialDate,
+            disableMobile: true,
+            allowInput: true,
+            clickOpens: false, // Don't open on input click
+            static: false, // Allow positioning
+            appendTo: buttonParent, // Append to parent container
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    const selectedDate = selectedDates[0];
+                    const formattedDate = selectedDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    // Update button text
+                    if (selectedDateSpan) {
+                        selectedDateSpan.textContent = formattedDate;
+                    }
+                    
+                    // Update button active state
+                    dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+                    
+                    // Set selected date global
+                    selectedDateGlobal = selectedDate;
+                    
+                    // Reset search mode
+                    isSearchMode = false;
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) searchInput.value = '';
+                    const clearButton = document.getElementById('clearButton');
+                    if (clearButton) clearButton.classList.add('hidden');
+                    
+                    // Fetch records for selected date
+                    window.__tr_state = { scope: dateStr, page: 1, per_page: 10 };
+                    fetchTimeRecords(dateStr);
+                    
+                    // Deactivate Show All button style
+                    const showAllBtn = document.getElementById('showAllBtn');
+                    if (showAllBtn) {
+                        showAllBtn.classList.remove('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+                    }
+                }
+            }
+        });
+        
+        // Make button trigger Flatpickr
+        dateButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (timeRecordsFlatpickr) {
+                timeRecordsFlatpickr.open();
+                
+                // Position calendar below button after it opens
+                setTimeout(() => {
+                    const calendar = document.querySelector('.flatpickr-calendar');
+                    if (calendar) {
+                        // Move calendar to button's parent if not already there
+                        if (calendar.parentElement !== buttonParent) {
+                            buttonParent.appendChild(calendar);
+                        }
+                        
+                        // Position relative to button
+                        calendar.style.position = 'absolute';
+                        calendar.style.top = '100%';
+                        calendar.style.left = '0';
+                        calendar.style.marginTop = '5px';
+                        calendar.style.marginLeft = '0';
+                        calendar.style.transform = 'none';
+                        calendar.setAttribute('data-time-records', 'true');
+                    }
+                }, 10);
+            }
+        });
+        
+        // Reposition on scroll/resize to keep it below button
+        let repositionCalendar = function() {
+            const calendar = document.querySelector('.flatpickr-calendar[data-time-records]');
+            if (calendar && timeRecordsFlatpickr && timeRecordsFlatpickr.isOpen) {
+                // Ensure it stays in the right parent
+                if (calendar.parentElement !== buttonParent) {
+                    buttonParent.appendChild(calendar);
+                }
+                calendar.style.top = '100%';
+                calendar.style.left = '0';
+            }
+        };
+        
+        window.addEventListener('scroll', repositionCalendar, true);
+        window.addEventListener('resize', repositionCalendar);
+        
+        // Set initial button text and style
+        const dateObj = new Date(initialDate + 'T00:00:00');
+        const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        if (selectedDateSpan) {
+            selectedDateSpan.textContent = formattedDate;
+        }
+        dateButton.classList.add('bg-[#f2f8f2]', 'border-[#16a249]', 'text-[#16a249]', 'ring-2', 'ring-[#16a249]', 'ring-offset-2');
+        selectedDateGlobal = dateObj;
+    }
+    
     // Initialize clear button state
     toggleClearButton();
     
@@ -1564,8 +1487,8 @@ async function performSearch() {
             
             // Apply status filter to search results (client-side, but skip search filtering)
             if (currentStatus !== 'All Status') {
-                filterTableByStatus(currentStatus);
-            }
+    filterTableByStatus(currentStatus);
+}
         }
     } catch (err) {
         console.error('Search failed:', err);

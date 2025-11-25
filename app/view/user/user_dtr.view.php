@@ -126,6 +126,25 @@ if ($nameQuery) {
     }
 }
 
+// === Get Employee Creation Date ===
+$employeeCreatedAt = null;
+if ($userContext['type'] === 'employee') {
+    $createdStmt = $db->prepare("SELECT created_at FROM employees WHERE id = :id LIMIT 1");
+    $createdStmt->execute([':id' => $userContext['id']]);
+    $createdRecord = $createdStmt->fetch(PDO::FETCH_ASSOC);
+    $employeeCreatedAt = $createdRecord ? $createdRecord['created_at'] : null;
+} elseif ($userContext['type'] === 'manager') {
+    $createdStmt = $db->prepare("SELECT created_at FROM managers WHERE id = :id LIMIT 1");
+    $createdStmt->execute([':id' => $userContext['id']]);
+    $createdRecord = $createdStmt->fetch(PDO::FETCH_ASSOC);
+    $employeeCreatedAt = $createdRecord ? $createdRecord['created_at'] : null;
+} elseif ($userContext['type'] === 'hr') {
+    $createdStmt = $db->prepare("SELECT hr_created_at as created_at FROM admins WHERE id = :id LIMIT 1");
+    $createdStmt->execute([':id' => $userContext['id']]);
+    $createdRecord = $createdStmt->fetch(PDO::FETCH_ASSOC);
+    $employeeCreatedAt = $createdRecord ? $createdRecord['created_at'] : null;
+}
+
 // === Get Employee Schedule ===
 $officialMorningIn = '-';
 $officialMorningOut = '-';
@@ -173,12 +192,12 @@ $timeIsValid = static function ($time) {
 ?>
 
 <div class="flex min-h-screen overflow-hidden bg-gray-100">    
-    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-all duration-300 ease-in-out">
+    <main id="mainContent" class="flex-1 p-3 sm:p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out md:ml-64">
         <?php require_once views_path("partials/user_sidebar"); ?>
 
-        <div class="mt-6">
-            <span class="text-2xl font-bold tracking-tight">Daily Time Record</span>
-            <p class="text-gray-600">Here's a quick overview of your daily logs.</p>
+        <div class="mb-4 md:mb-6 pt-2 sm:pt-4">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-800">Daily Time Record</h1>
+            <p class="text-sm sm:text-base text-gray-600 mt-1 md:mt-2">Here's a quick overview of your daily logs.</p>
         </div>
 
         <div class="max-w-6xl mx-auto bg-white rounded-lg shadow p-6 mt-4">
@@ -186,23 +205,20 @@ $timeIsValid = static function ($time) {
             <div class="flex items-center justify-between mb-6 gap-4">
                 <form method="GET" class="flex flex-wrap items-center gap-2 sm:gap-4">
                     <input type="hidden" name="payroll" value="user_dtr" />
-                    <label for="month" class="font-medium text-gray-700">Month:</label>
-                    <select name="month" id="month" class="border rounded p-1" required>
-                        <option disabled <?= is_null($selectedMonth) ? 'selected' : '' ?>>-- Select Month --</option>
-                        <?php foreach ($months as $num => $name): ?>
-                            <option value="<?= $num ?>" <?= ($num === $selectedMonth) ? 'selected' : '' ?>><?= $name ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <input type="hidden" name="month" id="month" value="<?= $selectedMonth ? $selectedMonth : '' ?>">
+                    <input type="hidden" name="year" id="year" value="<?= $selectedYear ? $selectedYear : '' ?>">
+                    
+                    <label for="monthYearPicker" class="font-medium text-gray-700">Select Month & Year:</label>
+                    <div class="relative" style="position: relative;">
+                        <input type="text" id="monthYearPicker" class="border rounded p-1 flatpickr-month-year-input w-100" 
+                               value="<?= ($selectedMonth && $selectedYear) ? date('F Y', mktime(0, 0, 0, $selectedMonth, 1, $selectedYear)) : '' ?>" 
+                               placeholder="Select Month & Year" 
+                               readonly 
+                               required
+                               style="width: 180px; cursor: pointer; background-color: white;">
+                    </div>
 
-                    <label for="year" class="font-medium text-gray-700">Year:</label>
-                    <select name="year" id="year" class="border rounded p-1" required>
-                        <option disabled <?= is_null($selectedYear) ? 'selected' : '' ?>>-- Select Year --</option>
-                        <?php foreach ($years as $year): ?>
-                            <option value="<?= $year ?>" <?= ($year == $selectedYear) ? 'selected' : '' ?>><?= $year ?></option>
-                        <?php endforeach; ?>
-                    </select>
-
-                    <button id="filterBtn" type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition">
+                    <button id="filterBtn" type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition-colors ">
                         <span class="text-sm">Filter</span>
                         <i class="bi bi-funnel fs-7 ml-2"></i>
                     </button>
@@ -211,11 +227,11 @@ $timeIsValid = static function ($time) {
                 <?php if ($selectedMonth && $selectedYear): ?>
                     <div class="flex gap-2">
                         <?php if (count($filteredRecords) > 0): ?>
-                            <button onclick="downloadDTR()" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition">
+                            <button onclick="downloadDTR()" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition-colors duration-200">
                                 <i class="bi bi-download mr-2"></i><span class="text-sm">Download DTR</span>
                             </button>
                         <?php endif; ?>
-                        <button type="button" onclick="clearFilter()" class="bg-gray-600 text-white px-4 py-1 rounded hover:bg-gray-700 transition">
+                        <button type="button" onclick="clearFilter()" class="bg-gray-600 text-white px-4 py-1 rounded hover:bg-gray-700 transition-colors duration-200">
                             <span class="text-sm">Clear Filter</span>
                         </button>
                     </div>
@@ -225,9 +241,28 @@ $timeIsValid = static function ($time) {
             <?php if ($selectedMonth && $selectedYear): ?>
     <?php if (count($filteredRecords) > 0): ?>
         <!-- DTR Table -->
-        <div class="overflow-x-auto w-full">
-            <div id="dtrSection" class="text-xs leading-tight">
-                <p class="text-center font-semibold text-sm">DAILY TIME RECORD</p>
+        <div class="overflow-x-auto w-full" style="margin: 0; padding: 0;">
+            <div id="dtrSection" class="text-xs leading-tight" style="margin: 0 auto; padding: 5px;">
+                <!-- Header Section (Same as Payslip) -->
+                <div class="header-section">
+                    <div class="header-top">
+                        <div class="header-left">
+                            <div class="header-left-content">
+                                <div class="logo-container">
+                                    <img src="../public/assets/image/test_logo_cropted.png" alt="Company Logo" class="logo-image">
+                                </div>
+                                <div class="company-info">
+                                    <div class="company-name">Migrants Venture Corporation</div>
+                                    <div class="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="header-divider">
+                
+                <p class="text-center font-semibold dtr-title" style="margin-top: 10px;">DAILY TIME RECORD</p>
                 <p class="text-left mb-2">
                     Name: <strong><span class="underline"><?= ucwords(htmlspecialchars($userName)) ?></span></strong>
                 </p>
@@ -282,9 +317,10 @@ for ($day = 1; $day <= $daysInMonth; $day++):
     }
 
 $morningInRaw = $morningOutRaw = $afternoonInRaw = $afternoonOutRaw = null;
-$morningInDisplay = $morningOutDisplay = $afternoonInDisplay = $afternoonOutDisplay = '-';
+// Default to "--:--" for all time displays when no data
+$morningInDisplay = $morningOutDisplay = $afternoonInDisplay = $afternoonOutDisplay = '--:--';
 
-// Skip processing database entries for weekends - they should always show "No Worked"
+// Skip processing database entries for weekends - they should always show "--:--"
 if (!$isWeekend && $entry) {
     $morningInRaw = $timeIsValid($entry['morning_in']) ? $entry['morning_in'] : null;
     $morningOutRaw = $timeIsValid($entry['morning_out']) ? $entry['morning_out'] : null;
@@ -293,15 +329,23 @@ if (!$isWeekend && $entry) {
 
     if ($morningInRaw) {
         $morningInDisplay = date("h:i:s A", strtotime($morningInRaw));
+    } else {
+        $morningInDisplay = '--:--';
     }
     if ($morningOutRaw) {
         $morningOutDisplay = date("h:i:s A", strtotime($morningOutRaw));
+    } else {
+        $morningOutDisplay = '--:--';
     }
     if ($afternoonInRaw) {
         $afternoonInDisplay = date("h:i:s A", strtotime($afternoonInRaw));
+    } else {
+        $afternoonInDisplay = '--:--';
     }
     if ($afternoonOutRaw) {
         $afternoonOutDisplay = date("h:i:s A", strtotime($afternoonOutRaw));
+    } else {
+        $afternoonOutDisplay = '--:--';
     }
 }
 
@@ -312,11 +356,19 @@ $morningRemarks = [];
 $afternoonRemarks = [];
 
 if ($isWeekend) {
-    $worked = '--';
+    $worked = '';
     $dailyRemarks[] = 'No Worked';
-    $morningRemarks[] = '-';
-    $afternoonRemarks[] = '-';
+    $morningRemarks[] = '—';
+    $afternoonRemarks[] = '—';
+    // Set weekend time displays to "--:--" format
+    $morningInDisplay = '--:--';
+    $morningOutDisplay = '--:--';
+    $afternoonInDisplay = '--:--';
+    $afternoonOutDisplay = '--:--';
 } elseif ($dateStr <= $currentDate) {
+    // Check if date is before employee creation date (new employee)
+    $isNewEmployee = $employeeCreatedAt && $dateStr < date('Y-m-d', strtotime($employeeCreatedAt));
+    
     if ($morningInRaw && $morningOutRaw) {
         $morningHours = (strtotime($morningOutRaw) - strtotime($morningInRaw)) / 3600;
         $morningRemarks[] = 'Present';
@@ -329,7 +381,7 @@ if ($isWeekend) {
     } elseif ($morningInRaw || $morningOutRaw) {
         $morningRemarks[] = 'Incomplete';
     }
-    if (empty($morningRemarks)) {
+    if (empty($morningRemarks) && !$isNewEmployee) {
         $morningRemarks[] = 'Absent';
     }
 
@@ -345,7 +397,7 @@ if ($isWeekend) {
     } elseif ($afternoonInRaw || $afternoonOutRaw) {
         $afternoonRemarks[] = 'Incomplete';
     }
-    if (empty($afternoonRemarks)) {
+    if (empty($afternoonRemarks) && !$isNewEmployee) {
         $afternoonRemarks[] = 'Absent';
     }
 
@@ -368,7 +420,7 @@ if ($isWeekend) {
         $dailyRemarks[] = 'Incomplete Day';
     } else {
         $worked = 0;
-        if (empty($dailyRemarks)) {
+        if (empty($dailyRemarks) && !$isNewEmployee) {
             $dailyRemarks[] = 'Absent';
         }
     }
@@ -376,39 +428,27 @@ if ($isWeekend) {
     $totalHoursWorked += (int)$worked;
 }
 
-// Set "No Worked" for all weekend days (Sat/Sun), including future dates
-if ($isWeekend) {
-    $morningInDisplay = 'No Worked';
-    $morningOutDisplay = 'No Worked';
-    $afternoonInDisplay = 'No Worked';
-    $afternoonOutDisplay = 'No Worked';
-}
-
-$morningRemarkText = $isWeekend ? 'No Worked' : (($dateStr > $currentDate) ? '-' : implode(', ', array_unique($morningRemarks)));
-$afternoonRemarkText = $isWeekend ? 'No Worked' : (($dateStr > $currentDate) ? '-' : implode(', ', array_unique($afternoonRemarks)));
-$morningRemarkText = $morningRemarkText !== '' ? $morningRemarkText : '--';
-$afternoonRemarkText = $afternoonRemarkText !== '' ? $afternoonRemarkText : '-';
-$remarks = !empty($dailyRemarks) ? implode('; ', array_unique($dailyRemarks)) : (($isWeekend) ? 'No Worked' : (($dateStr > $currentDate) ? '' : ($worked === '' ? '' : 'Absent')));
-$workedDisplay = ($isWeekend || $worked === '' ? ($isWeekend ? '—' : '-') : $worked);
-$weekendRowStyle = $isWeekend ? 'background-color: #fef2f2; color: #dc2626;' : '';
-$weekendDayStyle = $isWeekend ? 'color: #dc2626; font-weight: 600;' : '';
+$morningRemarkText = $isWeekend ? '—' : (($dateStr > $currentDate) ? '—' : (empty($morningRemarks) ? '—' : implode(', ', array_unique($morningRemarks))));
+$afternoonRemarkText = $isWeekend ? '—' : (($dateStr > $currentDate) ? '—' : (empty($afternoonRemarks) ? '—' : implode(', ', array_unique($afternoonRemarks))));
+$remarks = !empty($dailyRemarks) ? implode('; ', array_unique($dailyRemarks)) : (($isWeekend) ? 'No Worked' : (($dateStr > $currentDate) ? '' : ''));
+$workedDisplay = ($isWeekend || $worked === '' ? ($isWeekend ? '—' : '') : $worked);
+// Remove weekend styling - make weekends same as weekdays
+$weekendRowStyle = '';
+$weekendDayStyle = '';
 ?>
-<tr class="<?= $isWeekend ? 'weekend-row' : '' ?>" style="<?= $weekendRowStyle ?>">
-    <td class="border border-black <?= $isWeekend ? 'weekend-day' : '' ?>" style="<?= $weekendDayStyle ?>">
-        <div class="font-semibold" style="font-weight: 600;"><?= $day ?></div>
+<tr>
+    <td class="border border-black">
+        <div class="font-semibold" style="font-weight: 600; font-size: 12px;"><?= $day ?></div>
         <div class="text-[10px] uppercase tracking-wide" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;"><?= substr($weekdayName, 0, 3) ?></div>
-        <?php if ($isWeekend): ?>
-            <div class="text-[10px] mt-1 font-semibold" style="font-size: 9px; margin-top: 2px; font-weight: 600; color: #dc2626;">No Worked</div>
-        <?php endif; ?>
     </td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $morningInDisplay ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $morningOutDisplay ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $morningRemarkText ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $afternoonInDisplay ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $afternoonOutDisplay ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $afternoonRemarkText ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $workedDisplay ?></td>
-    <td class="border border-black" style="<?= $weekendRowStyle ?>"><?= $remarks !== '' ? $remarks : '-' ?></td>
+    <td class="border border-black"><?= $morningInDisplay ?></td>
+    <td class="border border-black"><?= $morningOutDisplay ?></td>
+    <td class="border border-black"><?= $morningRemarkText ?></td>
+    <td class="border border-black"><?= $afternoonInDisplay ?></td>
+    <td class="border border-black"><?= $afternoonOutDisplay ?></td>
+    <td class="border border-black"><?= $afternoonRemarkText ?></td>
+    <td class="border border-black"><?= $workedDisplay ?></td>
+    <td class="border border-black"><?= $remarks !== '' ? $remarks : '' ?></td>
 </tr>
 <?php endfor; ?>
 <tr>
@@ -420,15 +460,20 @@ $weekendDayStyle = $isWeekend ? 'color: #dc2626; font-weight: 600;' : '';
                 </table>
 
                 <!-- Certification Section -->
-                <div class="flex justify-between items-center mt-4 text-[10px] leading-snug">
-                    <p class="max-w-[70%] text-justify">
-                        I certify on my honor that the above is a true and correct record of the hours of work performed, and that I have not falsified or misrepresented any information contained herein.
-                        I understand that any misrepresentation or omission of time-in or time-out entries may result in disciplinary action and/or legal consequences.
-                    </p>
-                    <p class="text-right max-w-[35%] pr-10">
-                        ______________________________<br>
-                        Signature over printed name
-                    </p>
+                <div class="certification-section" style="display: table !important; height: 100px !important; width: 100% !important; margin-top: 15px !important; visibility: visible !important; opacity: 1 !important; page-break-inside: avoid !important;">
+                    <div style="display: table-row !important; width: 100% !important;">
+                        <div style="display: table-cell !important; width: 65% !important; vertical-align: top !important; padding-right: 15px !important;">
+                            <p style="font-size: 9px !important; line-height: 1.4 !important; text-align: justify !important; margin: 0 !important; padding: 0 !important; display: block !important; visibility: visible !important; opacity: 1 !important; word-wrap: break-word !important; overflow-wrap: break-word !important;">
+                                I certify on my honor that the above is a true and correct record of the hours of work performed, and that I have not falsified or misrepresented any information contained herein. I understand that any misrepresentation or omission of time-in or time-out entries may result in disciplinary action and/or legal consequences.
+                            </p>
+                        </div>
+                        <div style="display: table-cell !important; width: 35% !important; vertical-align: top !important; text-align: right !important; padding-left: 10px !important;">
+                            <p style="font-size: 9px !important; line-height: 1.4 !important; text-align: right !important; margin: 0 !important; padding: 0 !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+                                ______________________________<br>
+                                Signature over printed name
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -466,27 +511,109 @@ function downloadDTR() {
     // Scroll to top to avoid clipping
     window.scrollTo(0, 0);
 
+    // Ensure element is visible and properly positioned (centered)
+    // Reduce width to fit within page margins (Letter size: 8.5" = 816px, but we need margins)
+    element.style.display = 'block';
+    element.style.visibility = 'visible';
+    element.style.position = 'relative';
+    element.style.margin = '0 auto';
+    element.style.width = '750px'; // Reduced from 816px to fit with margins
+    element.style.maxWidth = '750px';
+    element.style.boxSizing = 'border-box';
+    
+    // Add class for PDF optimization
+    element.classList.add('pdf-mode');
+
+    // Calculate proper margins for centering
+    // Letter size: 8.5" x 11" = 215.9mm x 279.4mm
+    // Content width: 816px = 215.9mm at 96 DPI
+    // To center: equal left/right margins
+    const pageWidth = 215.9; // mm (letter width)
+    const contentWidth = 215.9; // mm (816px at 96 DPI)
+    const leftRightMargin = (pageWidth - contentWidth) / 2; // Should be 0, but we'll add small margins
+    
     const opt = {
-        margin: [10, 10, 10, 10], // top, left, bottom, right
-        filename: 'DTR_<?= $months[$selectedMonth] . "_" . $selectedYear ?>.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
+        margin: [5, 5, 5, 5], // Equal margins all around (Top, Right, Bottom, Left)
+        filename: <?= json_encode(($selectedMonth && isset($months[$selectedMonth])) ? 'DTR_' . $months[$selectedMonth] . '_' . $selectedYear . '.pdf' : 'DTR_Report.pdf') ?>,
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: {
-            scale: 2, // balance between clarity and performance
-            scrollY: 0
+            scale: 2,
+            scrollY: 0,
+            scrollX: 0,
+            useCORS: true,
+            allowTaint: true,
+            windowWidth: 750, // Reduced to fit within page margins
+            windowHeight: 1056, // Letter height in pixels (11" at 96 DPI)
+            x: 0,
+            y: 0,
+            onclone: function(clonedDoc) {
+                const clonedElement = clonedDoc.getElementById('dtrSection');
+                if (clonedElement) {
+                    // Center the element in the cloned document
+                    clonedElement.style.margin = '0 auto';
+                    clonedElement.style.width = '750px'; // Reduced to fit with margins
+                    clonedElement.style.maxWidth = '750px';
+                    clonedElement.style.boxSizing = 'border-box';
+                    clonedElement.style.position = 'relative';
+                    clonedElement.style.left = 'auto';
+                    clonedElement.style.right = 'auto';
+                    
+                    // Center the table within the element and ensure it fits
+                    const table = clonedElement.querySelector('table');
+                    if (table) {
+                        table.style.width = '100%';
+                        table.style.maxWidth = '100%';
+                        table.style.marginLeft = 'auto';
+                        table.style.marginRight = 'auto';
+                        table.style.tableLayout = 'fixed';
+                        table.style.wordWrap = 'break-word';
+                    }
+                    
+                    // Ensure certification section is visible
+                    const certSection = clonedElement.querySelector('.certification-section');
+                    if (certSection) {
+                        certSection.style.display = 'table';
+                        certSection.style.visibility = 'visible';
+                        certSection.style.opacity = '1';
+                        certSection.style.marginTop = '15px';
+                        certSection.style.width = '100%';
+                        certSection.style.pageBreakInside = 'avoid';
+                    }
+                    
+                    // Ensure all elements in certification are visible
+                    const certCells = clonedElement.querySelectorAll('.certification-section div[style*="table-cell"]');
+                    certCells.forEach(cell => {
+                        cell.style.display = 'table-cell';
+                        cell.style.visibility = 'visible';
+                        cell.style.opacity = '1';
+                    });
+                    
+                    const certParagraphs = clonedElement.querySelectorAll('.certification-section p');
+                    certParagraphs.forEach(p => {
+                        p.style.display = 'block';
+                        p.style.visibility = 'visible';
+                        p.style.opacity = '1';
+                    });
+                }
+            }
         },
         jsPDF: {
             unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
+            format: 'letter', // Changed from 'a4' to 'letter' (8.5" x 11")
+            orientation: 'portrait',
+            compress: true
         },
         pagebreak: {
-            mode: ['avoid-all', 'css', 'legacy']
+            mode: 'avoid-all'
         }
     };
 
     html2pdf().set(opt).from(element).save().then(() => {
+        // Remove PDF class after download
+        element.classList.remove('pdf-mode');
         Swal.close();
     }).catch(error => {
+        element.classList.remove('pdf-mode');
         Swal.fire('Error', 'Something went wrong while generating the PDF.', 'error');
         console.error(error);
     });
@@ -503,17 +630,90 @@ function clearFilter() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const monthSelect = document.getElementById('month');
-    const yearSelect = document.getElementById('year');
+    const monthInput = document.getElementById('month');
+    const yearInput = document.getElementById('year');
+    const monthYearPicker = document.getElementById('monthYearPicker');
     const filterForm = document.querySelector('form');
+    
+    let monthYearFlatpickr = null;
+    
+    // Initialize Month & Year Flatpickr with monthSelect plugin
+    if (monthYearPicker) {
+        const selectedYear = <?= $selectedYear !== null ? json_encode($selectedYear) : 'null' ?>;
+        const selectedMonth = <?= $selectedMonth !== null ? (intval($selectedMonth) - 1) : 'null' ?>;
+        const year = selectedYear !== null && selectedYear !== undefined ? selectedYear : new Date().getFullYear();
+        const month = selectedMonth !== null && selectedMonth !== undefined ? selectedMonth : new Date().getMonth();
+        const defaultDate = (monthInput.value && yearInput.value) ? new Date(year, month, 1) : new Date();
+        
+        monthYearFlatpickr = flatpickr(monthYearPicker, {
+            plugins: [
+                new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m",
+                    altFormat: "F Y"
+                })
+            ],
+            dateFormat: "Y-m",
+            altInput: true,
+            altFormat: "F Y",
+            defaultDate: (monthInput.value && yearInput.value) ? defaultDate : null,
+            disableMobile: true,
+            clickOpens: true,
+            allowInput: false,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    // Extract month and year from selected date
+                    const monthNum = String(selectedDates[0].getMonth() + 1).padStart(2, '0');
+                    const yearNum = String(selectedDates[0].getFullYear());
+                    
+                    // Update hidden inputs for form submission
+                    monthInput.value = monthNum;
+                    yearInput.value = yearNum;
+                    
+                    // Remove empty state attribute
+                    if (instance.altInput) {
+                        instance.altInput.removeAttribute('data-empty');
+                    }
+                } else {
+                    // Clear values if no date selected
+                    monthInput.value = '';
+                    yearInput.value = '';
+                    if (instance.altInput) {
+                        instance.altInput.value = '';
+                        instance.altInput.placeholder = 'Select Month & Year';
+                        instance.altInput.setAttribute('data-empty', 'true');
+                    }
+                }
+            }
+        });
+        
+        // Set initial value if exists, otherwise show placeholder
+        if (monthInput.value && yearInput.value) {
+            const monthNum = parseInt(monthInput.value);
+            const yearNum = parseInt(yearInput.value);
+            monthYearFlatpickr.setDate(new Date(yearNum, monthNum - 1, 1), false);
+        } else {
+            // Ensure placeholder is visible when no value
+            setTimeout(() => {
+                if (monthYearFlatpickr.altInput) {
+                    monthYearFlatpickr.altInput.value = '';
+                    monthYearFlatpickr.altInput.placeholder = 'Select Month & Year';
+                    // Set a data attribute to track empty state
+                    monthYearFlatpickr.altInput.setAttribute('data-empty', 'true');
+                }
+                monthYearPicker.value = '';
+                monthYearPicker.placeholder = 'Select Month & Year';
+            }, 100);
+        }
+    }
 
     filterForm.addEventListener('submit', function (e) {
-        if (!monthSelect.value || !yearSelect.value) {
+        if (!monthInput.value || !yearInput.value) {
             e.preventDefault();
             Swal.fire({
                 icon: 'warning',
                 title: 'Incomplete Filter',
-                text: 'Please select both month and year before filtering.'
+                text: 'Please select month and year before filtering.'
             });
         }
     });
@@ -521,39 +721,410 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
+/* Responsive adjustments for DTR page */
+@media (max-width: 767px) {
+    main#mainContent {
+        margin-left: 0 !important;
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    /* Ensure heading is visible on mobile */
+    main#mainContent > div:first-of-type {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent:not(.ml-\[64px\]) {
+        margin-left: 256px;
+    }
+}
+
+/* Make sure heading is always visible */
+h1.text-xl {
+    display: block !important;
+    visibility: visible !important;
+}
+
 #dtrSection {
     width: 100%;
-    max-width: 794px;
-    padding: 20px;
-    margin: auto;
+    max-width: 750px; /* Reduced to fit within page margins */
+    padding: 5px;
+    margin: 0 auto;
     background-color: white;
     overflow-x: auto;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Ensure header is always visible */
+#dtrSection .header-section {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Header section styles */
+#dtrSection .header-section {
+    width: 100% !important;
+    margin-bottom: 8px;
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+#dtrSection .header-top {
+    display: table !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#dtrSection .header-left {
+    display: table-cell !important;
+    vertical-align: top;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#dtrSection .header-left-content {
+    display: table !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#dtrSection .logo-container {
+    display: table-cell;
+    vertical-align: top;
+    width: 70px;
+    padding-right: 15px;
+}
+
+#dtrSection .logo-image {
+    width: 100%;
+    height: auto;
+}
+
+#dtrSection .company-info {
+    display: table-cell;
+    vertical-align: top;
+}
+
+#dtrSection .company-name {
+    font-size: 18px;
+    margin-top: 4px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+#dtrSection .company-address {
+    font-size: 10px;
+    color: #478547;
+    line-height: 1.2;
+}
+
+#dtrSection .header-divider {
+    border: none;
+    border-top: 1px solid #dee2e6;
+    margin: 8px 0;
+}
+
+#dtrSection .dtr-title {
+    text-align: center;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-size: 11px;
 }
 
 #dtrSection table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    font-size: 10px;
-    word-break: break-word;
-    margin-top: 10px;
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-size: 8px;
+    word-break: break-word !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    margin-top: 2px;
+    page-break-inside: avoid;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 #dtrSection th,
 #dtrSection td {
-    padding: 4px;
+    padding: 2px 1px;
     border: 1px solid black;
     text-align: center;
+    font-size: 8px;
+    line-height: 1.2;
+    vertical-align: middle;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto;
 }
 
-.weekend-row td {
-    background-color: #fef2f2 !important;
-    color: #b91c1c !important;
+/* Day number styling */
+#dtrSection td:first-child .font-semibold {
+    font-size: 12px !important; /* Day number size */
 }
 
-.weekend-day {
-    color: #b91c1c !important;
-    font-weight: 600;
+/* Header adjustments for PDF */
+#dtrSection .header-section {
+    margin-bottom: 10px !important; /* Reduced from 20px */
+}
+
+#dtrSection .company-name {
+    font-size: 18px !important; /* Reduced from 22px */
+    margin-top: 8px !important; /* Reduced from 12px */
+}
+
+#dtrSection .logo-container {
+    width: 70px !important; /* Reduced from 90px */
+}
+
+#dtrSection .logo-image {
+    width: 70px !important;
+    height: auto;
+}
+
+/* Reduce spacing in header */
+#dtrSection .header-left-content {
+    margin-bottom: 0 !important;
+}
+
+/* Reduce spacing for DTR title */
+#dtrSection p.text-center {
+    margin-top: 5px !important; /* Reduced from mt-8 */
+    margin-bottom: 5px !important;
+    font-size: 12px !important; /* Increased from 11px */
+}
+
+/* Reduce spacing for name and info */
+#dtrSection p.text-left {
+    margin-bottom: 3px !important;
+    font-size: 11px !important; /* Increased from 10px */
+}
+
+#dtrSection .mb-2 {
+    margin-bottom: 5px !important;
+}
+
+#dtrSection .mb-2 p {
+    font-size: 10px !important; /* Increased from 9px */
+    margin: 2px 0 !important;
+    line-height: 1.3 !important; /* Improved readability */
+}
+
+/* Certification section adjustments */
+#dtrSection .flex.justify-between {
+    margin-top: 5px !important; /* Reduced spacing */
+}
+
+#dtrSection .flex.justify-between p {
+    font-size: 9px !important; /* Increased from 8px */
+    line-height: 1.4 !important; /* Improved readability */
+}
+
+/* HR line adjustments */
+#dtrSection hr {
+    margin: 8px 0 !important; /* Reduced from 15px */
+}
+
+/* PDF mode specific styles - optimized for single page (Letter size) */
+#dtrSection.pdf-mode {
+    padding: 3px !important;
+    width: 750px !important; /* Reduced to fit within page margins */
+    max-width: 750px !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    display: block !important;
+}
+
+/* Ensure header is visible in PDF mode */
+#dtrSection.pdf-mode .header-section {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    position: relative !important;
+    margin-bottom: 3px !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+#dtrSection.pdf-mode .header-top {
+    display: table !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#dtrSection.pdf-mode .header-left {
+    display: table-cell !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#dtrSection.pdf-mode .header-left-content {
+    display: table !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Fix table alignment in PDF mode - centered and fit within container */
+#dtrSection.pdf-mode table {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 2px !important;
+    table-layout: fixed !important;
+    word-wrap: break-word !important;
+    border-collapse: collapse !important;
+}
+
+#dtrSection.pdf-mode .header-section {
+    margin-bottom: 3px !important;
+}
+
+#dtrSection.pdf-mode .logo-container {
+    width: 50px !important;
+    padding-right: 10px !important;
+}
+
+#dtrSection.pdf-mode .company-name {
+    font-size: 12px !important;
+    margin-top: 2px !important;
+    line-height: 1.1 !important;
+}
+
+#dtrSection.pdf-mode .company-address {
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+}
+
+#dtrSection.pdf-mode .header-divider {
+    margin: 3px 0 !important;
+    border-top-width: 0.5px !important;
+}
+
+#dtrSection.pdf-mode .dtr-title {
+    margin-top: 10px !important;
+    margin-bottom: 2px !important;
+    font-size: 9px !important;
+}
+
+#dtrSection.pdf-mode table {
+    font-size: 7px !important;
+    margin-top: 2px !important;
+    page-break-inside: avoid !important;
+}
+
+#dtrSection.pdf-mode th,
+#dtrSection.pdf-mode td {
+    padding: 1px 0.5px !important;
+    font-size: 7px !important;
+    line-height: 1.1 !important;
+}
+
+/* Day number in PDF mode */
+#dtrSection.pdf-mode td:first-child .font-semibold {
+    font-size: 8px !important;
+}
+
+#dtrSection.pdf-mode .header-section {
+    margin-bottom: 2px !important;
+}
+
+#dtrSection.pdf-mode .company-name {
+    font-size: 14px !important;
+    margin-top: 2px !important;
+    line-height: 1.1 !important;
+}
+
+#dtrSection.pdf-mode .logo-container {
+    width: 50px !important;
+}
+
+#dtrSection.pdf-mode .logo-image {
+    width: 50px !important;
+}
+
+#dtrSection.pdf-mode p.text-center {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+    font-size: 8px !important;
+    line-height: 1.2 !important;
+}
+
+#dtrSection.pdf-mode p.text-left {
+    margin-bottom: 1px !important;
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+}
+
+#dtrSection.pdf-mode .mb-2 {
+    margin-bottom: 2px !important;
+}
+
+#dtrSection.pdf-mode .mb-2 p {
+    font-size: 7px !important;
+    margin: 1px 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Certification section in PDF mode */
+#dtrSection.pdf-mode .certification-section {
+    margin-top: 15px !important;
+    display: table !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+}
+
+#dtrSection.pdf-mode .certification-section > div {
+    display: table-row !important;
+    width: 100% !important;
+}
+
+#dtrSection.pdf-mode .certification-section > div > div {
+    display: table-cell !important;
+    vertical-align: top !important;
+}
+
+#dtrSection.pdf-mode .certification-section p {
+    font-size: 8px !important;
+    line-height: 1.4 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#dtrSection.pdf-mode hr {
+    margin: 3px 0 !important;
+    border-top-width: 0.5px !important;
 }
 
 @media (max-width: 768px) {
@@ -562,13 +1133,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     #dtrSection table {
-        font-size: 9px;
+        font-size: 10px; /* Increased from 9px */
     }
 
     #dtrSection p,
     #dtrSection span,
     #dtrSection strong {
-        font-size: 10px;
+        font-size: 11px; /* Increased from 10px */
     }
 }
 
@@ -578,9 +1149,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     #dtrSection {
-        width: 794px;
-        padding: 20px;
+        width: 750px; /* Reduced to fit within page margins */
+        padding: 8px;
         page-break-inside: avoid;
+        font-size: 10px;
+    }
+
+    #dtrSection table {
+        font-size: 10px; /* Increased from 9px */
+    }
+
+    #dtrSection th,
+    #dtrSection td {
+        padding: 4px; /* Increased from 3px */
+        font-size: 10px; /* Increased from 9px */
+    }
+
+    #dtrSection p,
+    #dtrSection span,
+    #dtrSection strong {
+        font-size: 10px; /* Increased from 9px */
     }
 
     table, tr, td, th {
@@ -588,8 +1176,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     html, body {
-        width: 210mm;
-        height: 297mm;
+        width: 8.5in; /* Letter width (8.5 inches) */
+        height: 11in; /* Letter height (11 inches) */
     }
+}
+/* Flatpickr input styling */
+.flatpickr-month-year-input {
+    min-width: 180px;
+}
+
+.flatpickr-month-year-input.flatpickr-input {
+    cursor: pointer;
+}
+
+.flatpickr-month-year-input::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+.flatpickr-month-year-input:placeholder-shown {
+    color: #9ca3af;
+}
+
+/* Style for empty state in altInput */
+.flatpickr-month-year-input[data-empty="true"] {
+    color: #9ca3af;
+}
+
+/* Ensure altInput shows placeholder when empty */
+.flatpickr-month-year-input[data-empty="true"]::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+/* Ensure Flatpickr calendar appears above other elements */
+.flatpickr-calendar {
+    z-index: 9999 !important;
 }
 </style>

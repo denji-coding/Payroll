@@ -42,6 +42,24 @@ require_once views_path("partials/nav");
   background-color: #fee2e2;
   color: #991b1b;
 }
+
+/* Prevent horizontal scrollbar */
+.overflow-x-hidden {
+  overflow-x: hidden !important;
+}
+
+/* Ensure table fits within container */
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Adjust column widths for better fit */
+table th,
+table td {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
 </style>
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
@@ -73,9 +91,9 @@ require_once views_path("partials/nav");
       </div>
 
       <div class="p-6 pt-0">
-        <div class="relative w-full overflow-auto">
-          <div class="max-h-[calc(100vh-300px)] overflow-y-auto">
-            <table class="w-full caption-bottom text-sm">
+        <div class="relative w-full overflow-x-hidden">
+          <div class="max-h-[calc(100vh-300px)] overflow-y-auto overflow-x-hidden">
+            <table class="w-full caption-bottom text-sm table-fixed">
               <thead class="[&_tr]:border-b bg-[#f2f8f2] sticky top-0 z-10">
                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                   <th class="h-12 px-3 text-left font-bold text-[#478547] bg-white">Photos</th>
@@ -108,7 +126,7 @@ require_once views_path("partials/nav");
                       </td>
                       <td class="p-3 font-medium"><?= htmlspecialchars($employee['employee_name']) ?></td>
                       <td class="p-3"><?= htmlspecialchars($employee['employee_no']) ?></td>
-                      <td class="p-3">
+                      <td class="p-3* truncate">
                         <?php
                           $applicantType = $employee['applicant_type'] ?? 'employee';
                           $typeBadgeClass = '';
@@ -150,7 +168,7 @@ require_once views_path("partials/nav");
                               break;
                           }
                         ?>
-                        <span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($employee['status']) ?></span>
+                        <span class="status-badge truncate <?= $statusClass ?>"><?= htmlspecialchars($employee['status']) ?></span>
                       </td>
                       <td class="p-3 text-center">
                         <?php if ($employee['status'] === 'Approved' || $employee['status'] === 'Rejected'): ?>

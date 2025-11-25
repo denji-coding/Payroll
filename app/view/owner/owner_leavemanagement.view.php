@@ -273,14 +273,34 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
 .btn-xs i {
     font-size: 0.75rem;
 }
+
+@media (max-width: 767px) {
+    main#mainContent {
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+        margin-left: 0 !important;
+    }
+    
+    h1 {
+        display: block !important;
+        visibility: visible !important;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent {
+        padding-top: 0 !important;
+        margin-left: 256px !important;
+    }
+}
 </style>
 
 <!-- Main layout -->
 <div class="flex min-h-screen overflow-hidden">
-    <main id="mainContent" class="flex-1 p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px; overflow-x: hidden;">
-        <div>
-            <span class="text-2xl font-bold tracking-tight">Leave Management</span>
-            <p class="text-gray-600">Manage leave requests from all branches and view details below.</p>
+    <main id="mainContent" class="flex-1 p-3 sm:p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 0; overflow-x: hidden;">
+        <div class="pt-2 sm:pt-0">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight block" style="display: block !important; visibility: visible !important;">Leave Management</h1>
+            <p class="text-sm sm:text-base text-gray-600 mt-1">Manage leave requests from all branches and view details below.</p>
         </div>
 
         <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">

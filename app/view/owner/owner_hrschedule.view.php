@@ -27,24 +27,41 @@ require_once views_path("owner/owner_sidebar");
 }
 .btn-close:hover { color: #000; text-decoration: none; opacity: 0.75; }
 .btn-close:focus { outline: none; box-shadow: none; }
+
+@media (max-width: 767px) {
+    main#mainContent {
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    header h1 {
+        display: block !important;
+        visibility: visible !important;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent {
+        padding-top: 0 !important;
+    }
+}
 </style>
 
-<main class="h-[calc(100vh-3rem)] overflow-hidden p-4 md:p-6 sm:ml-64 mt-12 bg-[#f8fbf8]">
-  <header class="mb-6">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+<main id="mainContent" class="ml-0 md:ml-[256px] p-3 sm:p-4 md:p-6 bg-[#f8fbf8] min-h-screen">
+  <header class="mb-4 md:mb-6 pt-2 sm:pt-0">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
       <div>
-        <span class="text-2xl font-bold tracking-tight text-[#133913]">HR Schedule</span>
-        <p class="text-[#478547]">Manage HR schedules.</p>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-[#133913] block" style="display: block !important; visibility: visible !important;">HR Schedule</h1>
+        <p class="text-sm sm:text-base text-[#478547] mt-1">Manage HR schedules.</p>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex gap-2 w-full sm:w-auto">
         <button type="button" 
-                class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2"
-                style="min-width: 106px;"
+                class="btn btn-success d-inline-flex align-items-center h-10 px-3 sm:px-4 py-2 text-sm sm:text-base w-full sm:w-auto"
                 data-bs-toggle="modal" 
                 data-bs-target="#addScheduleModal">
           <i class="fas fa-plus me-2"></i>
-          <span class="d-none d-sm-inline font-semibold">Add schedule</span>
+          <span class="font-semibold">Add schedule</span>
         </button>
       </div>
     </div>

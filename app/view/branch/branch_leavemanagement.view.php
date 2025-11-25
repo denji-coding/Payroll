@@ -31,6 +31,15 @@ try {
 
             $conn->beginTransaction();
 
+            // Get leave details to restore credits
+            $leaveStmt = $conn->prepare("
+                SELECT l.leave_type, l.employee_id 
+                FROM leaves l
+                WHERE l.id = :leave_id
+            ");
+            $leaveStmt->execute([':leave_id' => $leaveId]);
+            $leaveData = $leaveStmt->fetch(PDO::FETCH_ASSOC);
+
             $conn->prepare("INSERT INTO leave_rejections (leave_id, reason, manager_id) 
                             VALUES (:leave_id, :reason, :manager_id)")
                 ->execute([
@@ -46,6 +55,30 @@ try {
                     ':leave_id' => $leaveId,
                     ':manager_id' => $managerId
                 ]);
+
+            // Restore 1 credit when rejecting a leave (credits are deducted per application, not per day)
+            if ($leaveData) {
+                $leaveTypeMapping = [
+                    'Sick Leave' => 1,
+                    'Emergency Leave' => 2,
+                    'Vacation Leave' => 3,
+                    'Personal Leave' => 4,
+                    'Maternity/Paternity Leave' => 5
+                ];
+                $leaveTypeId = $leaveTypeMapping[$leaveData['leave_type']] ?? null;
+                
+                if ($leaveTypeId) {
+                    $restoreStmt = $conn->prepare("
+                        UPDATE leave_credits 
+                        SET taken = GREATEST(0, taken - 1), updated_at = CURRENT_TIMESTAMP
+                        WHERE employee_id = :emp_id AND leave_type_id = :type_id
+                    ");
+                    $restoreStmt->execute([
+                        ':emp_id' => $leaveData['employee_id'],
+                        ':type_id' => $leaveTypeId
+                    ]);
+                }
+            }
 
             $conn->commit();
             $feedback = ['type' => 'success', 'message' => 'Leave request rejected successfully.'];
@@ -116,8 +149,9 @@ try {
             }
 
             $available = $credit['default_allowed'] - $credit['taken'];
-            if ($available < $duration) {
-                throw new Exception("The employee has insufficient leave credits. Available: {$available} days, Requested: {$duration} days.");
+            // Check if at least 1 credit is available (credits are deducted per application, not per day)
+            if ($available < 1) {
+                throw new Exception("The employee has insufficient leave credits. Available: {$available} credit(s).");
             }
 
             // ✅ Approve leave
@@ -129,15 +163,8 @@ try {
                     ':manager_id' => $managerId
                 ]);
 
-            // ✅ Deduct leave credits based on duration
-            $conn->prepare("UPDATE leave_credits 
-                            SET taken = taken + :duration, updated_at = CURRENT_TIMESTAMP
-                            WHERE employee_id = :eid AND leave_type_id = :type_id")
-                ->execute([
-                    ':eid' => $empId,
-                    ':type_id' => $leaveTypeId,
-                    ':duration' => $duration
-                ]);
+            // Note: Credits are already deducted when the leave application was submitted
+            // No need to deduct again on approval
 
             $conn->commit();
             $feedback = ['type' => 'success', 'message' => 'Leave request approved.'];
@@ -279,7 +306,7 @@ try {
                     >
                     <button
                         id="clearSearch"
-                        class="absolute right-2 top-1 text-[#478547] text-xl hidden"
+                        class="absolute right-2 top-1 text-[#478547] text-xl cursor-pointer hover:text-[#16a249] transition-colors hidden"
                         aria-label="Clear search"
                         type="button"
                     >
@@ -290,7 +317,7 @@ try {
 
             <div class="relative w-full overflow-auto custom-scrollbar">
                     <div class="max-h-[calc(100vh-220px)] ">
-                <table class="min-w-[1000px] w-full divide-y divide-gray-200 text-sm">
+                <table id="leaveTable" class="min-w-[1000px] w-full divide-y divide-gray-200 text-sm">
 
                 <thead class="bg-emerald-600 sticky top-0 text-white text-[13.8px]">
                     <tr>
@@ -495,6 +522,7 @@ try {
                 <?php else: ?>
                     <tr id="noLeavesRow"><td colspan="10" class="text-center px-6 py-4 text-muted">No leave requests found.</td></tr>
                 <?php endif; ?>
+                <tr id="noSearchResults" style="display: none;"><td colspan="10" class="text-center px-6 py-4 text-muted">No search results found.</td></tr>
                 </tbody>
             </table>
             </div>
@@ -531,44 +559,65 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 <script>
-const searchInput = document.getElementById('leaveSearch');
-const clearBtn = document.getElementById('clearSearch');
-const table = document.getElementById('leaveTable');
-const noResultsRow = document.getElementById('noLeavesRow');
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('leaveSearch');
+    const clearBtn = document.getElementById('clearSearch');
+    const table = document.getElementById('leaveTable');
+    const noLeavesRow = document.getElementById('noLeavesRow');
+    const noSearchResults = document.getElementById('noSearchResults');
 
-if (searchInput && table) {
-  searchInput.addEventListener('input', () => {
-    // Only show clear button if it exists
-    if (clearBtn) {
-      clearBtn.style.display = searchInput.value ? 'block' : 'none';
+    if (searchInput && table) {
+        searchInput.addEventListener('input', () => {
+            // Show/hide clear button
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', !searchInput.value);
+            }
+
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const tbody = table.querySelector('tbody');
+            
+            if (!tbody) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => 
+                row.id !== 'noLeavesRow' && row.id !== 'noSearchResults'
+            );
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                const match = searchTerm === '' || rowText.includes(searchTerm);
+                row.style.display = match ? '' : 'none';
+                if (match) visibleCount++;
+            });
+
+            // Show/hide "no search results" message
+            if (noSearchResults) {
+                if (searchTerm !== '' && visibleCount === 0) {
+                    noSearchResults.style.display = '';
+                    // Hide the original "no leaves" row when searching
+                    if (noLeavesRow) {
+                        noLeavesRow.style.display = 'none';
+                    }
+                } else {
+                    noSearchResults.style.display = 'none';
+                    // Show the original "no leaves" row if no search and no data
+                    if (noLeavesRow && searchTerm === '') {
+                        noLeavesRow.style.display = rows.length === 0 ? '' : 'none';
+                    }
+                }
+            }
+        });
     }
 
-    const searchTerm = searchInput.value.toLowerCase();
-    const rows = Array.from(table.tBodies[0].rows).filter(row => row.id !== 'noLeavesRow');
-
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-      const rowText = row.textContent.toLowerCase();
-      const match = rowText.includes(searchTerm);
-      row.style.display = match ? '' : 'none';
-      if (match) visibleCount++;
-    });
-
-    // Show or hide the "no results" row if it exists
-    if (noResultsRow) {
-      noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+    if (clearBtn && searchInput) {
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.classList.add('hidden');
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
+        });
     }
-  });
-}
-
-if (clearBtn && searchInput) {
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    clearBtn.style.display = 'none';
-    searchInput.dispatchEvent(new Event('input'));
-  });
-}
+});
 </script>
 
 

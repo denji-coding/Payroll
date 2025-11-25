@@ -26,9 +26,9 @@ try {
         $perPage = 10000; // Very high limit to get all results
         $offset = 0;
     } else {
-        $page = max(1, (int)($_GET['page'] ?? 1));
-        $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 10)));
-        $offset = ($page - 1) * $perPage;
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 10)));
+    $offset = ($page - 1) * $perPage;
     }
 
     $db = new Database();
@@ -63,7 +63,7 @@ try {
             ':search4' => $searchPattern
         ]);
         $total = (int)($countStmt->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0);
-        
+
         // Search query - no pagination, get all results
         $stmt = $pdo->prepare("
             SELECT 
@@ -162,10 +162,10 @@ try {
             $stmt->bindParam(':filterDate', $filterDate);
         } else {
             $stmt = $pdo->prepare($unionQuery . " LIMIT :limit OFFSET :offset");
-            $stmt->bindParam(':filterDate', $filterDate);
-            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        }
+        $stmt->bindParam(':filterDate', $filterDate);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    }
     }
     
     // Execute the prepared statement with appropriate parameters
@@ -178,7 +178,7 @@ try {
             ':limit' => $perPage
         ]);
     } else {
-        $stmt->execute();
+    $stmt->execute();
     }
     
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -204,7 +204,7 @@ try {
             $name  = ucwords(strtolower($rec['full_name'] ?? 'Unknown'));
             $pos   = $rec['position'] ?? '';
             $empNo = $rec['employee_no'] ?? 'N/A';
-            $date  = date('Y-m-d', strtotime($rec['date']));
+            $date  = date('d-M-Y', strtotime($rec['date']));
             $min   = $rec['morning_in']   ? date('h:i A', strtotime($rec['morning_in']))   : '-';
             $mout  = $rec['morning_out']  ? date('h:i A', strtotime($rec['morning_out']))  : '-';
             $ain   = $rec['afternoon_in'] ? date('h:i A', strtotime($rec['afternoon_in'])) : '-';
@@ -257,7 +257,7 @@ try {
     if ($isSearchMode) {
         $totalPages = 1;
     } else {
-        $totalPages = (int)ceil(($total ?? 0) / $perPage);
+    $totalPages = (int)ceil(($total ?? 0) / $perPage);
     }
     
     echo json_encode([

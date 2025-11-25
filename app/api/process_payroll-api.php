@@ -1,8 +1,7 @@
 <?php
 header('Content-Type: application/json');
-session_start();
+require_once __DIR__ . '/../core/secure_session.php';
 require_once __DIR__ . '/../core/database.php';
-require_once __DIR__ . '/../core/session_helper.php';
 require __DIR__ . '/../../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -10,12 +9,15 @@ use PHPMailer\PHPMailer\Exception;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+// Start secure session
+startSecureSession();
+
 // Check authentication - allow admin, manager, or owner
 $adminId = $_SESSION['SESSION_USER_ID'] ?? null;
 $managerId = $_SESSION['manager_id'] ?? null;
 $ownerId = $_SESSION['owner_id'] ?? null;
 
-if (!$adminId && !$managerId && !$ownerId) {
+if ((!$adminId || empty($adminId)) && (!$managerId || empty($managerId)) && (!$ownerId || empty($ownerId))) {
     echo json_encode([
         'status' => 'error',
         'message' => 'Unauthorized. Please log in.'

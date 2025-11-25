@@ -1,12 +1,15 @@
 <?php
 header('Content-Type: application/json');
-session_start();
+require_once __DIR__ . '/../core/secure_session.php';
 require_once __DIR__ . '/../core/database.php';
 
-// Allow only admin access
+// Start secure session
+startSecureSession();
+
+// Allow only admin/HR access
 $adminId = $_SESSION['SESSION_USER_ID'] ?? null;
 
-if (!$adminId) {
+if (!$adminId || empty($adminId)) {
     echo json_encode([
         'status' => 'error',
         'message' => 'Unauthorized. Please log in as admin.'

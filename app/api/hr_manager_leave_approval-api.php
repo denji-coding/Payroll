@@ -162,8 +162,8 @@ if ($method === 'POST') {
         ");
         $updateStmt->execute([$status, $hrId, $approverName, $leaveId]);
         
-        // If approved, deduct from manager's leave credits
-        if ($action === 'approve') {
+        // Handle credit restoration on rejection
+        if ($action === 'reject') {
             $leaveTypeMapping = [
                 'Sick Leave' => 1,
                 'Emergency Leave' => 2,
@@ -174,32 +174,17 @@ if ($method === 'POST') {
             $leaveTypeId = $leaveTypeMapping[$leave['leave_type']] ?? null;
             
             if ($leaveTypeId) {
-                // Get or create leave credits for manager
-                $creditStmt = $pdo->prepare("
-                    SELECT id, taken FROM leave_credits 
+                // Restore 1 credit when rejecting a leave (credits are deducted per application, not per day)
+                $restoreStmt = $pdo->prepare("
+                    UPDATE leave_credits 
+                    SET taken = GREATEST(0, taken - 1), updated_at = CURRENT_TIMESTAMP
                     WHERE manager_id = ? AND leave_type_id = ? AND user_type = 'manager'
                 ");
-                $creditStmt->execute([$leave['applicant_manager_id'], $leaveTypeId]);
-                $credit = $creditStmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($credit) {
-                    // Update existing credit
-                    $updateCreditStmt = $pdo->prepare("
-                        UPDATE leave_credits 
-                        SET taken = taken + ? 
-                        WHERE id = ?
-                    ");
-                    $updateCreditStmt->execute([$leave['duration'], $credit['id']]);
-                } else {
-                    // Create new credit record
-                    $insertCreditStmt = $pdo->prepare("
-                        INSERT INTO leave_credits (manager_id, leave_type_id, taken, user_type)
-                        VALUES (?, ?, ?, 'manager')
-                    ");
-                    $insertCreditStmt->execute([$leave['applicant_manager_id'], $leaveTypeId, $leave['duration']]);
-                }
+                $restoreStmt->execute([$leave['applicant_manager_id'], $leaveTypeId]);
             }
         }
+        // Note: Credits are already deducted when the leave application was submitted
+        // No need to deduct again on approval
         
         $pdo->commit();
         

@@ -86,8 +86,8 @@ elseif (isset($_SESSION['manager_id']) && !empty($_SESSION['manager_id'])) {
 // Regular Employee
 elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
     $employeeNo = $_SESSION['employee_no'] ?? $_SESSION['employee_id'];
-    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, email, contact_number, position, address, dob, place_of_birth, sex, civil_status, citizenship, blood_type, photo_path, created_at, updated_at FROM employees WHERE employee_no = :employee_no OR id = :employee_id");
-    $stmt->execute([':employee_no' => $employeeNo, ':employee_id' => $employeeNo]);
+    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, email, contact_number, position, address, dob, place_of_birth, sex, civil_status, citizenship, blood_type, photo_path, created_at, updated_at FROM employees WHERE employee_no = :employee_no1 OR id = :employee_id");
+    $stmt->execute([':employee_no1' => $employeeNo, ':employee_id' => $employeeNo]);
     $userData = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($userData) {
@@ -118,19 +118,19 @@ elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
 
 <div class="flex min-h-screen overflow-hidden">
     <!-- Main content -->
-    <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">
+    <main id="mainContent" class="flex-1 p-3 sm:p-4 md:p-6 bg-gray-100 transition-margin duration-300 ease-in-out md:ml-64">
         <?php require_once views_path("partials/user_sidebar"); ?>
 
-        <div class="mb-6">
-            <span class="text-3xl font-bold tracking-tight text-gray-800">My Profile</span>
-            <p class="text-gray-600 mt-2">View and manage your personal information and account settings.</p>
+        <div class="mb-4 md:mb-6 pt-2 sm:pt-4">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-800">My Profile</h1>
+            <p class="text-sm sm:text-base text-gray-600 mt-1 md:mt-2">View and manage your personal information and account settings.</p>
         </div>
 
         <!-- Profile Header Card -->
-        <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+        <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg md:rounded-xl overflow-hidden border border-gray-200">
             <!-- Profile Header with Background -->
-            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 py-6">
-                <div class="flex flex-col items-center text-center space-y-4">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6">
+                <div class="flex flex-col items-center text-center space-y-3 sm:space-y-4">
                     <!-- Profile Image -->
                     <div class="relative">
                         <?php
@@ -151,167 +151,167 @@ elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
                         ?>
                         <img src="<?= htmlspecialchars($photoSrc) ?>"
                      alt="Profile Photo"
-                             class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                             class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
                              onerror="this.onerror=null;this.src='<?= htmlspecialchars($defaultPhoto) ?>';">
-                        <div class="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-2 border-white"></div>
+                        <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-green-500 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-white"></div>
                     </div>
 
                     <!-- Employee Name and Position -->
                     <div class="text-white">
-                        <h1 class="text-2xl font-bold profile-header-name"><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></h1>
-                        <p class="text-emerald-100 text-lg"><?= htmlspecialchars(ucwords($employee['position'] ?? 'N/A')) ?></p>
-                        <p class="text-emerald-100"><?= ucfirst($userType === 'hr' ? 'HR' : ($userType === 'manager' ? 'Manager' : 'Employee')) ?></p>
+                        <h1 class="text-lg sm:text-xl md:text-2xl font-bold profile-header-name"><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></h1>
+                        <p class="text-emerald-100 text-sm sm:text-base md:text-lg"><?= htmlspecialchars(ucwords($employee['position'] ?? 'N/A')) ?></p>
+                        <!-- <p class="text-emerald-100 text-xs sm:text-sm"><?= ucfirst($userType === 'hr' ? 'HR' : ($userType === 'manager' ? 'Manager' : 'Employee')) ?></p> -->
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex gap-3 mt-4">
-                        <button onclick="openChangePasswordModal()" class="inline-flex items-center bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2 rounded-lg shadow-sm transition-colors duration-200">
-                            <i class="bi bi-key-fill mr-2"></i> Change Password
+                    <div class="flex gap-2 sm:gap-3 mt-2 sm:mt-4 w-full sm:w-auto">
+                        <button onclick="openChangePasswordModal()" class="flex-1 sm:flex-initial inline-flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 sm:px-6 py-2 text-sm sm:text-base rounded-lg shadow-sm transition-colors duration-200">
+                            <i class="bi bi-key-fill mr-2"></i> <span class="hidden sm:inline">Change Password</span><span class="sm:hidden">Password</span>
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Information -->
-            <div class="p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="p-4 sm:p-6 md:p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     <!-- Personal Information -->
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">Personal Information</h3>
+                    <div class="space-y-4 md:space-y-6">
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">Personal Information</h3>
                         
-                        <div class="space-y-4">
+                        <div class="space-y-3 md:space-y-4">
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Full Name</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 flex items-center justify-between group">
-                                    <p id="fullNameDisplay" class="text-gray-800 font-medium" data-original="<?= htmlspecialchars($employee['name'] ?? 'N/A') ?>"><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Full Name</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200 flex items-center justify-between group gap-2">
+                                    <p id="fullNameDisplay" class="text-gray-800 font-medium text-sm sm:text-base flex-1 truncate" data-original="<?= htmlspecialchars($employee['name'] ?? 'N/A') ?>"><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></p>
                                     <input type="text" id="fullNameInput" value="<?= htmlspecialchars($employee['full_name'] ?? 'N/A') ?>" 
-                                           class="hidden w-full px-2 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                           class="hidden flex-1 px-2 py-1 sm:py-0.5 border border-gray-300 rounded text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                            oninput="toggleSaveButton('fullName')">
-                                    <div class="flex items-center space-x-2">
+                                    <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                                         <button id="fullNameEditBtn" onclick="toggleEdit('fullName')" 
-                                                class="text-gray-400 hover:text-emerald-600 transition-colors duration-200">
-                                            <i class="bi bi-pencil-fill"></i>
+                                                class="text-gray-400 hover:text-emerald-600 transition-colors duration-200 p-1">
+                                            <i class="bi bi-pencil-fill text-sm sm:text-base"></i>
                                         </button>
                                         <button id="fullNameSaveBtn" onclick="saveEdit('fullName')" 
-                                                class="hidden text-green-600 hover:text-green-700 transition-colors duration-200">
-                                            <i class="bi bi-check-lg"></i>
+                                                class="hidden text-green-600 hover:text-green-700 transition-colors duration-200 p-1">
+                                            <i class="bi bi-check-lg text-sm sm:text-base"></i>
                                         </button>
                                         <button id="fullNameCancelBtn" onclick="cancelEdit('fullName')" 
-                                                class="hidden text-red-600 hover:text-red-700 transition-colors duration-200">
-                                            <i class="bi bi-x-lg"></i>
+                                                class="hidden text-red-600 hover:text-red-700 transition-colors duration-200 p-1">
+                                            <i class="bi bi-x-lg text-sm sm:text-base"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Email Address</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 flex items-center justify-between group">
-                                    <p id="emailDisplay" class="text-gray-800" data-original="<?= htmlspecialchars($employee['email'] ?? 'N/A') ?>"><?= htmlspecialchars($employee['email'] ?? 'N/A') ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Email Address</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200 flex items-center justify-between group gap-2">
+                                    <p id="emailDisplay" class="text-gray-800 text-sm sm:text-base flex-1 truncate" data-original="<?= htmlspecialchars($employee['email'] ?? 'N/A') ?>"><?= htmlspecialchars($employee['email'] ?? 'N/A') ?></p>
                                     <input type="email" id="emailInput" value="<?= htmlspecialchars($employee['email'] ?? 'N/A') ?>" 
-                                           class="hidden w-full px-2 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                           class="hidden flex-1 px-2 py-1 sm:py-0.5 border border-gray-300 rounded text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                            oninput="toggleSaveButton('email')">
-                                    <div class="flex items-center space-x-2">
+                                    <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                                         <button id="emailEditBtn" onclick="toggleEdit('email')" 
-                                                class="text-gray-400 hover:text-emerald-600 transition-colors duration-200">
-                                            <i class="bi bi-pencil-fill"></i>
+                                                class="text-gray-400 hover:text-emerald-600 transition-colors duration-200 p-1">
+                                            <i class="bi bi-pencil-fill text-sm sm:text-base"></i>
                                         </button>
                                         <button id="emailSaveBtn" onclick="saveEdit('email')" 
-                                                class="hidden text-green-600 hover:text-green-700 transition-colors duration-200">
-                                            <i class="bi bi-check-lg"></i>
+                                                class="hidden text-green-600 hover:text-green-700 transition-colors duration-200 p-1">
+                                            <i class="bi bi-check-lg text-sm sm:text-base"></i>
                                         </button>
                                         <button id="emailCancelBtn" onclick="cancelEdit('email')" 
-                                                class="hidden text-red-600 hover:text-red-700 transition-colors duration-200">
-                                            <i class="bi bi-x-lg"></i>
+                                                class="hidden text-red-600 hover:text-red-700 transition-colors duration-200 p-1">
+                                            <i class="bi bi-x-lg text-sm sm:text-base"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Contact Number</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 flex items-center justify-between group">
-                                    <p id="contactNumberDisplay" class="text-gray-800" data-original="<?= htmlspecialchars($employee['contact_number'] ?? 'N/A') ?>"><?= htmlspecialchars($employee['contact_number'] ?? 'N/A') ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Contact Number</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200 flex items-center justify-between group gap-2">
+                                    <p id="contactNumberDisplay" class="text-gray-800 text-sm sm:text-base flex-1 truncate" data-original="<?= htmlspecialchars($employee['contact_number'] ?? 'N/A') ?>"><?= htmlspecialchars($employee['contact_number'] ?? 'N/A') ?></p>
                                     <input type="text" id="contactNumberInput" value="<?= htmlspecialchars($employee['contact_number'] ?? 'N/A') ?>" 
-                                           class="hidden w-full px-2 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                           class="hidden flex-1 px-2 py-1 sm:py-0.5 border border-gray-300 rounded text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                            oninput="toggleSaveButton('contactNumber')">
-                                    <div class="flex items-center space-x-2">
+                                    <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                                         <button id="contactNumberEditBtn" onclick="toggleEdit('contactNumber')" 
-                                                class="text-gray-400 hover:text-emerald-600 transition-colors duration-200">
-                                            <i class="bi bi-pencil-fill"></i>
+                                                class="text-gray-400 hover:text-emerald-600 transition-colors duration-200 p-1">
+                                            <i class="bi bi-pencil-fill text-sm sm:text-base"></i>
                                         </button>
                                         <button id="contactNumberSaveBtn" onclick="saveEdit('contactNumber')" 
-                                                class="hidden text-green-600 hover:text-green-700 transition-colors duration-200">
-                                            <i class="bi bi-check-lg"></i>
+                                                class="hidden text-green-600 hover:text-green-700 transition-colors duration-200 p-1">
+                                            <i class="bi bi-check-lg text-sm sm:text-base"></i>
                                         </button>
                                         <button id="contactNumberCancelBtn" onclick="cancelEdit('contactNumber')" 
-                                                class="hidden text-red-600 hover:text-red-700 transition-colors duration-200">
-                                            <i class="bi bi-x-lg"></i>
+                                                class="hidden text-red-600 hover:text-red-700 transition-colors duration-200 p-1">
+                                            <i class="bi bi-x-lg text-sm sm:text-base"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Position</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800 font-medium"><?= htmlspecialchars(ucwords($employee['position'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Position</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 font-medium text-sm sm:text-base"><?= htmlspecialchars(ucwords($employee['position'] ?? 'N/A')) ?></p>
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Address</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= htmlspecialchars(ucwords($employee['address'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Address</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= htmlspecialchars(ucwords($employee['address'] ?? 'N/A')) ?></p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Additional Information -->
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">Additional Information</h3>
+                    <div class="space-y-4 md:space-y-6">
+                        <h3 class="text-lg sm:text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">Additional Information</h3>
                         
-                        <div class="space-y-4">
+                        <div class="space-y-3 md:space-y-4">
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Date of Birth</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= isset($employee['dob']) ? htmlspecialchars(date("F d, Y", strtotime($employee['dob']))) : 'N/A' ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Date of Birth</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= isset($employee['dob']) ? htmlspecialchars(date("F d, Y", strtotime($employee['dob']))) : 'N/A' ?></p>
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-gray-700 font-medium mb-2">Place of Birth</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= htmlspecialchars(ucwords($employee['place_of_birth'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Place of Birth</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= htmlspecialchars(ucwords($employee['place_of_birth'] ?? 'N/A')) ?></p>
                                 </div>
                             </div>
 
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">Sex</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= htmlspecialchars(ucwords($employee['sex'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Sex</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= htmlspecialchars(ucwords($employee['sex'] ?? 'N/A')) ?></p>
                                 </div>
                 </div>
 
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">Civil Status</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= htmlspecialchars(ucwords($employee['civil_status'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Civil Status</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= htmlspecialchars(ucwords($employee['civil_status'] ?? 'N/A')) ?></p>
                                 </div>
                 </div>
 
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">Citizenship</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= htmlspecialchars(ucwords($employee['citizenship'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Citizenship</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= htmlspecialchars(ucwords($employee['citizenship'] ?? 'N/A')) ?></p>
                                 </div>
                 </div>
 
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">Blood Type</label>
-                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                    <p class="text-gray-800"><?= htmlspecialchars(strtoupper($employee['blood_type'] ?? 'N/A')) ?></p>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Blood Type</label>
+                                <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                    <p class="text-gray-800 text-sm sm:text-base"><?= htmlspecialchars(strtoupper($employee['blood_type'] ?? 'N/A')) ?></p>
                                 </div>
                             </div>
                         </div>
@@ -319,14 +319,14 @@ elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
                 </div>
 
                 <!-- Account Information -->
-                <div class="mt-8 pt-8 border-t border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-6">Account Information</h3>
+                <div class="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-gray-200">
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4 md:mb-6">Account Information</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 <div>
-                            <label class="block text-gray-700 font-medium mb-2">Account Status</label>
-                            <div class="bg-green-50 p-2 rounded-lg border border-green-200">
-                                <span class="inline-flex items-center text-green-800">
+                            <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Account Status</label>
+                            <div class="bg-green-50 p-2 sm:p-3 rounded-lg border border-green-200">
+                                <span class="inline-flex items-center text-green-800 text-sm sm:text-base">
                                     <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                                     Active
                                 </span>
@@ -334,16 +334,16 @@ elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
                 </div>
 
                 <div>
-                            <label class="block text-gray-700 font-medium mb-2">Member Since</label>
-                            <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                <p class="text-gray-800"><?= isset($employee['created_at']) ? htmlspecialchars(date("F d, Y", strtotime($employee['created_at']))) : 'N/A' ?></p>
+                            <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Member Since</label>
+                            <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                <p class="text-gray-800 text-sm sm:text-base"><?= isset($employee['created_at']) ? htmlspecialchars(date("F d, Y", strtotime($employee['created_at']))) : 'N/A' ?></p>
                             </div>
                 </div>
 
                 <div>
-                            <label class="block text-gray-700 font-medium mb-2">Last Updated</label>
-                            <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                <p class="text-gray-800"><?= isset($employee['updated_at']) ? htmlspecialchars(date("F d, Y", strtotime($employee['updated_at']))) : 'N/A' ?></p>
+                            <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Last Updated</label>
+                            <div class="bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-200">
+                                <p class="text-gray-800 text-sm sm:text-base"><?= isset($employee['updated_at']) ? htmlspecialchars(date("F d, Y", strtotime($employee['updated_at']))) : 'N/A' ?></p>
                             </div>
                         </div>
                     </div>
@@ -352,57 +352,57 @@ elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
         </div>
 
         <!-- Change Password Modal -->
-        <div id="changePasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-800">Change Password</h3>
+        <div id="changePasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen p-3 sm:p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full my-4">
+                    <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-800">Change Password</h3>
                     </div>
                     
-                    <form id="changePasswordForm" class="px-6 py-4">
-                        <div class="space-y-4">
+                    <form id="changePasswordForm" class="px-4 sm:px-6 py-4">
+                        <div class="space-y-3 sm:space-y-4">
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">Current Password</label>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Current Password</label>
                                 <div class="relative">
                                     <input type="password" id="currentPassword" name="currentPassword" required 
-                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                                     <button type="button" onclick="togglePassword('currentPassword')" 
                                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                                        <i class="bi bi-eye" id="currentPasswordEye"></i>
+                                        <i class="bi bi-eye text-sm sm:text-base" id="currentPasswordEye"></i>
                                     </button>
                                 </div>
                 </div>
                             
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">New Password</label>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">New Password</label>
                                 <div class="relative">
                                     <input type="password" id="newPassword" name="newPassword" required 
-                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                                     <button type="button" onclick="togglePassword('newPassword')" 
                                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                                        <i class="bi bi-eye" id="newPasswordEye"></i>
+                                        <i class="bi bi-eye text-sm sm:text-base" id="newPasswordEye"></i>
                                     </button>
                                 </div>
                 </div>
                             
                 <div>
-                                <label class="block text-gray-700 font-medium mb-2">Confirm New Password</label>
+                                <label class="block text-gray-700 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Confirm New Password</label>
                                 <div class="relative">
                                     <input type="password" id="confirmPassword" name="confirmPassword" required 
-                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                                     <button type="button" onclick="togglePassword('confirmPassword')" 
                                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                                        <i class="bi bi-eye" id="confirmPasswordEye"></i>
+                                        <i class="bi bi-eye text-sm sm:text-base" id="confirmPasswordEye"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="flex gap-3 mt-6">
-                            <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-6">
+                            <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base">
                                 Update Password
                             </button>
-                            <button type="button" onclick="closeChangePasswordModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                            <button type="button" onclick="closeChangePasswordModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base">
                                 Cancel
                             </button>
                         </div>
@@ -412,6 +412,40 @@ elseif (isset($_SESSION['employee_no']) || isset($_SESSION['employee_id'])) {
         </div>
     </main>
 </div>
+
+<style>
+/* Responsive adjustments for profile page */
+@media (max-width: 767px) {
+    main#mainContent {
+        margin-left: 0 !important;
+        padding-top: calc(var(--mobile-navbar-height, 3.5rem) + 0.5rem) !important;
+    }
+    
+    /* Ensure heading is visible on mobile */
+    main#mainContent > div:first-of-type {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    main#mainContent:not(.ml-\[64px\]) {
+        margin-left: 256px;
+    }
+}
+
+/* Ensure text doesn't overflow on mobile */
+#fullNameDisplay, #emailDisplay, #contactNumberDisplay {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Make sure heading is always visible */
+h1.text-xl {
+    display: block !important;
+    visibility: visible !important;
+}
+</style>
 
 <script>
 function openChangePasswordModal() {
