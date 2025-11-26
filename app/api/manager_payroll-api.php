@@ -42,7 +42,16 @@ if ($method === 'GET') {
         $philhealth_rate = $rateRow['philhealth_rate'] ?? 0;
         $total_benefit_rate = ($sss_rate + $pagibig_rate + $philhealth_rate) / 100;
 
-        // Get all managers (not just under a specific manager)
+        // Get all employees
+        $employeesStmt = $pdo->prepare("
+            SELECT id, employee_no, first_name, middle_name, last_name, position, base_salary
+            FROM employees
+            WHERE deleted_at IS NULL AND approved_by_manager = 1
+        ");
+        $employeesStmt->execute();
+        $employees = $employeesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get all managers
         $managersStmt = $pdo->prepare("
             SELECT id, m_employee_id, m_first_name, m_middle_name, m_last_name, m_position, m_base_salary
             FROM managers
@@ -51,6 +60,15 @@ if ($method === 'GET') {
         $managersStmt->execute();
         $managers = $managersStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Get all HR (admins)
+        $hrStmt = $pdo->prepare("
+            SELECT id, hr_employee_id, hr_first_name, hr_middle_name, hr_last_name, hr_position, hr_base_salary
+            FROM admins
+            WHERE deleted_at IS NULL
+        ");
+        $hrStmt->execute();
+        $hrList = $hrStmt->fetchAll(PDO::FETCH_ASSOC);
+
         // Generate date range
         $dateRange = [];
         $period = new DatePeriod(new DateTime($start_date), new DateInterval('P1D'), (new DateTime($end_date))->modify('+1 day'));
@@ -58,27 +76,152 @@ if ($method === 'GET') {
             $dateRange[] = $date->format('Y-m-d');
         }
 
+        // Attendance records for employees
+        $empAttendanceStmt = $pdo->prepare("
+            SELECT a.*, e.employee_no
+            FROM attendance a
+            INNER JOIN employees e ON a.employee_id = e.id
+            WHERE a.date BETWEEN :start AND :end AND a.employee_id IS NOT NULL
+        ");
+        $empAttendanceStmt->execute([':start' => $start_date, ':end' => $end_date]);
+        $empAttendanceRows = $empAttendanceStmt->fetchAll(PDO::FETCH_ASSOC);
+
         // Attendance records for managers
-        $attendanceStmt = $pdo->prepare("
+        $mgrAttendanceStmt = $pdo->prepare("
             SELECT a.*, m.m_employee_id
             FROM attendance a
             INNER JOIN managers m ON a.manager_id = m.id
             WHERE a.date BETWEEN :start AND :end AND a.manager_id IS NOT NULL
         ");
-        $attendanceStmt->execute([':start' => $start_date, ':end' => $end_date]);
-        $attendanceRows = $attendanceStmt->fetchAll(PDO::FETCH_ASSOC);
+        $mgrAttendanceStmt->execute([':start' => $start_date, ':end' => $end_date]);
+        $mgrAttendanceRows = $mgrAttendanceStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $attendanceMap = [];
-        foreach ($attendanceRows as $att) {
-            $key = $att['m_employee_id'] . '_' . $att['date'];
-            $attendanceMap[$key] = $att;
+        // Attendance records for HR
+        $hrAttendanceStmt = $pdo->prepare("
+            SELECT a.*, admin.hr_employee_id
+            FROM attendance a
+            INNER JOIN admins admin ON a.hr_id = admin.id
+            WHERE a.date BETWEEN :start AND :end AND a.hr_id IS NOT NULL
+        ");
+        $hrAttendanceStmt->execute([':start' => $start_date, ':end' => $end_date]);
+        $hrAttendanceRows = $hrAttendanceStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Create attendance maps
+        $empAttendanceMap = [];
+        foreach ($empAttendanceRows as $att) {
+            $key = $att['employee_no'] . '_' . $att['date'];
+            $empAttendanceMap[$key] = $att;
         }
 
-        // Note: Managers don't have leave records in the leaves table (only employees do)
-        // If you need leave tracking for managers, you'll need to add that functionality
+        $mgrAttendanceMap = [];
+        foreach ($mgrAttendanceRows as $att) {
+            $key = $att['m_employee_id'] . '_' . $att['date'];
+            $mgrAttendanceMap[$key] = $att;
+        }
+
+        $hrAttendanceMap = [];
+        foreach ($hrAttendanceRows as $att) {
+            $key = $att['hr_employee_id'] . '_' . $att['date'];
+            $hrAttendanceMap[$key] = $att;
+        }
+
+        // Get leave records for employees
+        $leaveStmt = $pdo->prepare("
+            SELECT employee_id, COUNT(*) as leave_count
+            FROM leaves
+            WHERE start_date <= :end AND end_date >= :start 
+            AND status = 'Approved'
+            AND employee_id IS NOT NULL
+            GROUP BY employee_id
+        ");
+        $leaveStmt->execute([':start' => $start_date, ':end' => $end_date]);
+        $leaveRows = $leaveStmt->fetchAll(PDO::FETCH_ASSOC);
+        $leaveMap = [];
+        foreach ($leaveRows as $lv) {
+            $leaveMap[$lv['employee_id']] = (int)$lv['leave_count'];
+        }
 
         $result = [];
 
+        // Process Employees
+        foreach ($employees as $emp) {
+            $emp_no = $emp['employee_no'] ?: 'N/A';
+            $emp_id = $emp['id'];
+            $base_salary = $emp['base_salary'] ?? 0;
+            $present = $absent = $total_hours = 0;
+
+            foreach ($dateRange as $date) {
+                $key = $emp_no . '_' . $date;
+                if (isset($empAttendanceMap[$key])) {
+                    $present++;
+                    $total_hours += 8;
+                } else {
+                    $absent++;
+                }
+            }
+
+            $leave = $leaveMap[$emp_id] ?? 0;
+
+            if ($present === 0 && $absent === 0 && $leave === 0) continue;
+
+            $gross = $base_salary * ($total_hours / 8);
+            $sss = $gross * ($sss_rate / 100);
+            $pagibig = $gross * ($pagibig_rate / 100);
+            $philhealth = $gross * ($philhealth_rate / 100);
+            $benefit_deduction = $sss + $pagibig + $philhealth;
+
+            $daily_rate = $base_salary;
+            $leave_deduction = ($daily_rate / (count($dateRange) ?: 22)) * $leave;
+            $total_deductions = $benefit_deduction + $leave_deduction;
+            $net = $gross - $total_deductions;
+
+            // Check if already processed
+            $checkProcessed = $pdo->prepare("
+                SELECT id FROM payroll 
+                WHERE employee_id = :emp_id 
+                AND pay_period_start = :start 
+                AND pay_period_end = :end
+                LIMIT 1
+            ");
+            $checkProcessed->execute([
+                ':emp_id' => $emp_id,
+                ':start' => $start_date,
+                ':end' => $end_date
+            ]);
+            $already_processed = $checkProcessed->fetch() ? true : false;
+
+            // Format name
+            $first_name = ucwords(strtolower($emp['first_name'] ?? ''));
+            $middle_initial = !empty($emp['middle_name']) ? strtoupper(substr($emp['middle_name'], 0, 1)) . '. ' : '';
+            $last_name = ucwords(strtolower($emp['last_name'] ?? ''));
+            $full_name = trim($first_name . ' ' . $middle_initial . $last_name);
+
+            $result[] = [
+                'employee_id' => $emp_id,
+                'manager_id' => null,
+                'hr_id' => null,
+                'employee_no' => $emp_no,
+                'full_name' => $full_name,
+                'position' => $emp['position'] ?? 'Employee',
+                'base_salary' => (float)$base_salary,
+                'total_hours' => $total_hours,
+                'present_days' => $present,
+                'absent_days' => $absent,
+                'leave_days' => $leave,
+                'gross' => round($gross, 2),
+                'sss_deduction' => round($sss, 2),
+                'pagibig_deduction' => round($pagibig, 2),
+                'philhealth_deduction' => round($philhealth, 2),
+                'benefit_deduction' => round($benefit_deduction, 2),
+                'leave_deduction' => round($leave_deduction, 2),
+                'total_deductions' => round($total_deductions, 2),
+                'net' => round($net, 2),
+                'processed' => $already_processed,
+                'user_type' => 'employee'
+            ];
+        }
+
+        // Process Managers
         foreach ($managers as $mgr) {
             $emp_no = $mgr['m_employee_id'] ?: 'N/A';
             $mgr_id = $mgr['id'];
@@ -87,7 +230,7 @@ if ($method === 'GET') {
 
             foreach ($dateRange as $date) {
                 $key = $emp_no . '_' . $date;
-                if (isset($attendanceMap[$key])) {
+                if (isset($mgrAttendanceMap[$key])) {
                     $present++;
                     $total_hours += 8;
                 } else {
@@ -106,22 +249,24 @@ if ($method === 'GET') {
             $benefit_deduction = $sss + $pagibig + $philhealth;
 
             $daily_rate = $base_salary;
-            $leave_deduction = $daily_rate * $leave;
-
+            $leave_deduction = 0;
             $total_deductions = $benefit_deduction + $leave_deduction;
             $net = $gross - $total_deductions;
 
-            // Check if payroll already processed
-            $checkStmt = $pdo->prepare("
-                SELECT COUNT(*) FROM payroll 
-                WHERE manager_id = :manager_id AND pay_period_start = :start AND pay_period_end = :end
+            // Check if already processed
+            $checkProcessed = $pdo->prepare("
+                SELECT id FROM payroll 
+                WHERE manager_id = :mgr_id 
+                AND pay_period_start = :start 
+                AND pay_period_end = :end
+                LIMIT 1
             ");
-            $checkStmt->execute([
-                ':manager_id' => $mgr_id,
+            $checkProcessed->execute([
+                ':mgr_id' => $mgr_id,
                 ':start' => $start_date,
                 ':end' => $end_date
             ]);
-            $already_processed = $checkStmt->fetchColumn() > 0;
+            $already_processed = $checkProcessed->fetch() ? true : false;
 
             // Format name
             $first_name = ucwords(strtolower($mgr['m_first_name'] ?? ''));
@@ -130,7 +275,9 @@ if ($method === 'GET') {
             $full_name = trim($first_name . ' ' . $middle_initial . $last_name);
 
             $result[] = [
+                'employee_id' => null,
                 'manager_id' => $mgr_id,
+                'hr_id' => null,
                 'employee_no' => $emp_no,
                 'full_name' => $full_name,
                 'position' => $mgr['m_position'] ?? 'Manager',
@@ -147,7 +294,86 @@ if ($method === 'GET') {
                 'leave_deduction' => round($leave_deduction, 2),
                 'total_deductions' => round($total_deductions, 2),
                 'net' => round($net, 2),
-                'processed' => $already_processed
+                'processed' => $already_processed,
+                'user_type' => 'manager'
+            ];
+        }
+
+        // Process HR
+        foreach ($hrList as $hr) {
+            $emp_no = $hr['hr_employee_id'] ?: 'N/A';
+            $hr_id = $hr['id'];
+            $base_salary = $hr['hr_base_salary'] ?? 0;
+            $present = $absent = $total_hours = 0;
+
+            foreach ($dateRange as $date) {
+                $key = $emp_no . '_' . $date;
+                if (isset($hrAttendanceMap[$key])) {
+                    $present++;
+                    $total_hours += 8;
+                } else {
+                    $absent++;
+                }
+            }
+
+            $leave = 0; // HR don't have leave records in current schema
+
+            if ($present === 0 && $absent === 0 && $leave === 0) continue;
+
+            $gross = $base_salary * ($total_hours / 8);
+            $sss = $gross * ($sss_rate / 100);
+            $pagibig = $gross * ($pagibig_rate / 100);
+            $philhealth = $gross * ($philhealth_rate / 100);
+            $benefit_deduction = $sss + $pagibig + $philhealth;
+
+            $daily_rate = $base_salary;
+            $leave_deduction = 0;
+            $total_deductions = $benefit_deduction + $leave_deduction;
+            $net = $gross - $total_deductions;
+
+            // Check if already processed
+            $checkProcessed = $pdo->prepare("
+                SELECT id FROM payroll 
+                WHERE hr_id = :hr_id 
+                AND pay_period_start = :start 
+                AND pay_period_end = :end
+                LIMIT 1
+            ");
+            $checkProcessed->execute([
+                ':hr_id' => $hr_id,
+                ':start' => $start_date,
+                ':end' => $end_date
+            ]);
+            $already_processed = $checkProcessed->fetch() ? true : false;
+
+            // Format name
+            $first_name = ucwords(strtolower($hr['hr_first_name'] ?? ''));
+            $middle_initial = !empty($hr['hr_middle_name']) ? strtoupper(substr($hr['hr_middle_name'], 0, 1)) . '. ' : '';
+            $last_name = ucwords(strtolower($hr['hr_last_name'] ?? ''));
+            $full_name = trim($first_name . ' ' . $middle_initial . $last_name);
+
+            $result[] = [
+                'employee_id' => null,
+                'manager_id' => null,
+                'hr_id' => $hr_id,
+                'employee_no' => $emp_no,
+                'full_name' => $full_name,
+                'position' => $hr['hr_position'] ?? 'HR',
+                'base_salary' => (float)$base_salary,
+                'total_hours' => $total_hours,
+                'present_days' => $present,
+                'absent_days' => $absent,
+                'leave_days' => $leave,
+                'gross' => round($gross, 2),
+                'sss_deduction' => round($sss, 2),
+                'pagibig_deduction' => round($pagibig, 2),
+                'philhealth_deduction' => round($philhealth, 2),
+                'benefit_deduction' => round($benefit_deduction, 2),
+                'leave_deduction' => round($leave_deduction, 2),
+                'total_deductions' => round($total_deductions, 2),
+                'net' => round($net, 2),
+                'processed' => $already_processed,
+                'user_type' => 'hr'
             ];
         }
 

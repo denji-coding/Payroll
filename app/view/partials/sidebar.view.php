@@ -2,7 +2,7 @@
 $currentPage = $_GET['payroll'] ?? basename($_SERVER['PHP_SELF']);
 require_once views_path("partials/header");
 
-$employeePages = ['employees', 'delete_history', 'approvals_request', 'leave_credits'];
+$employeePages = ['employees', 'managers_account', 'delete_history', 'approvals_request', 'leave_credits'];
 $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
 ?>
 
@@ -150,6 +150,11 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
                     class="block font-semibold ml-4 py-2 px-3 text-xs text-white rounded <?= $currentPage == 'employees' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
                         <i class="bi bi-person-gear"></i> Manage Employees
                     </a>
+                    
+                    <a href="index.php?payroll=managers_account" 
+                    class="block ml-4 py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'managers_account' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">                    
+                        <i class="bi bi-person-lines-fill"></i> Manage Managers
+                    </a>
                     <a href="index.php?payroll=approvals_request" 
                     class="block ml-4 py-2 px-3 font-semibold text-xs text-white rounded <?= $currentPage == 'approvals_request' ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">                    
                         <i class="bi bi-check-circle"></i> Approvals by Manager
@@ -175,10 +180,7 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
             class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'hr_manager_leave_approval') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-person-check"></i> Manager Leave Approvals
         </a>
-        <a href="index.php?payroll=managers_account"
-            class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'managers_account') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
-            <i class="bi bi-person-badge"></i> Managers
-        </a>
+        
             </div>
         </div>
         
@@ -196,9 +198,9 @@ $isEmployeeDropdownOpen = in_array($currentPage, $employeePages);
             </svg>
         </button>
         <div id="payrollSectionDropdown" class="dropdown-container ml-0 mt-0">
-        <a href="index.php?payroll=payroll_manager"
-                class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'payroll_manager') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
-                <i class="bi bi-credit-card"></i> Payroll Manager
+        <a href="index.php?payroll=payroll"
+                class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'payroll') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
+                <i class="bi bi-credit-card"></i> Payroll
             </a>
             <a href="index.php?payroll=timerecords"
                 class="sidebar-item w-full flex items-center font-semibold text-white text-sm gap-1 p-2 px-4 rounded <?= ($currentPage == 'timerecords') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">

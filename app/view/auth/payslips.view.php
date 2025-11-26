@@ -62,7 +62,7 @@ require_once views_path("partials/nav");
                     data-aos-duration="500">
       <!-- Card Header -->
       <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
-        <span class="text-xl md:text-2xl font-semibold text-[#133913]" data-aos="fade-in" data-aos-delay="200" data-aos-duration="500">All Employee Payslips</span>
+        <span class="text-xl md:text-2xl font-semibold text-[#133913]" data-aos="fade-in" data-aos-delay="200" data-aos-duration="500">All Payslips</span>
 
         <!-- Search Bar -->
         <div class="relative w-64" data-aos="fade-in" data-aos-delay="300" data-aos-duration="500">
@@ -88,7 +88,8 @@ require_once views_path("partials/nav");
             <thead class="[&_tr]:border-b bg-white sticky top-0 z-10">
                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                 <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">No.</th>
-                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Employee Name</th>
+                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Name</th>
+                <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Type</th>
                 <th class="h-10 md:h-12 px-2 md:px-4 text-left align-middle font-bold text-[#478547]">Payroll Period</th>
                 <th class="h-10 md:h-12 px-2 md:px-4 text-center align-middle font-bold text-[#478547]">Actions</th>
                 </tr>
@@ -277,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   tbody.innerHTML = `
     <tr>
-      <td colspan="4" class="text-center py-12">
+      <td colspan="5" class="text-center py-12">
         <div class="flex flex-col items-center justify-center space-y-4">
           <div class="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
           <p class="text-gray-500 font-medium">Loading payslips...</p>
@@ -298,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         tbody.innerHTML = `
           <tr>
-            <td colspan="4" class="text-center py-12">
+            <td colspan="5" class="text-center py-12">
               <div class="flex flex-col items-center justify-center space-y-4">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                   <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -318,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(() => {
       tbody.innerHTML = `
         <tr>
-          <td colspan="4" class="text-center py-12">
+          <td colspan="5" class="text-center py-12">
             <div class="flex flex-col items-center justify-center space-y-4">
               <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                 <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -643,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (payslipsData.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="4" class="text-center py-12">
+          <td colspan="5" class="text-center py-12">
             <div class="flex flex-col items-center justify-center space-y-4">
               <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -669,11 +670,23 @@ document.addEventListener('DOMContentLoaded', () => {
         : '';
 
       const employeeName = record.full_name || 'N/A';
+      
+      // Get user type badge
+      const userType = record.user_type || 'employee';
+      let typeBadge = '';
+      if (userType === 'manager') {
+        typeBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">Manager</span>';
+      } else if (userType === 'hr') {
+        typeBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">HR</span>';
+      } else {
+        typeBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Employee</span>';
+      }
 
       const row = `
         <tr class="fade-in-slide border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]" style="animation-delay: ${i * 30}ms;">
           <td class="p-2 md:p-4 align-middle">${i + 1}</td>
           <td class="p-2 md:p-4 align-middle">${employeeName}</td>
+          <td class="p-2 md:p-4 align-middle">${typeBadge}</td>
           <td class="p-2 md:p-4 align-middle">${payPeriod}</td>
           <td class="p-2 md:p-4 align-middle text-center">
             <button 

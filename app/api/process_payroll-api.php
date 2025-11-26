@@ -25,8 +25,6 @@ if ((!$adminId || empty($adminId)) && (!$managerId || empty($managerId)) && (!$o
     exit;
 }
 
-$generatedBy = $adminId ?? $managerId ?? $ownerId;
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'status' => 'error',
@@ -48,6 +46,30 @@ if (!$input || !isset($input['payrolls'], $input['start_date'], $input['end_date
 $db = new Database();
 $pdo = $db->getConnection();
 
+// Only use manager_id for generated_by due to foreign key constraint
+// If user is admin/owner, we need to get a default manager ID for payslips table
+// (payslips.generated_by is NOT NULL, but payroll.generated_by can be NULL)
+$generatedBy = null;
+if ($managerId) {
+    $generatedBy = $managerId;
+} else {
+    // For admin/HR/owner, get the first available manager ID as fallback
+    // This is needed because payslips.generated_by cannot be NULL
+    $defaultManagerStmt = $pdo->prepare("SELECT id FROM managers WHERE deleted_at IS NULL LIMIT 1");
+    $defaultManagerStmt->execute();
+    $defaultManager = $defaultManagerStmt->fetch(PDO::FETCH_ASSOC);
+    if ($defaultManager) {
+        $generatedBy = $defaultManager['id'];
+    } else {
+        // If no manager exists, we cannot proceed (payslips requires generated_by)
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Cannot process payroll: No manager found in the system. Please add a manager first.'
+        ]);
+        exit;
+    }
+}
+
 try {
     $pdo->beginTransaction();
     
@@ -56,10 +78,18 @@ try {
     $payrollType = $input['payroll_type'];
     $payrolls = $input['payrolls'];
     
-    // Calculate duration
+    // Calculate duration (only weekdays, excluding Saturday and Sunday)
     $start = new DateTime($startDate);
     $end = new DateTime($endDate);
-    $duration = $start->diff($end)->days + 1;
+    $duration = 0;
+    $current = clone $start;
+    while ($current <= $end) {
+        $dayOfWeek = (int)$current->format('w'); // 0 = Sunday, 6 = Saturday
+        if ($dayOfWeek !== 0 && $dayOfWeek !== 6) {
+            $duration++;
+        }
+        $current->modify('+1 day');
+    }
     
     $processedEmployees = [];
     $errors = [];
@@ -117,13 +147,23 @@ try {
                     $employeeNo = 'MGR-' . $currentManagerId;
                 }
             } else {
-                // This is employee payroll - get employee by employee_no
-                $employeeStmt = $pdo->prepare("SELECT id, email, first_name, last_name, employee_no FROM employees WHERE employee_no = ? LIMIT 1");
-                $employeeStmt->execute([$payroll['employee_no']]);
+                // This is employee payroll - check if employee_id is provided, otherwise get by employee_no
+                $currentEmployeeId = $payroll['employee_id'] ?? null;
+                
+                if ($currentEmployeeId) {
+                    // Use provided employee_id
+                    $employeeStmt = $pdo->prepare("SELECT id, email, first_name, last_name, employee_no FROM employees WHERE id = ? LIMIT 1");
+                    $employeeStmt->execute([$currentEmployeeId]);
+                } else {
+                    // Fallback to employee_no lookup
+                    $employeeStmt = $pdo->prepare("SELECT id, email, first_name, last_name, employee_no FROM employees WHERE employee_no = ? LIMIT 1");
+                    $employeeStmt->execute([$payroll['employee_no']]);
+                }
+                
                 $employee = $employeeStmt->fetch(PDO::FETCH_ASSOC);
                 
                 if (!$employee) {
-                    $errors[] = "Employee not found for ID: " . $payroll['employee_no'];
+                    $errors[] = "Employee not found for ID: " . ($currentEmployeeId ?? $payroll['employee_no']);
                     continue;
                 }
                 
@@ -169,6 +209,11 @@ try {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
+            // For payroll table, generated_by can be NULL (for admin/HR/owner)
+            // For payslips table, generated_by must be a valid manager ID (NOT NULL constraint)
+            $payrollGeneratedBy = $managerId ? $managerId : null; // NULL for payroll table when admin/HR/owner
+            $payslipGeneratedBy = $generatedBy; // Must be a valid manager ID for payslips table
+            
             $insertStmt->execute([
                 $employeeId, // NULL for managers/HR, actual ID for employees
                 $currentManagerId, // NULL for employees/HR, actual ID for managers
@@ -187,7 +232,7 @@ try {
                 $payroll['total_deductions'] ?? 0,
                 $payroll['gross'] ?? 0,
                 $payroll['net'] ?? 0,
-                $generatedBy
+                $payrollGeneratedBy // NULL for admin/HR/owner, manager_id for managers
             ]);
             
             $payrollId = $pdo->lastInsertId();
@@ -208,7 +253,7 @@ try {
                 $employeeId, // NULL for managers/HR, actual ID for employees
                 $currentManagerId, // NULL for employees/HR, actual ID for managers
                 $currentHrId, // NULL for employees/managers, actual ID for HR
-                $generatedBy,
+                $payslipGeneratedBy, // Must be a valid manager ID (NOT NULL constraint)
                 $pdfPath
             ]);
             
@@ -402,7 +447,8 @@ function generatePayslipPDF($pdo, $payrollId, $managerId, $employeeId, $hrId, $p
         
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
+        // Set paper size to 5.5" x 8.5" (Statement/Half Letter) - 396 x 612 points
+        $dompdf->setPaper([0, 0, 396, 612], 'portrait');
         $dompdf->render();
         
         // Save PDF to file
@@ -427,71 +473,30 @@ function generatePayslipHTML($user, $payrollData, $startDate, $endDate, $fullNam
     $pagibig = $payrollData['pagibig_deduction'] ?? 0;
     $philhealth = $payrollData['philhealth_deduction'] ?? 0;
     $lateDeduction = $payrollData['late_deduction'] ?? 0;
-    $leaveDeduction = ($payrollData['total_deductions'] ?? 0) - ($sss + $pagibig + $philhealth + $lateDeduction);
+    $undertimeDeduction = $payrollData['undertime_deduction'] ?? 0;
     $totalDeductions = $payrollData['total_deductions'] ?? 0;
     $netPay = $payrollData['net'] ?? 0;
-    $totalHours = $payrollData['total_hours'] ?? 0;
-    $absentDays = $payrollData['absent_days'] ?? 0;
-    $leaveDays = $payrollData['leave_days'] ?? 0;
     $presentDays = $payrollData['present_days'] ?? 0;
+    
+    // LWP (Leave Without Pay) calculation
+    $lwp = $payrollData['leave_days'] ?? 0;
+    
+    // Calculate working days from date range
+    $start = new DateTime($startDate);
+    $end = new DateTime($endDate);
+    $workingDays = $start->diff($end)->days + 1;
     
     // Format numbers with commas
     $formatNumber = function($num) {
         return number_format($num, 2);
     };
     
-    // Format date for display (e.g., "Jul 1, 2025")
-    $formatDate = function($dateStr) {
-        $date = new DateTime($dateStr);
-        return $date->format('M j, Y');
+    // Format date for display (e.g., "Jul 1 - Jul 15, 2025")
+    $formatDateRange = function($startStr, $endStr) {
+        $start = new DateTime($startStr);
+        $end = new DateTime($endStr);
+        return $start->format('M j') . ' - ' . $end->format('M j, Y');
     };
-    
-    // Convert logo to base64 if it exists - but skip if GD is not available to avoid errors
-    // Note: Even with base64, Dompdf may still require GD for PNG processing in some cases
-    $logoImgTag = '';
-    $gdLoaded = extension_loaded('gd');
-    
-    if ($logoExists && $logoPath && file_exists($logoPath)) {
-        // Only include logo if GD is loaded (required by Dompdf for PNG images)
-        if ($gdLoaded) {
-            try {
-                $imageData = file_get_contents($logoPath);
-                if ($imageData !== false && !empty($imageData)) {
-                    // Determine MIME type from file extension
-                    $ext = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION));
-                    $mimeType = 'image/png'; // Default to PNG
-                    
-                    if ($ext === 'jpg' || $ext === 'jpeg') {
-                        $mimeType = 'image/jpeg';
-                    } elseif ($ext === 'gif') {
-                        $mimeType = 'image/gif';
-                    } elseif ($ext === 'png') {
-                        $mimeType = 'image/png';
-                    } elseif ($ext === 'svg') {
-                        $mimeType = 'image/svg+xml';
-                    }
-                    
-                    // Encode to base64 for embedding
-                    $base64Data = base64_encode($imageData);
-                    $logoImgTag = '<img src="data:' . $mimeType . ';base64,' . $base64Data . '" alt="Company Logo" class="logo-image" />';
-                    
-                    error_log("Logo converted to base64 successfully. MIME type: " . $mimeType . ", GD loaded: " . ($gdLoaded ? 'yes' : 'no'));
-                } else {
-                    error_log("Logo file could not be read: " . $logoPath);
-                }
-            } catch (Exception $e) {
-                // If logo loading fails, just skip it (don't break the PDF generation)
-                error_log("Logo loading error: " . $e->getMessage());
-                $logoImgTag = '';
-            }
-        } else {
-            // GD not loaded - skip logo to avoid PDF generation errors
-            error_log("GD extension not loaded - skipping logo. Please enable GD extension in php.ini and restart Apache.");
-            $logoImgTag = '';
-        }
-    } else {
-        error_log("Logo file not found: " . ($logoPath ?? 'null'));
-    }
     
     $html = '
     <!DOCTYPE html>
@@ -502,342 +507,196 @@ function generatePayslipHTML($user, $payrollData, $startDate, $endDate, $fullNam
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
-                font-family: "DejaVu Sans", Arial, Helvetica, sans-serif; 
-                margin: 55px 45px; 
-                color: #333; 
-                background: #fff; 
-                line-height: 1.2;
-                font-size: 13px;
-            }
-            
-            /* Header Section */
-            .header-section { 
-                width: 100%;
-                margin-bottom: 20px; 
-            }
-            .header-top {
-                display: table;
-                width: 100%;
-            }
-            .header-left {
-                display: table-cell;
-                vertical-align: top;
-                width: 60%;
-            }
-            .header-left-content {
-                display: table;
-                width: 100%;
-            }
-            .logo-container {
-                display: table-cell;
-                vertical-align: top;
-                width: 70px;
-                padding-right: 20px;
-                
-                
-            }
-            .logo-image {
-                width: 100%;
-                height: auto;
-            }
-            .company-info {
-                display: table-cell;
-                vertical-align: top;
-                
-            }
-            .header-right {
-                display: table-cell;
-                vertical-align: top;
-                text-align: right;
-                width: 40%;
-            }
-            .header-pay-period {
-                text-align: right;
-                margin-top: 10px;
-            }
-            .company-name { 
-                font-size: 22px; 
-                font-weight: 700; 
-                color: #000; 
-                
-                margin-bottom: 2px; 
-                line-height: 1.2;
-                
-            }
-            .company-address { 
-                font-size: 11px; 
-                color: #478547; 
-                line-height: 1.2;
-            }
-            .pay-period-label { 
-                font-weight: 700; 
-                font-size: 11px; 
-                margin-bottom: 2px; 
-                color: #000000;
-                line-height: 1.2;
-            }
-            .pay-period-date { 
-                font-size: 11px; 
-                color: #000000;
-                line-height: 1.2;
-                font-weight: normal;
-            }
-            
-            /* Horizontal Line */
-            hr { 
-                border: none; 
-                border-top: 1px solid #dee2e6; 
-                margin: 15px 0; 
-            }
-            
-            /* Two Column Layout */
-            .row { 
-                display: table;
-                width: 100%;
-                margin: 0;
-            }
-            .col-md-6 { 
-                display: table-cell;
-                width: 50%;
-                vertical-align: top;
-                padding: 0 10px; 
-            }
-            
-            /* Section Titles */
-            .section-title { 
-                font-weight: 700; 
-                font-size: 12px; 
-                margin-bottom: 10px; 
-                display: block; 
-                color: #333;
-            }
-            
-            /* Info Text */
-            .info-text { 
-                font-size: 12px; 
-                margin: 0; 
-            }
-            .info-text p { 
-                margin: 3px 0; 
-                line-height: 1.1;
-            }
-            .info-text strong { 
-                font-weight: 700; 
+                font-family: DejaVu Sans, Arial, sans-serif; 
+                font-size: 11px;
+                padding: 30px 40px;
                 color: #000;
             }
-            
-            /* Earnings and Deductions Section */
-            .earnings-deductions-section {
-                margin-top: 20px;
-            }
-            .earnings-title, .deductions-title { 
-                font-size: 12px; 
-                font-weight: 700; 
-                margin-bottom: 8px; 
-                display: block; 
-                color: #333;
-            }
-            
-            /* Tables */
-            table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                margin-top: 5px;
-            }
-            table td { 
-                padding: 6px 5px; 
-                border-bottom: 1px solid #dee2e6; 
-                font-size: 12px;
-                line-height: 1.2;
-            }
-            table td:first-child {
-                text-align: left;
-            }
-            table td:last-child {
-                text-align: right;
-            }
-            .text-end { 
-                text-align: right; 
-            }
-            
-            /* Earnings Table */
-            .earnings-table td {
-                color: #333;
-            }
-            .total-earnings {
-                font-weight: 700;
-                color: #2d5016;
-            }
-            .total-earnings td {
-                color: #2d5016;
-            }
-            
-            /* Deductions Table */
-            .deductions-table {
-                background-color: #fff;
-            }
-            .deductions-table td {
-                color: #333;
-            }
-            .total-deductions {
-                font-weight: 700;
-                color: #dc3545;
-            }
-            .total-deductions td {
-                color: #dc3545;
-            }
-            
-            /* Net Pay Section */
-            .net-pay-box { 
-                background-color: #f2f8f2; 
-                border-radius: 8px; 
-                padding: 20px; 
-                margin-top: 20px; 
-                display: table;
+            .payslip {
                 width: 100%;
             }
-            .net-pay-left {
-                display: table-cell;
-                vertical-align: middle;
-                width: 60%;
+            .company-header {
+                text-align: center;
+                margin-bottom: 15px;
             }
-            .net-pay-right {
-                display: table-cell;
-                vertical-align: middle;
+            .company-name {
+                font-size: 14px;
+                font-weight: bold;
+            }
+            .company-address {
+                font-size: 10px;
+                color: #333;
+            }
+            .payslip-title {
+                font-size: 12px;
+                font-weight: bold;
+                margin-top: 8px;
+                text-decoration: underline;
+            }
+            .header-table {
+                width: 100%;
+                border: none;
+                margin-bottom: 20px;
+            }
+            .header-table td {
+                border: none;
+                padding: 2px 0;
+                vertical-align: top;
+                line-height: 1.6;
+            }
+            .header-left {
+                width: 50%;
+            }
+            .header-right {
+                width: 50%;
+            }
+            table.main-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .earnings-header td {
+                background-color: #4CAF50;
+                color: white;
+                padding: 5px 8px;
+                font-weight: bold;
+                border: 1px solid #4CAF50;
+            }
+            .deductions-header td {
+                background-color: #c0392b;
+                color: white;
+                padding: 5px 8px;
+                font-weight: bold;
+                border: 1px solid #c0392b;
+            }
+            table.main-table td {
+                padding: 4px 8px;
+                border: 1px solid #000;
+            }
+            .col-label {
+                width: 55%;
+            }
+            .col-amount {
+                width: 45%;
                 text-align: right;
-                width: 40%;
             }
-            .net-pay-label { 
-                font-weight: 700; 
-                font-size: 14px; 
-                color: #2d5016;
+            .text-right {
+                text-align: right;
             }
-            .net-pay-desc { 
-                font-size: 12px; 
-                color: #333; 
-                margin-top: 5px; 
+            .font-bold {
+                font-weight: bold;
+            }
+            .total-row td {
+                border-top: none;
+                border-left: none;
+                border-right: none;
+                border-bottom: 1px solid #000;
+                font-weight: bold;
+            }
+            .total-row .col-label {
+                text-align: right;
+                padding-right: 10px;
+            }
+            .spacer-row td {
+                border: none;
+                height: 15px;
+            }
+            .net-row td {
+                border-top: none;
+                border-left: none;
+                border-right: none;
+                border-bottom: 1px solid #000;
+                font-weight: bold;
+            }
+            .net-row .col-label {
+                text-align: right;
+                padding-right: 10px;
                 font-weight: normal;
-            }
-            .net-pay-amount { 
-                font-weight: 700; 
-                font-size: 26px; 
-                color: #2d5016; 
-                text-align: right; 
             }
         </style>
     </head>
     <body>
-        <!-- Header Section -->
-        <div class="header-section">
-            <div class="header-top">
-                <div class="header-left">
-                    <div class="header-left-content">
-                        <div class="logo-container">
-                            ' . $logoImgTag . '
-                        </div>
-                        <div class="company-info">
-                            <div class="company-name">Migrants Venture Corporation</div>
-                            <div class="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="header-pay-period">
-                <div class="pay-period-label">PAY PERIOD</div>
-                <div class="pay-period-date">' . $formatDate($startDate) . ' - ' . $formatDate($endDate) . '</div>
-            </div>
-        </div>
-
-        
-
-        <!-- Employee and Payment Details Section -->
-        <div class="row">
-            <div class="col-md-6">
-                <span class="section-title">Employee Information</span>
-                <div class="info-text"> 
-                    <p><strong>Name:</strong> ' . htmlspecialchars($fullName) . '</p>
-                    <p><strong>ID:</strong> ' . htmlspecialchars($employeeNo) . '</p>
-                    <p><strong>Position:</strong> ' . htmlspecialchars($position) . '</p>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <span class="section-title">Payment Details</span>
-                <div class="info-text">
-                    <p><strong>Basic Salary:</strong> ₱' . $formatNumber($baseSalary) . ' /day</p>
-                    <p><strong>Total Hours:</strong> ' . $totalHours . '</p>
-                    <p><strong>Present Days:</strong> ' . $presentDays . '</p>
-                    <p><strong>Absent:</strong> ' . $absentDays . '</p>
-                    <p><strong>Leave:</strong> ' . $leaveDays . '</p>
-                </div>
-            </div>
-        </div>
-
-        <hr>
-        
-        <!-- Earnings and Deductions Section -->
-        <div class="earnings-deductions-section">
-            <span class="section-title">Earnings & Deductions</span>
-            <div class="row">
-                <div class="col-md-6">
-                    <span class="earnings-title">Earnings</span>
-                    <table class="earnings-table">
-                        <tbody>
-                            <tr>
-                                <td>Gross Pay</td>
-                                <td class="text-end">₱' . $formatNumber($grossPay) . '</td>
-                            </tr>
-                            <tr class="total-earnings">
-                                <td>Total Earnings</td>
-                                <td class="text-end">₱' . $formatNumber($grossPay) . '</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <span class="deductions-title">Deductions</span>
-                    <table class="deductions-table">
-                        <tbody>
-                            <tr>
-                                <td>SSS</td>                        
-                                <td class="text-end">₱' . $formatNumber($sss) . '</td>
-                            </tr>
-                            <tr>
-                                <td>PhilHealth</td>                        
-                                <td class="text-end">₱' . $formatNumber($philhealth) . '</td>
-                            </tr>
-                            <tr>
-                                <td>Pag-IBIG</td>                        
-                                <td class="text-end">₱' . $formatNumber($pagibig) . '</td>
-                            </tr>
-                            <tr>
-                                <td>Late Deduction</td>                        
-                                <td class="text-end">₱' . $formatNumber($lateDeduction) . '</td>
-                            </tr>
-                            <tr>
-                                <td>Leave Deduction</td>                        
-                                <td class="text-end">₱' . $formatNumber($leaveDeduction) . '</td>
-                            </tr>
-                            <tr class="total-deductions">
-                                <td>Total Deductions</td>                        
-                                <td class="text-end">₱' . $formatNumber($totalDeductions) . '</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="payslip">
+            <!-- Company Header -->
+            <div class="company-header">
+                <div class="company-name">Migrants Venture Corporation</div>
+                <div class="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</div>
+                <div class="payslip-title">PAYSLIP</div>
             </div>
 
-            
+            <!-- Employee Info Section -->
+            <table class="header-table">
+                <tr>
+                    <td class="header-left">
+                        <div>Employee Name: ' . htmlspecialchars($fullName) . '</div>
+                        <div>Employee ID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' . htmlspecialchars($employeeNo) . '</div>
+                        <div>Position&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  : ' . htmlspecialchars($position) . '</div>
+                    </td>
+                    <td class="header-right">
+                        <div>Pay Period&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' . $formatDateRange($startDate, $endDate) . '</div>
+                        <div>Working Days: ' . $presentDays . '</div>
+                    </td>
+                </tr>
+            </table>
 
-            <!-- Net Pay Section -->
-            <div class="net-pay-box">
-                <div class="net-pay-left">
-                    <div class="net-pay-label">Net Pay</div>
-                    <div class="net-pay-desc">Total earnings minus total deductions</div>
-                </div>
-                <div class="net-pay-right">
-                    <div class="net-pay-amount">₱' . $formatNumber($netPay) . '</div>
-                </div>
-            </div>
+            <!-- Earnings Table -->
+            <table class="main-table">
+                <tr class="earnings-header">
+                    <td class="col-label">Earnings</td>
+                    <td class="col-amount">Amount</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Basic pay</td>
+                    <td class="col-amount text-right">&#8369;' . $formatNumber($baseSalary) . '</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Gross pay</td>
+                    <td class="col-amount text-right">&#8369;' . $formatNumber($grossPay) . '</td>
+                </tr>
+                <tr>
+                    <td class="col-label">LWP</td>
+                    <td class="col-amount text-right">' . $lwp . '</td>
+                </tr>
+                <tr class="spacer-row"><td></td><td></td></tr>
+                <tr class="total-row">
+                    <td class="col-label font-bold">Total Earnings</td>
+                    <td class="col-amount text-right">&#8369;' . $formatNumber($grossPay) . '</td>
+                </tr>
+                <tr class="spacer-row"><td></td><td></td></tr>
+                <tr class="deductions-header">
+                    <td class="col-label">Deductions</td>
+                    <td class="col-amount"></td>
+                </tr>
+                <tr>
+                    <td class="col-label">SSS</td>
+                    <td class="col-amount text-right">-&#8369;' . $formatNumber($sss) . '</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Pag-Ibig</td>
+                    <td class="col-amount text-right">-&#8369;' . $formatNumber($pagibig) . '</td>
+                </tr>
+                <tr>
+                    <td class="col-label">PhilHealth</td>
+                    <td class="col-amount text-right">-&#8369;' . $formatNumber($philhealth) . '</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Late Deduction</td>
+                    <td class="col-amount text-right">-&#8369;' . $formatNumber($lateDeduction) . '</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Undertime Deduction</td>
+                    <td class="col-amount text-right">-&#8369;' . $formatNumber($undertimeDeduction) . '</td>
+                </tr>
+                <tr class="spacer-row"><td></td><td></td></tr>
+                <tr class="total-row">
+                    <td class="col-label font-bold">Total Deductions</td>
+                    <td class="col-amount text-right">-&#8369;' . $formatNumber($totalDeductions) . '</td>
+                </tr>
+                <tr class="spacer-row"><td></td><td></td></tr>
+                <tr class="net-row">
+                    <td class="col-label font-bold"><strong>Net Pay</strong></td>
+                    <td class="col-amount text-right font-bold">&#8369;' . $formatNumber($netPay) . '</td>
+                </tr>
+            </table>
         </div>
     </body>
     </html>';

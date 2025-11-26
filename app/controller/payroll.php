@@ -5,7 +5,10 @@ require_once '../app/core/session_helper.php';
 requireAdminAuth();
 
 // Log user activity
-logUserActivity('Access payroll page');
+logUserActivity('Access admin dashboard');
 
-// Load the payroll view
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require views_path("auth/payroll");
