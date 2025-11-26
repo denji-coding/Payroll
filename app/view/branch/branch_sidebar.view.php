@@ -358,10 +358,10 @@ main#mainContent {
             <i class="bi bi-calendar-x"></i> <span>Leave Management</span>
             </a>
 
-            <a href="index.php?payroll=branch_payroll" title="Payroll"
+            <!-- <a href="index.php?payroll=branch_payroll" title="Payroll"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'branch_payroll') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-credit-card"></i> <span>Payroll</span>
-            </a>
+            </a> -->
 
             <a href="index.php?payroll=branch_reports" title="Reports"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'branch_reports') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">

@@ -215,10 +215,10 @@ main#mainContent {
             <i class="bi bi-calendar-x"></i> <span>HR Leave     </span>
             </a>
 
-            <a href="index.php?payroll=owner_payroll" title="Payroll"
+            <!-- <a href="index.php?payroll=owner_payroll" title="Payroll"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'owner_payroll') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-credit-card"></i> <span>HR Payroll</span>
-            </a>
+            </a> -->
 
             <a href="index.php?payroll=owner_hrschedule" title="HR Schedule"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'owner_hrschedule') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
