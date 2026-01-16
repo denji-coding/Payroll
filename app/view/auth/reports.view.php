@@ -86,6 +86,10 @@ $reports = [
             <div class="flex items-center justify-between p-4 border-gray-200 relative">
                 <span class="text-lg font-semibold text-gray-800"></span>
                 <div class="relative max-w-sm w-full sm:w-auto">
+                  <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
                     <input
                         type="text"
                         id="employeeSearch"

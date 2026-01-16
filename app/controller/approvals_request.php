@@ -1,100 +1,49 @@
 <?php
-require_once '../app/core/Database.php';
+require_once '../app/core/session_helper.php';
+
+// Check if admin is logged in
+requireAdminAuth();
+
+// Log user activity
+logUserActivity('Access approvals request page');
+
+// controller/approval_request.php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require_once '../app/core/database.php';
+
 $db = new Database();
 $pdo = $db->getConnection();
 
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'])) {
-    $id = $_POST['id'];
-    $action = $_POST['action'];
-
-    if ($action === 'resend') {
-        try {
-            $checkStmt = $pdo->prepare("SELECT approved_by_manager FROM employees WHERE id = :id AND deleted_at IS NULL");
-            $checkStmt->execute(['id' => $id]);
-            $emp = $checkStmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($emp && (int)$emp['approved_by_manager'] === -1) {
-                $updateStmt = $pdo->prepare("UPDATE employees SET approved_by_manager = 0 WHERE id = :id");
-                $updateStmt->execute(['id' => $id]);
-
-                echo json_encode($updateStmt->rowCount() > 0
-                    ? ['status' => 'success', 'message' => 'Approval request resent successfully']
-                    : ['status' => 'error', 'message' => 'Failed to resend approval']
-                );
-            } else {
-                echo json_encode(['status' => 'error', 'message' => 'Cannot resend approval for this employee']);
-            }
-        } catch (PDOException $e) {
-            echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
-        }
-        exit;
-
-    } elseif ($action === 'delete') {
-        try {
-            $stmt = $pdo->prepare("UPDATE employees SET deleted_at = NOW() WHERE id = :id");
-            $stmt->execute(['id' => $id]);
-
-            echo json_encode($stmt->rowCount() > 0
-                ? ['status' => 'success', 'message' => 'Employee deleted successfully']
-                : ['status' => 'error', 'message' => 'Failed to delete employee']
-            );
-        } catch (PDOException $e) {
-            echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
-        }
-        exit;
-
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-        exit;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
-    $id = $_GET['id'];
-    header('Content-Type: application/json');
-
-    try {
-        $stmt = $pdo->prepare("
-            SELECT 
-                e.*, 
-                a.name AS manager_name,
-                m.name AS branch_name,
-                m.branch AS branch_address
-            FROM employees e
-            LEFT JOIN admins a ON e.branch_manager = a.id
-            LEFT JOIN managers m ON e.branch_manager = m.id
-            WHERE e.id = :id AND e.deleted_at IS NULL
-        ");
-        $stmt->execute(['id' => $id]);
-        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($employee) {
-            echo json_encode(['status' => 'success', 'data' => $employee]);
-        } else {
-            http_response_code(404);
-            echo json_encode(['status' => 'error', 'message' => 'Employee not found']);
-        }
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
-    }
-    exit;
-}
-
-// If not POST or GET with id, load employee approval list
+// Fetch employees pending or rejected
 try {
-    $stmt = $pdo->prepare("SELECT * FROM employees WHERE approved_by_manager IN (0, -1) AND deleted_at IS NULL ORDER BY id DESC");
+    $stmt = $pdo->prepare("
+        SELECT 
+            e.*, 
+            CONCAT(m.m_first_name, ' ', UPPER(LEFT(m.m_middle_name, 1)), '. ', m.m_last_name) AS manager_name,
+            m.m_branch AS branch_address
+        FROM employees e
+        LEFT JOIN managers m ON e.branch_manager = m.id
+        WHERE e.approved_by_manager IN (0, -1) AND e.deleted_at IS NULL
+        ORDER BY e.id DESC
+    ");
     $stmt->execute();
     $employeesApproval = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die("Database error: " . $e->getMessage());
+    die("Employee fetch error: " . $e->getMessage());
 }
 
-$stmt = $pdo->prepare("SELECT * FROM managers ORDER BY created_at DESC");
-$stmt->execute();
-$managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Fetch all managers for dropdown/filtering if needed
+try {
+    $stmt = $pdo->prepare("SELECT * FROM managers ORDER BY m_created_at DESC");
+    $stmt->execute();
+    $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Manager fetch error: " . $e->getMessage());
+}
 
-// Pass to view
+// Send to view
 require views_path("auth/approvals_request");

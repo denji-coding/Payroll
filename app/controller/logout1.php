@@ -8,7 +8,7 @@ if (isset($_SESSION['SESSION_EMAIL'])) {
     unset($_SESSION['SESSION_USER_ID']);
     unset($_SESSION['USERNAME']);
     $_SESSION['logged_out'] = true;
-    header("Location: index.php?payroll=login1&type=admin");
+    header("Location: index.php?payroll=login_admin");
     exit;
 
 } elseif (isset($_SESSION['employee_id'])) {
@@ -29,7 +29,7 @@ if (isset($_SESSION['SESSION_EMAIL'])) {
     unset($_SESSION['manager_id']);
     unset($_SESSION['manager_name']);
     $_SESSION['logged_out'] = true;
-    header("Location: index.php?payroll=login_manager");
+    header("Location: index.php?payroll=login1&type=manager");
     exit;
 
 } else {

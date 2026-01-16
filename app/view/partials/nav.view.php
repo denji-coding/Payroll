@@ -1,13 +1,28 @@
 <?php
+
 $username = $_SESSION['USERNAME'] ?? 'Unknown User';
 $email = $_SESSION['SESSION_EMAIL'] ?? 'no-email@example.com';
+$photoPath = $_SESSION['photo_path'] ?? '';
 
 // Get initials
 $nameParts = explode(' ', $username);
 $initials = '';
 foreach ($nameParts as $part) {
     $initials .= strtoupper(substr($part, 0, 1));
-}?>
+}
+
+// Build avatar URL if available
+$avatar = '';
+if (!empty($photoPath)) {
+    if (preg_match('/^https?:\\/\\//i', $photoPath)) {
+        $avatar = $photoPath;
+    } elseif (strpos($photoPath, 'public/') === 0) {
+        $avatar = '../' . $photoPath;
+    } else {
+        $avatar = '../public/' . ltrim($photoPath, '/');
+    }
+}
+?>
 
 <!-- Header -->
 <header class="fixed top-0 ml-[31px] left-56 right-0 z-50 bg-white h-14 shadow-sm">
@@ -40,9 +55,15 @@ foreach ($nameParts as $part) {
 
             <!-- Profile Dropdown -->
             <div class="relative" style="margin-top: 2px;">
-                <button id="profileDropdownBtn" class="w-9 h-9 rounded-circle bg-[#396A39] flex items-center justify-center text-white font-semibold focus:outline-none">
-                    <?= htmlspecialchars($initials) ?>
-                </button>
+                <?php if (!empty($avatar)): ?>
+                    <button id="profileDropdownBtn" class="w-9 h-9 rounded-circle overflow-hidden focus:outline-none">
+                        <img src="<?= htmlspecialchars($avatar) ?>" alt="Avatar" class="w-9 h-9 object-cover" onerror="this.onerror=null;this.closest('button').innerHTML='<?= htmlspecialchars($initials) ?>'; this.closest('button').classList.add('bg-[#396A39]','flex','items-center','justify-center','text-white','font-semibold');" />
+                    </button>
+                <?php else: ?>
+                    <button id="profileDropdownBtn" class="w-9 h-9 rounded-circle bg-[#396A39] flex items-center justify-center text-white font-semibold focus:outline-none">
+                        <?= htmlspecialchars($initials) ?>
+                    </button>
+                <?php endif; ?>
                 <div id="profileDropdown" class="absolute right-0 mt-[12px] w-64 bg-white border rounded-lg shadow-md p-4 hidden z-50" style="left: -210px;">
                     <button id="closeProfileDropdown" class="absolute top-1 right-[21px] text-xl text-gray-500 hover:text-gray-700">
                         <i class="fas fa-times"></i>
@@ -51,13 +72,13 @@ foreach ($nameParts as $part) {
                         <div class="w-4 h-4 bg-white border-t border-l border-gray-200 rotate-45"></div>
                     </div> -->
                     <div class="mb-2">
-                        <h4 class="font-semibold text-[#403E43]"><?= htmlspecialchars($username) ?></h4>
-                        <p class="text-sm text-gray-500"><?= htmlspecialchars($email) ?></p>
+                        <h4 class="font-semibold text-[#403E43] capitalize"><?= htmlspecialchars($username) ?></h4>
+                        <p title="<?= htmlspecialchars($email) ?>" class="truncate text-sm text-gray-500"><?= htmlspecialchars($email) ?></p>
                     </div>
                     <hr class="my-2">
                     <ul class="space-y-2 text-sm text-[#403E43]">
-                        <li><a href="#" class="bi bi-person-fill block hover:text-green-700"> Profile</a></li>
-                        <li><a href="#" class="bi bi-gear block hover:text-green-700"> Settings</a></li>
+                        <li><a href="index.php?payroll=admin_profile" class="bi bi-person-fill block hover:text-green-700"> Profile</a></li>
+                        <!-- <li><a href="#" class="bi bi-gear block hover:text-green-700"> Settings</a></li> -->
                         <hr>
                         <li><a href="index.php?payroll=logout1" onclick="confirmLogout(event)" class="bi bi-box-arrow-right block hover:text-green-700"> Logout</a></li>
                     </ul>

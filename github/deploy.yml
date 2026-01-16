@@ -1,0 +1,48 @@
+name: Deploy to InfinityFree
+
+on:
+  push:
+    branches:
+      - denji_branch
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # optional: daily sync at 03:00 UTC
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-infinityfree-denji_branch
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Upload files to InfinityFree via FTP
+        uses: SamKirkland/FTP-Deploy-Action@4.3.4
+        with:
+          server: ftpupload.net
+          username: if0_39147159
+          password: ${{ secrets.INFINITYFREE_FTP_PASSWORD }}
+          server-dir: /htdocs/mvcPayroll/
+          protocol: ftps
+          port: 21
+          timeout: 600000
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/github/**
+            **/.env
+            **/.env.*
+            **/.DS_Store
+            **/node_modules/**
+            **/tests/**
+            **/test/**
+            **/*.md
+            **/README*
+          log-level: verbose
+          state-name: .ftp-deploy-sync-state.json

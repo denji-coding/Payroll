@@ -1,10 +1,22 @@
 <?php
+require_once '../app/core/session_helper.php';
+
+// Check if manager is logged in
+requireManagerAuth();
+
+// Log user activity
+logUserActivity('Access branch approvals page');
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../app/core/database.php';
+require_once '../app/core/SecureAuth.php';
 require '../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
 
 $db = new Database();
 $pdo = $db->getConnection();
@@ -28,14 +40,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'
 
     try {
         if ($action === 'approve') {
-            $stmt = $pdo->prepare("UPDATE employees SET approved_by_manager = 1 WHERE id = :id AND branch_manager = :managerId");
-            $stmt->execute(['id' => $id, 'managerId' => $managerId]);
+            // First, fetch employee data to get employee_no for password hashing
+            $empStmt = $pdo->prepare("SELECT email, employee_no, first_name, middle_name, last_name, password, role_id, position FROM employees WHERE id = :id");
+            $empStmt->execute(['id' => $id]);
+            $employee = $empStmt->fetch();
+            
+            if (!$employee) {
+                echo json_encode(['status' => 'error', 'message' => 'Employee not found']);
+                exit;
+            }
+            
+            // Set password if not already set (hash the employee_no as default password)
+            $passwordUpdate = '';
+            $hashedPassword = null;
+            if (empty($employee['password'])) {
+                $auth = new SecureAuth();
+                $hashedPassword = $auth->hashPassword($employee['employee_no']);
+                
+                // Fallback to bcrypt if Argon2ID is not available
+                if (empty($hashedPassword) || (!str_starts_with($hashedPassword, '$argon2id$') && !str_starts_with($hashedPassword, '$2y$') && !str_starts_with($hashedPassword, '$2a$'))) {
+                    $hashedPassword = password_hash($employee['employee_no'], PASSWORD_BCRYPT, ['cost' => 12]);
+                }
+                
+                $passwordUpdate = ", password = :password";
+            }
+            
+            // Set role_id if not already set (default: Employee role = 1 for Staff and Driver)
+            $roleUpdate = '';
+            $roleId = null;
+            if (empty($employee['role_id'])) {
+                $position = strtolower($employee['position'] ?? '');
+                
+                // Staff and Driver get Employee role (role_id = 1)
+                if (in_array($position, ['staff', 'driver'])) {
+                    $roleId = 1; // Employee role
+                    $roleUpdate = ", role_id = :roleId";
+                }
+            }
+            
+            // Update employee: set approved_by_manager = 1, password if needed, and role_id if needed
+            $stmt = $pdo->prepare("UPDATE employees SET approved_by_manager = 1" . $passwordUpdate . $roleUpdate . " WHERE id = :id AND branch_manager = :managerId");
+            $params = ['id' => $id, 'managerId' => $managerId];
+            if (!empty($passwordUpdate) && $hashedPassword) {
+                $params['password'] = $hashedPassword;
+            }
+            if (!empty($roleUpdate) && $roleId) {
+                $params['roleId'] = $roleId;
+            }
+            $stmt->execute($params);
 
             if ($stmt->rowCount() > 0) {
-                // Fetch employee data for email including employee_no
-                $empStmt = $pdo->prepare("SELECT email, employee_no, first_name, middle_name, last_name FROM employees WHERE id = :id");
-                $empStmt->execute(['id' => $id]);
-                $employee = $empStmt->fetch();
 
                 if ($employee && !empty($employee['email'])) {
                     try {
@@ -47,13 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'
                         $mail = new PHPMailer(true);
                         $mail->isSMTP();
                         $mail->SMTPAuth   = true;
-                        $mail->Host       = 'mail.smtp2go.com';
-                        $mail->Username   = 'nabesis.roy@dnsc.edu.ph';
-                        $mail->Password   = 'pGdu8SqFpeLnVp2Y';
-                        $mail->SMTPSecure = 'tls';
+                        $mail->Host       = 'smtp.gmail.com';
+                        $mail->Username   = 'migrantsventurecorporation@gmail.com';
+                        $mail->Password   = 'tfop acec ukat dosw'; // Gmail App Password
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                         $mail->Port       = 587;
 
-                        $mail->setFrom('noreply@migrantsventurecorp.ip-ddns.com', 'Migrants Venture Corporation');
+                        $mail->setFrom('migrantsventurecorporation@gmail.com', 'Migrants Venture Corporation');
                         $mail->addReplyTo('support@migrantsventurecorp.ip-ddns.com', 'Support Team');
                         $mail->addAddress($employee['email'], $fullName);
 
@@ -71,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'
                             <p><strong>Login Credentials:</strong></p>
                             <ul>
                                 <li>Email: {$employee['email']}</li>
-                                <li>Employee Number: {$employee['employee_no']}</li>
+                                <li>Password: {$employee['employee_no']}</li>
                             </ul>
                             <br>
                             <p>– Migrants Venture Corporation</p>
@@ -121,6 +175,7 @@ try {
         SELECT *
         FROM employees
         WHERE branch_manager = :managerId AND approved_by_manager IN (0, -1)
+        ORDER BY id DESC
     ");
     $stmt->execute(['managerId' => $managerId]);
     $list = $stmt->fetchAll(PDO::FETCH_ASSOC);

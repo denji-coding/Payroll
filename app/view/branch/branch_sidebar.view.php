@@ -4,8 +4,8 @@ $currentPage = $_GET['payroll'] ?? basename($_SERVER['PHP_SELF']);
 require_once views_path("partials/header");
 // require_once views_path("partials/user_navbar");
 
-$username = $_SESSION['name'] ?? 'Unknown Employee';
-$email = $_SESSION['email'] ?? 'no-email@example.com';
+// $username = $_SESSION['m_first_name'] . ' ' . $_SESSION['m_middle_name'][0] . '. ' . $_SESSION['m_last_name'] ?? 'Unknown Employee';
+// $email = $_SESSION['m_email'] ?? 'no-email@example.com';
 
 // $imagePath = (!empty($_SESSION['photo_path']))
 //     ? '../public/upload/' . basename($_SESSION['photo_path'])
@@ -15,18 +15,27 @@ $email = $_SESSION['email'] ?? 'no-email@example.com';
 
 
 
-$username = "Manager"; // Default fallback
+$username = "Manager"; // default fallback
 
 if (isset($_SESSION['manager_id'])) {
     $db = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare("SELECT name FROM managers WHERE id = :id");
+    $stmt = $conn->prepare("SELECT m_first_name, m_middle_name, m_last_name, m_photo_path, m_sex FROM managers WHERE id = :id");
     $stmt->execute([':id' => $_SESSION['manager_id']]);
     $manager = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($manager) {
-        $username = $manager['name'];
+        $first = $manager['m_first_name'] ?? '';
+        $middle = $manager['m_middle_name'] ?? '';
+        $last = $manager['m_last_name'] ?? '';
+        // Format the name with proper capitalization
+        $firstName = ucwords(strtolower(trim($first)));
+        $middleName = $middle ? ucwords(strtolower(trim($middle))) : '';
+        $lastName = ucwords(strtolower(trim($last)));
+        $username = $firstName . ' ' . ($middleName ? $middleName[0] . '. ' : '') . $lastName;
+        $managerPhoto = $manager['m_photo_path'] ?? '';
+        $managerSex = $manager['m_sex'] ?? '';
     }
 }
 ?>
@@ -264,6 +273,7 @@ a {
 /* Underline style for expanded (full label) */
 #sidebar:not(.collapsed) #portalLabel .underline {
     width: 100%;
+    /* margin-left: 1px; reset margin */
 }
 
 /* Ensure parent wrapper is relatively positioned */
@@ -278,7 +288,7 @@ a {
     width: 100%;
     position: absolute;
     bottom: -4px; /* or adjust as needed */
-    left: 14px;
+    left: 0.2px;
     transform: none; /* remove translateX */
     height: 4px;
     background-color: #22c55e; /* green-500 */
@@ -302,13 +312,13 @@ main#mainContent {
         <!-- Profile Section -->
         <div class="text-center mb-6">
             <!-- Sidebar Toggle Button -->
-            <div style="display: flex; justify-content: center; align-items: center;">
+            <!-- <div style="display: flex; justify-content: center; align-items: center;">
                 <button id="sidebarToggle"  title="Close sidebar"
                         class="mb-4 bg-green-600 hover:bg-green-700 text-white flex items-center justify-center rounded" 
                         style="width: 40px; height: 40px; padding: 0;">
                     <i class="bi bi-layout-sidebar-inset"></i>
                 </button>
-            </div>
+            </div> -->
 
             <!-- <img src="../public/assets/image/logo2.png" alt="Organization Logo"  class="mx-auto w-100 h-20 mb-3 rounded-md object-cover" /> -->
             <div id="portalLabel" class="text-white text-lg font-extrabold tracking-wide uppercase relative inline-block pb-2">
@@ -348,10 +358,10 @@ main#mainContent {
             <i class="bi bi-calendar-x"></i> <span>Leave Management</span>
             </a>
 
-            <a href="index.php?payroll=branch_payroll" title="Payroll"
+            <!-- <a href="index.php?payroll=branch_payroll" title="Payroll"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'branch_payroll') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
             <i class="bi bi-credit-card"></i> <span>Payroll</span>
-            </a>
+            </a> -->
 
             <a href="index.php?payroll=branch_reports" title="Reports"
             class="w-full flex items-center font-semibold text-white text-sm gap-2 p-2 px-4 rounded no-underline <?= ($currentPage == 'branch_reports') ? 'bg-[#206037] border-l-4 border-white' : 'hover:bg-[#206037] hover:border-l-4 hover:border-white' ?>">
@@ -363,16 +373,16 @@ main#mainContent {
     <!-- Bottom: Logout -->
     <div class="flex items-center justify-between text-white px-3 py-2 border-t">
         <div class="flex items-center gap-3 min-w-0 sidebar-user mt-2">
-            <img 
-                src="../public/assets/image/man (1).png"
-                title="Profile Picture" 
-                alt="Profile Picture" 
-                class="w-10 h-10 rounded-full object-cover bg-white border border-gray-300 flex-shrink-0" 
-                onerror="this.onerror=null;this.src='public/uploads/employees/default.png';"
-            />
+                    <img 
+            src="<?= !empty($managerPhoto) ? '../public/upload/' . (strpos($managerPhoto, 'upload/') === 0 ? substr($managerPhoto, 7) : $managerPhoto) : ($managerSex == 'F' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png') ?>"
+            title="Profile Picture" 
+            alt="Profile Picture" 
+            class="w-10 h-10 rounded-full object-cover bg-white border border-gray-300 flex-shrink-0" 
+            onerror="this.onerror=null;this.src='<?= $managerSex == 'F' ? '../public/assets/image/default_women.png' : '../public/assets/image/default_men.png' ?>';"
+        />
             <div class="max-w-[150px] overflow-hidden truncate transition-all duration-300 sidebar-expanded:block sidebar-collapsed:hidden">
-    <div class="text-sm font-medium text-gray-100 whitespace-normal">
-        <?= htmlspecialchars(ucwords(strtolower($username))) ?>
+    <div class="text-sm font-medium text-gray-100 whitespace-normal sidebar-manager-name">
+        <?= htmlspecialchars($username) ?>
     </div>
 </div>
 
@@ -403,12 +413,12 @@ function confirmLogout() {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Confirm',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, logout',
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = 'index.php?payroll=login_manager&logout=true';
+            window.location.href = 'index.php?payroll=login1&type=manager&logout=true';
         }
     });
 }

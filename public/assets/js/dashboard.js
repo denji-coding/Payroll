@@ -1,4 +1,4 @@
-const notificationBtn = document.getElementById('notificationBtn');
+    const notificationBtn = document.getElementById('notificationBtn');
     const notificationDropdown = document.getElementById('notificationDropdown');
     const closeNotificationBtn = document.getElementById('closeNotificationDropdown');
 
@@ -37,9 +37,12 @@ const notificationBtn = document.getElementById('notificationBtn');
         }
     });
 
-    document.getElementById('dateString').textContent = new Date().toLocaleDateString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
+    const dateStringElement = document.getElementById('dateString');
+    if (dateStringElement) {
+        dateStringElement.textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+    }
 
     const holidaysByYear = {
         2026: {
@@ -213,22 +216,35 @@ const notificationBtn = document.getElementById('notificationBtn');
     }
 
     // Add event listeners for calendar navigation
-        document.getElementById('prevMonth').addEventListener('click', () => {
-        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const calendarMonth = document.getElementById('calendarMonth');
+    const calendarDays = document.getElementById('calendarDays');
+    
+    if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
             renderCalendar(currentDate);
         });
+    }
 
-        document.getElementById('nextMonth').addEventListener('click', () => {
-        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-        renderCalendar(currentDate);
-    });
-
-    // Initial calendar render
+    if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
             renderCalendar(currentDate);
+        });
+    }
+
+    // Initial calendar render (only if calendar elements exist)
+    if (calendarMonth && calendarDays) {
+        renderCalendar(currentDate);
+    }
 
     function openCalendarModal(cell) {
         const modal = document.getElementById('calendarCellModal');
         const overlay = document.getElementById('calendarCellModalOverlay');
+        if (!modal || !overlay) return;
+        
         const date = cell.getAttribute('data-date');
         const isHoliday = cell.classList.contains('holiday');
         const holidayText = cell.getAttribute('data-holiday') || '';
@@ -240,20 +256,28 @@ const notificationBtn = document.getElementById('notificationBtn');
             day: 'numeric'
         });
         
-        document.getElementById('modalDateTitle').textContent = `Attendance Records - ${formattedDate}`;
-        document.getElementById('modalHolidayText').textContent = holidayText;
+        const modalDateTitle = document.getElementById('modalDateTitle');
+        const modalHolidayText = document.getElementById('modalHolidayText');
+        if (modalDateTitle) modalDateTitle.textContent = `Attendance Records - ${formattedDate}`;
+        if (modalHolidayText) modalHolidayText.textContent = holidayText;
+
+        const holidayMessage = document.getElementById('holidayMessage');
+        const attendanceStats = document.getElementById('attendanceStats');
+        const attendanceDetailsSection = document.getElementById('attendanceDetailsSection');
+        const noRecordsMessage = document.getElementById('noRecordsMessage');
+        const holidayDescription = document.getElementById('holidayDescription');
 
         if (isHoliday) {
-            document.getElementById('holidayMessage').classList.remove('hidden');
-            document.getElementById('attendanceStats').classList.add('hidden');
-            document.getElementById('attendanceDetailsSection').classList.add('hidden');
-            document.getElementById('noRecordsMessage').classList.add('hidden');
-            document.getElementById('holidayDescription').textContent = holidayText;
+            if (holidayMessage) holidayMessage.classList.remove('hidden');
+            if (attendanceStats) attendanceStats.classList.add('hidden');
+            if (attendanceDetailsSection) attendanceDetailsSection.classList.add('hidden');
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
+            if (holidayDescription) holidayDescription.textContent = holidayText;
         } else {
-            document.getElementById('holidayMessage').classList.add('hidden');
-            document.getElementById('attendanceStats').classList.remove('hidden');
-            document.getElementById('attendanceDetailsSection').classList.remove('hidden');
-            document.getElementById('noRecordsMessage').classList.add('hidden');
+            if (holidayMessage) holidayMessage.classList.add('hidden');
+            if (attendanceStats) attendanceStats.classList.remove('hidden');
+            if (attendanceDetailsSection) attendanceDetailsSection.classList.remove('hidden');
+            if (noRecordsMessage) noRecordsMessage.classList.add('hidden');
 
             const attendanceData = {
                 timeIn: 5,
@@ -266,11 +290,15 @@ const notificationBtn = document.getElementById('notificationBtn');
                 ]
             };
 
-            document.getElementById('timeInCount').textContent = attendanceData.timeIn;
-            document.getElementById('timeOutCount').textContent = attendanceData.timeOut;
-            document.getElementById('lateCount').textContent = attendanceData.late;
+            const timeInCount = document.getElementById('timeInCount');
+            const timeOutCount = document.getElementById('timeOutCount');
+            const lateCount = document.getElementById('lateCount');
+            if (timeInCount) timeInCount.textContent = attendanceData.timeIn;
+            if (timeOutCount) timeOutCount.textContent = attendanceData.timeOut;
+            if (lateCount) lateCount.textContent = attendanceData.late;
 
             const tbody = document.getElementById('attendanceDetails');
+            if (!tbody) return;
             tbody.innerHTML = '';
             
             if (attendanceData.details.length > 0) {
@@ -291,9 +319,9 @@ const notificationBtn = document.getElementById('notificationBtn');
                     tbody.appendChild(row);
                 });
             } else {
-                document.getElementById('attendanceStats').classList.add('hidden');
-                document.getElementById('attendanceDetailsSection').classList.add('hidden');
-                document.getElementById('noRecordsMessage').classList.remove('hidden');
+                if (attendanceStats) attendanceStats.classList.add('hidden');
+                if (attendanceDetailsSection) attendanceDetailsSection.classList.add('hidden');
+                if (noRecordsMessage) noRecordsMessage.classList.remove('hidden');
             }
         }
 
@@ -321,7 +349,10 @@ const notificationBtn = document.getElementById('notificationBtn');
         }, 300);
     }
 
-    document.getElementById('closeCalendarModal').addEventListener('click', closeCalendarModal);
+    const closeCalendarModalBtn = document.getElementById('closeCalendarModal');
+    if (closeCalendarModalBtn) {
+        closeCalendarModalBtn.addEventListener('click', closeCalendarModal);
+    }
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeCalendarModal();

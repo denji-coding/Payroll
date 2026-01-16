@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip Test - HTML Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            color: #333; 
+            background: #fff; 
+            line-height: 1.4;
+        }
+        
+        /* Header Section */
+        .header-section { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 20px; 
+        }
+        .company-name { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #2d5016; 
+            margin-bottom: 5px; 
+        }
+        .company-address { 
+            font-size: 14px; 
+            color: #478547; 
+        }
+        .pay-period-label { 
+            font-weight: 700; 
+            font-size: 12px; 
+            margin-bottom: 3px; 
+            color: #333;
+        }
+        .pay-period-date { 
+            font-size: 12px; 
+            color: #333;
+        }
+        
+        /* Horizontal Line */
+        hr { 
+            border: none; 
+            border-top: 1px solid #dee2e6; 
+            margin: 15px 0; 
+        }
+        
+        /* Two Column Layout */
+        .row { 
+            display: flex; 
+            flex-wrap: wrap; 
+            margin: 0 -10px; 
+        }
+        .col-md-6 { 
+            flex: 0 0 50%; 
+            max-width: 50%; 
+            padding: 0 10px; 
+        }
+        
+        /* Section Titles */
+        .section-title { 
+            font-weight: 700; 
+            font-size: 13px; 
+            margin-bottom: 10px; 
+            display: block; 
+            color: #333;
+        }
+        
+        /* Info Text */
+        .info-text { 
+            font-size: 13px; 
+            margin: 0; 
+        }
+        .info-text p { 
+            margin: 5px 0; 
+        }
+        .info-text strong { 
+            font-weight: 700; 
+            color: #333;
+        }
+        
+        /* Earnings and Deductions Section */
+        .earnings-deductions-section {
+            margin-top: 20px;
+        }
+        .earnings-title, .deductions-title { 
+            font-size: 13px; 
+            font-weight: 700; 
+            margin-bottom: 8px; 
+            display: block; 
+            color: #333;
+        }
+        
+        /* Tables */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 5px;
+        }
+        table td { 
+            padding: 8px 5px; 
+            border-bottom: 1px solid #dee2e6; 
+            font-size: 13px;
+        }
+        table td:first-child {
+            text-align: left;
+        }
+        table td:last-child {
+            text-align: right;
+        }
+        .text-end { 
+            text-align: right; 
+        }
+        
+        /* Earnings Table */
+        .earnings-table td {
+            color: #333;
+        }
+        .total-earnings {
+            font-weight: 700;
+            color: #2d5016;
+        }
+        .total-earnings td {
+            color: #2d5016;
+        }
+        
+        /* Deductions Table */
+        .deductions-table {
+            background-color: #f8fbf8;
+        }
+        .deductions-table td {
+            color: #dc3545;
+        }
+        .total-deductions {
+            font-weight: 700;
+            color: #dc3545;
+        }
+        .total-deductions td {
+            color: #dc3545;
+        }
+        
+        /* Net Pay Section */
+        .net-pay-box { 
+            background-color: #f2f8f2; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin-top: 20px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .net-pay-label { 
+            font-weight: 700; 
+            font-size: 16px; 
+            color: #2d5016;
+        }
+        .net-pay-desc { 
+            font-size: 13px; 
+            color: #333; 
+            margin-top: 5px; 
+            font-weight: normal;
+        }
+        .net-pay-amount { 
+            font-weight: 700; 
+            font-size: 28px; 
+            color: #2d5016; 
+            text-align: right; 
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header-section">
+        <div>
+            <div class="company-name">Migrants Venture Corporation</div>
+            <div class="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</div>
+        </div>
+        <div style="text-align: right;">
+            <div class="pay-period-label">PAY PERIOD</div>
+            <div class="pay-period-date">Jul 1, 2025 - Jul 18, 2025</div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Employee and Payment Details Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <span class="section-title">Employee Information</span>
+            <div class="info-text"> 
+                <p><strong>Name:</strong> Giovan Kier V. Cardenio</p>
+                <p><strong>ID:</strong> EMP-517859</p>
+                <p><strong>Position:</strong> Staff</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <span class="section-title">Payment Details</span>
+            <div class="info-text">
+                <p><strong>Basic Salary:</strong> ₱600.00 /day</p>
+                <p><strong>Total Hours:</strong> 16</p>
+                <p><strong>Present Days:</strong> 2</p>
+                <p><strong>Absent:</strong> 6</p>
+                <p><strong>Leave:</strong> 10</p>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Earnings and Deductions Section -->
+    <div class="earnings-deductions-section">
+        <span class="section-title">Earnings & Deductions</span>
+        <div class="row">
+            <div class="col-md-6">
+                <span class="earnings-title">Earnings</span>
+                <table class="earnings-table">
+                    <tbody>
+                        <tr>
+                            <td>Gross Pay</td>
+                            <td class="text-end">₱1,200.00</td>
+                        </tr>
+                        <tr class="total-earnings">
+                            <td>Total Earnings</td>
+                            <td class="text-end">₱1,200.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <span class="deductions-title">Deductions</span>
+                <table class="deductions-table">
+                    <tbody>
+                        <tr>
+                            <td>SSS</td>                        
+                            <td class="text-end">₱60.00</td>
+                        </tr>
+                        <tr>
+                            <td>PhilHealth</td>                        
+                            <td class="text-end">₱60.00</td>
+                        </tr>
+                        <tr>
+                            <td>Pag-IBIG</td>                        
+                            <td class="text-end">₱60.00</td>
+                        </tr>
+                        <tr>
+                            <td>Late Deduction</td>                        
+                            <td class="text-end">₱0.00</td>
+                        </tr>
+                        <tr>
+                            <td>Leave Deduction</td>                        
+                            <td class="text-end">₱6,000.00</td>
+                        </tr>
+                        <tr class="total-deductions">
+                            <td>Total Deductions</td>                        
+                            <td class="text-end">₱333.33</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <hr style="border-top: 1px solid #28a745;">
+
+        <!-- Net Pay Section -->
+        <div class="net-pay-box">
+            <div>
+                <div class="net-pay-label">Net Pay</div>
+                <div class="net-pay-desc">Total earnings minus total deductions</div>
+            </div>
+            <div class="net-pay-amount">₱686.67</div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,3 +1,5 @@
+// edit_employee.js
+
 function editdisplayFileName(input) {
   const fileNameSpan = document.getElementById('edit_photoFileName');
   if (!fileNameSpan) return;
@@ -26,43 +28,182 @@ function editpreviewEmployeePhoto(event) {
   }
 }
 
-function initEmployeePhoto(photoPath) {
-  const preview = document.getElementById('edit_employeePhotoPreview');
-  const placeholder = document.getElementById('edit_photoPlaceholder');
-  const fileNameSpan = document.getElementById('edit_photoFileName');
-  if (!preview || !placeholder || !fileNameSpan) return;
-
-  if (photoPath) {
-    preview.src = photoPath;
-    preview.style.display = 'block';
-    placeholder.style.display = 'none';
-    fileNameSpan.textContent = photoPath.split('/').pop();
-  } else {
-    preview.style.display = 'none';
-    placeholder.style.display = 'flex';
-    fileNameSpan.textContent = 'No file chosen';
-  }
-}
-
 function formatSalary(salary) {
   if (!salary) return '';
   const str = salary.toString();
   return str.endsWith('.00') ? str.slice(0, -3) : str;
 }
 
+function resetEditForm() {
+  const form = document.getElementById('editEmployeeForm');
+  if (form) form.reset();
+
+  const preview = document.getElementById('edit_employeePhotoPreview');
+  if (preview) preview.style.display = 'none';
+
+  const placeholder = document.getElementById('edit_photoPlaceholder');
+  if (placeholder) placeholder.style.display = 'flex';
+
+  const photoFilename = document.getElementById('edit_photoFileName');
+  if (photoFilename) {
+    photoFilename.textContent = 'No file chosen';
+    photoFilename.style.display = 'block';
+  }
+}
+
+function refreshEmployeeList() {
+  fetch('index.php?payroll=api/employees')
+    .then(res => res.json())
+    .then(data => {
+      const tableBody = document.getElementById('employeeTable');
+      tableBody.innerHTML = '';
+
+      if (data.status === 'success') {
+        let count = 1;
+        data.data.forEach((emp, index) => {
+          const row = document.createElement('tr');
+          row.className = 'transition-opacity duration-500 opacity-0 hover:bg-[#f2f8f2] even:bg-[#cde4cd]';
+
+          const defaultImage = emp.sex === 'Female'
+            ? '../public/assets/image/default_women.png'
+            : '../public/assets/image/default_men.png';
+
+          const position = emp.position || '';
+          let bgColor = 'bg-gray-500 text-white';
+          switch (position) {
+            case 'Manager':
+              bgColor = 'bg-green-600 text-white'; break;
+            case 'Human Resources':
+              bgColor = 'bg-blue-600 text-white'; break;
+            case 'Staff':
+              bgColor = 'bg-yellow-600 text-white'; break;
+            case 'Driver':
+              bgColor = 'bg-red-600 text-white'; break;
+          }
+
+          const capitalize = str => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+          const fullName = `${capitalize(emp.first_name)} ${emp.middle_name ? emp.middle_name.charAt(0).toUpperCase() + '.' : ''} ${capitalize(emp.last_name)}`;
+
+          row.innerHTML = `
+            <td class="p-3 align-middle font-medium">${count++}</td>
+            <td class="p-3 align-middle font-medium">
+              <div class="flex items-center space-x-2">
+                <span class="relative flex shrink-0 overflow-hidden rounded-full h-12 w-12">
+                  <img class="aspect-square h-full w-full" src="${emp.photo_path || defaultImage}" alt="Employee Photo">
+                </span>
+              </div>
+            </td>
+            <td class="p-3 align-middle font-medium">
+              <div class="flex items-center space-x-2">
+                <span>${fullName}</span>
+              </div>
+            </td>
+            <td class="p-3 align-middle">${emp.employee_no}</td>
+            <td class="p-3 align-middle">${emp.rfid_number}</td>
+            <td class="p-3 align-middle text-center">
+              <div class="inline-flex items-center rounded-full border border-transparent ${bgColor} px-2.5 py-0.5 text-xs font-semibold">
+                ${emp.position || ''}
+              </div>
+            </td>
+            <td class="p-3 align-middle text-right">
+              <div class="flex gap-2">
+                <button type="button" class="inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium px-2 py-1 transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white" data-bs-toggle="modal" data-bs-target="#viewEmployeeModal" onclick="viewEmployee('${emp.employee_no}')">
+                  <i class="bi bi-eye text-lg"></i>
+                </button>
+                <div class="dropdown relative inline-block">
+                  <button class="dropdown-toggle-btn inline-flex h-8 w-8 md:h-8 md:w-8 items-center justify-center rounded-md font-medium transition duration-100 transform hover:scale-105 hover:bg-[#478547] hover:text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-gear text-lg"></i>
+                  </button>
+                  <ul class="dropdown-menu absolute right-0 mt-2 w-48 rounded-md shadow-md bg-white ring-1 ring-black ring-opacity-5 z-50">
+                    <li>
+                      <a href="#" class="dropdown-item flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-[#f2f8f2] hover:text-[#478547]" onclick="openModal('viewAttendanceModal', ${emp.id})">
+                        <i class="bi bi-calendar-check h-4 w-4"></i>
+                        <span>View Attendance</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" class="dropdown-item flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-[#f2f8f2] hover:text-[#478547]" onclick="openModal('viewSlipsModal', ${emp.id})">
+                        <i class="bi bi-receipt h-4 w-4"></i>
+                        <span>View Slips</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          `;
+
+          tableBody.appendChild(row);
+
+          // ✅ Delay fade-in to trigger animation
+          setTimeout(() => {
+            row.classList.remove('opacity-0');
+            row.classList.add('opacity-100');
+          }, index * 50); // stagger animation
+        });
+
+        if (typeof bindEmployeeTableEvents === 'function') {
+          bindEmployeeTableEvents();
+        }
+      } else {
+        tableBody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">No Employee Found!</td></tr>';
+      }
+    })
+    .catch(err => {
+      console.error('Error loading employees:', err);
+    });
+}
+
+// Helper to clear all custom dropdowns in the Edit modal
+function clearEditDropdowns() {
+  const dropdowns = [
+    'editManagerDropdownSelected',
+    'editPositionDropdownSelected',
+    'editSexDropdownSelected',
+    'editCivilStatusDropdownSelected',
+    'editBloodTypeDropdownSelected',
+    'editCitizenshipDropdownSelected',
+  ];
+  const hiddenInputs = [
+    'edit_branchManager',
+    'edit_position',
+    'edit_sex',
+    'edit_civilStatus',
+    'edit_bloodType',
+    'edit_citizenship',
+  ];
+  dropdowns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'Select';
+  });
+  hiddenInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// EDIT BUTTON LOGIC
 const editBtn = document.querySelector('.editBtn');
 if (editBtn) {
   editBtn.addEventListener('click', () => {
+    clearEditDropdowns(); // Clear dropdowns before loading new data
     const employeeIdInput = document.querySelector('#view_employee_id');
     const employeeId = employeeIdInput?.value;
 
-    fetch(`index.php?payroll=employees&id=${employeeId}`)
-      .then(res => res.json())
+    fetch(`index.php?payroll=api/employees&id=${employeeId}`)
+      .then(async res => {
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          const text = await res.text();
+          console.error('Expected JSON, got:', text);
+          throw new Error('Invalid JSON response');
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.status === 'success') {
           const emp = data.data;
 
-          // Fill input fields
           const fields = {
             edit_employee_id: emp.employee_no,
             edit_rfidNumber: emp.rfid_number,
@@ -82,61 +223,156 @@ if (editBtn) {
             edit_address: emp.address,
             edit_baseSalary: formatSalary(emp.base_salary),
             edit_sssNumber: emp.sss_number,
-            edit_pagibigNumber: emp.pagibig_number
+            edit_pagibigNumber: emp.pagibig_number,
+            edit_branchManager: emp.branch_manager,
           };
 
           Object.entries(fields).forEach(([id, val]) => {
             const el = document.getElementById(id);
             if (el) el.value = val || '';
+            // If this is the birthday field, also set the date in flatpickr
+            if (id === 'edit_dob' && window.flatpickr) {
+              const fp = el._flatpickr;
+              if (fp && val) {
+                fp.setDate(val, true);
+              }
+            }
           });
 
-          // Set selected manager in dropdown
-          const branchManagerSelect = document.getElementById('edit_branchManager');
-          if (branchManagerSelect) {
-            branchManagerSelect.value = emp.branch_manager || '';
-          }
+          // After a short delay, re-initialize and update all custom dropdowns
+          setTimeout(() => {
+            // Manager
+            const managerSpan = document.getElementById('editManagerDropdownSelected');
+            const managerList = document.getElementById('editManagerDropdownList');
+            const managerInput = document.getElementById('edit_branchManager');
+            if (managerSpan && managerList && managerInput) {
+              // Clear all previous selections
+              managerList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              let found = false;
+              managerList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === managerInput.value) {
+                  managerSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                  found = true;
+                }
+              });
+              if (!found) managerSpan.textContent = 'Select a Manager';
+            }
+            
+            // Position
+            const positionSpan = document.getElementById('editPositionDropdownSelected');
+            const positionList = document.getElementById('editPositionDropdownList');
+            const positionInput = document.getElementById('edit_position');
+            if (positionSpan && positionList && positionInput) {
+              // Clear all previous selections
+              positionList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              positionList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === positionInput.value) {
+                  positionSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!positionInput.value) positionSpan.textContent = 'Select';
+            }
+            
+            // Sex
+            const sexSpan = document.getElementById('editSexDropdownSelected');
+            const sexList = document.getElementById('editSexDropdownList');
+            const sexInput = document.getElementById('edit_sex');
+            if (sexSpan && sexList && sexInput) {
+              // Clear all previous selections
+              sexList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              sexList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === sexInput.value) {
+                  sexSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!sexInput.value) sexSpan.textContent = 'Select';
+            }
+            
+            // Civil Status
+            const civilStatusSpan = document.getElementById('editCivilStatusDropdownSelected');
+            const civilStatusList = document.getElementById('editCivilStatusDropdownList');
+            const civilStatusInput = document.getElementById('edit_civilStatus');
+            if (civilStatusSpan && civilStatusList && civilStatusInput) {
+              // Clear all previous selections
+              civilStatusList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              civilStatusList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === civilStatusInput.value) {
+                  civilStatusSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!civilStatusInput.value) civilStatusSpan.textContent = 'Select';
+            }
+            
+            // Blood Type
+            const bloodTypeSpan = document.getElementById('editBloodTypeDropdownSelected');
+            const bloodTypeList = document.getElementById('editBloodTypeDropdownList');
+            const bloodTypeInput = document.getElementById('edit_bloodType');
+            if (bloodTypeSpan && bloodTypeList && bloodTypeInput) {
+              // Clear all previous selections
+              bloodTypeList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.classList.remove('selected');
+              });
+              // Find and mark the correct option as selected
+              bloodTypeList.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                if (option.dataset.value === bloodTypeInput.value) {
+                  bloodTypeSpan.textContent = option.textContent;
+                  option.classList.add('selected');
+                }
+              });
+              if (!bloodTypeInput.value) bloodTypeSpan.textContent = 'Select blood type';
+            }
+            
+            // Citizenship (this one uses API, so we'll just update the span)
+            const citizenshipSpan = document.getElementById('editCitizenshipDropdownSelected');
+            const citizenshipInput = document.getElementById('edit_citizenship');
+            if (citizenshipSpan && citizenshipInput) {
+              citizenshipSpan.textContent = citizenshipInput.value || 'Select citizenship';
+            }
+          }, 100);
 
-          // Update photo preview
           const preview = document.getElementById('edit_employeePhotoPreview');
           const placeholder = document.getElementById('edit_photoPlaceholder');
           const photoFilename = document.getElementById('edit_photoFileName');
 
           if (emp.photo_path) {
-            if (preview) {
-              preview.src = emp.photo_path;
-              preview.style.display = 'block';
-            }
-            if (placeholder) placeholder.style.display = 'none';
-            if (photoFilename) {
-              photoFilename.textContent = emp.photo_path.split('/').pop();
-              photoFilename.style.display = 'block';
-            }
+            preview.src = `../public/${emp.photo_path}?v=${Date.now()}`;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            photoFilename.textContent = emp.photo_path.split('/').pop();
           } else {
-            if (preview) preview.style.display = 'none';
-            if (placeholder) placeholder.style.display = 'flex';
-            if (photoFilename) {
-              photoFilename.textContent = 'No file chosen';
-              photoFilename.style.display = 'block';
-            }
+            preview.style.display = 'none';
+            placeholder.style.display = 'flex';
+            photoFilename.textContent = 'No file chosen';
           }
+
         } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Not Found',
-            text: 'Employee data not found.',
-          });
+          Swal.fire({ icon: 'error', title: 'Not Found', text: 'Employee data not found.' });
         }
       })
       .catch(err => {
         console.error('Error:', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Fetch Failed',
-          text: 'An error occurred while fetching the data.',
-        });
+        Swal.fire({ icon: 'error', title: 'Fetch Failed', text: 'An error occurred while fetching the data.' });
       });
   });
 }
+
+// HANDLE FORM SUBMIT
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('editEmployeeForm');
@@ -146,81 +382,46 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
     const formData = new FormData(this);
 
-    fetch('index.php?payroll=employees', {
+    fetch('index.php?payroll=api/employees', {
       method: 'POST',
       body: formData,
     })
       .then(async (response) => {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          return response.json();
-        } else {
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
           const text = await response.text();
-          console.error('Non-JSON response:', text);
-          throw new Error('Server did not return valid JSON.');
+          console.error('Expected JSON, got:', text);
+          throw new Error('Invalid JSON response');
         }
+        return response.json();
       })
       .then(data => {
-        console.log('Server response:', data);
-
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal'));
+            if (modal) modal.hide();
         if (data.status === 'success') {
           Swal.fire({
             icon: 'success',
-            title: 'Success!',
+            title: 'Updated!',
             text: data.message || 'Employee updated successfully.',
-            timer: 1000,
+            timer: 1500,
             showConfirmButton: false,
-            timerProgressBar: true,
           }).then(() => {
+            refreshEmployeeList();
             resetEditForm();
             const modal = bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal'));
             if (modal) modal.hide();
-            window.location.reload();
-          });
-        } else if (data.status === 'no_changes') {
-          Swal.fire({
-            icon: 'info',
-            title: 'No Changes!',
-            text: 'No changes were made to the employee data.',
-          });
-        } else if (data.status === 'error' && data.title === 'Duplicate Entry') {
-          Swal.fire({
-            icon: 'error',
-            title: data.title,
-            text: data.message,
+            // reload data instead of full page
+            if (typeof refreshEmployeeList === 'function') {
+              refreshEmployeeList();
+            }
           });
         } else {
-          Swal.fire({
-            icon: data.icon || 'error',
-            title: data.title || 'Update Failed',
-            text: data.message || 'An unknown error occurred during update.',
-          });
+          Swal.fire({ icon: data.icon || 'error', title: data.title || 'Error', text: data.message || 'Failed to update employee.' });
         }
       })
       .catch(error => {
-        console.error('Fetch error:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Request Failed',
-          text: 'Please try again later.',
-        });
+        console.error('Submission error:', error);
+        Swal.fire({ icon: 'error', title: 'Request Failed', text: 'Please try again later.' });
       });
   });
 });
-
-function resetEditForm() {
-  const form = document.getElementById('editEmployeeForm');
-  if (form) form.reset();
-
-  const preview = document.getElementById('edit_employeePhotoPreview');
-  if (preview) preview.style.display = 'none';
-
-  const placeholder = document.getElementById('edit_photoPlaceholder');
-  if (placeholder) placeholder.style.display = 'flex';
-
-  const photoFilename = document.getElementById('edit_photoFileName');
-  if (photoFilename) {
-    photoFilename.textContent = 'No file chosen';
-    photoFilename.style.display = 'block';
-  }
-}

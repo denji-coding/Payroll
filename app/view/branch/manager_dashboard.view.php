@@ -8,7 +8,15 @@ echo '<script src="../public/assets/js/bootstrap/bootstrap.bundle.min.js"></scri
 echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></script>';
 
 $username = isset($_SESSION['manager_name']) ? $_SESSION['manager_name'] : 'Guest';
+
+// Session handling for login success
+$loginSuccess = isset($_SESSION['login_success']) && $_SESSION['login_success'] === true;
+if ($loginSuccess) {
+    unset($_SESSION['login_success']);
+}
 ?>
+
+<?php // Removed login success toast ?>
 
 <div class="flex min-h-screen overflow-hidden">
     <main id="mainContent" class="flex-1 p-6 bg-gray-100 transition-margin duration-300 ease-in-out" style="margin-left: 256px;">
@@ -303,7 +311,7 @@ $username = isset($_SESSION['manager_name']) ? $_SESSION['manager_name'] : 'Gues
 
 
     // Default show payslip analytics on load
-    document.addEventListener('DOMContentLoaded', () => {
-        showAnalytics('payslip');
-    });
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     showAnalytics('payslip');
+    // });
 </script>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Signature Pad (Transparent)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+
+  <div class="bg-white p-6 rounded-2xl shadow-md w-full max-w-md text-center">
+    <h2 class="text-xl font-semibold mb-4">Draw Your Signature</h2>
+
+    <!-- Signature Canvas -->
+    <div class="border border-gray-300 rounded-lg overflow-hidden mb-4 bg-white">
+      <canvas id="signaturePad" width="600" height="200" class="w-full"></canvas>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex justify-between">
+      <button id="clear" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+        Clear
+      </button>
+      <button id="save" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
+        Save (Transparent)
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('signaturePad');
+    const signaturePad = new SignaturePad(canvas, {
+      backgroundColor: 'rgba(0, 0, 0, 0)', // 👈 transparent background
+      penColor: 'black',
+      minWidth: 1.5,
+      maxWidth: 3.0,
+    });
+
+    // Handle high DPI screens
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+      canvas.getContext("2d").scale(ratio, ratio);
+      signaturePad.clear();
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // Clear signature
+    document.getElementById('clear').addEventListener('click', () => {
+      signaturePad.clear();
+    });
+
+    // Save transparent signature as PNG
+    document.getElementById('save').addEventListener('click', () => {
+      if (signaturePad.isEmpty()) {
+        alert("Please draw your signature first!");
+        return;
+      }
+
+      // toDataURL() defaults to PNG (supports transparency)
+      const dataURL = signaturePad.toDataURL('image/png');
+
+      // Download it
+      const link = document.createElement('a');
+      link.download = 'signature.png';
+      link.href = dataURL;
+      link.click();
+    });
+  </script>
+
+</body>
+</html>

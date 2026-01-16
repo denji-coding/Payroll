@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Payslip</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: "DejaVu Sans", Arial, Helvetica, sans-serif; 
+                margin: 55px 45px; 
+                color: #333; 
+                background: #fff; 
+                line-height: 1.2;
+                font-size: 13px;
+            }
+            
+            /* Header Section */
+            .header-section { 
+                width: 100%;
+                margin-bottom: 20px; 
+            }
+            .header-top {
+                display: table;
+                width: 100%;
+            }
+            .header-left {
+                display: table-cell;
+                vertical-align: top;
+                width: 60%;
+            }
+            .header-left-content {
+                display: table;
+                width: 100%;
+            }
+            .logo-container {
+                display: table-cell;
+                vertical-align: top;
+                width: 70px;
+                padding-right: 20px;
+                
+                
+            }
+            .logo-image {
+                width: 100%;
+                height: auto;
+            }
+            .company-info {
+                display: table-cell;
+                vertical-align: top;
+                
+            }
+            .header-right {
+                display: table-cell;
+                vertical-align: top;
+                text-align: right;
+                width: 40%;
+            }
+            .header-pay-period {
+                text-align: right;
+                margin-top: 10px;
+            }
+            .company-name { 
+                font-size: 22px; 
+                font-weight: 700; 
+                color: #000; 
+                
+                margin-bottom: 2px; 
+                line-height: 1.2;
+                
+            }
+            .company-address { 
+                font-size: 11px; 
+                color: #478547; 
+                line-height: 1.2;
+            }
+            .pay-period-label { 
+                font-weight: 700; 
+                font-size: 11px; 
+                margin-bottom: 2px; 
+                color: #000000;
+                line-height: 1.2;
+            }
+            .pay-period-date { 
+                font-size: 11px; 
+                color: #000000;
+                line-height: 1.2;
+                font-weight: normal;
+            }
+            
+            /* Horizontal Line */
+            hr { 
+                border: none; 
+                border-top: 1px solid #dee2e6; 
+                margin: 15px 0; 
+            }
+            
+            /* Two Column Layout */
+            .row { 
+                display: table;
+                width: 100%;
+                margin: 0;
+            }
+            .col-md-6 { 
+                display: table-cell;
+                width: 50%;
+                vertical-align: top;
+                padding: 0 10px; 
+            }
+            
+            /* Section Titles */
+            .section-title { 
+                font-weight: 700; 
+                font-size: 12px; 
+                margin-bottom: 10px; 
+                display: block; 
+                color: #333;
+            }
+            
+            /* Info Text */
+            .info-text { 
+                font-size: 12px; 
+                margin: 0; 
+            }
+            .info-text p { 
+                margin: 3px 0; 
+                line-height: 1.1;
+            }
+            .info-text strong { 
+                font-weight: 700; 
+                color: #000;
+            }
+            
+            /* Earnings and Deductions Section */
+            .earnings-deductions-section {
+                margin-top: 20px;
+            }
+            .earnings-title, .deductions-title { 
+                font-size: 12px; 
+                font-weight: 700; 
+                margin-bottom: 8px; 
+                display: block; 
+                color: #333;
+            }
+            
+            /* Tables */
+            table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-top: 5px;
+            }
+            table td { 
+                padding: 6px 5px; 
+                border-bottom: 1px solid #dee2e6; 
+                font-size: 12px;
+                line-height: 1.2;
+            }
+            table td:first-child {
+                text-align: left;
+            }
+            table td:last-child {
+                text-align: right;
+            }
+            .text-end { 
+                text-align: right; 
+            }
+            
+            /* Earnings Table */
+            .earnings-table td {
+                color: #333;
+            }
+            .total-earnings {
+                font-weight: 700;
+                color: #2d5016;
+            }
+            .total-earnings td {
+                color: #2d5016;
+            }
+            
+            /* Deductions Table */
+            .deductions-table {
+                background-color: #fff;
+            }
+            .deductions-table td {
+                color: #333;
+            }
+            .total-deductions {
+                font-weight: 700;
+                color: #dc3545;
+            }
+            .total-deductions td {
+                color: #dc3545;
+            }
+            
+            /* Net Pay Section */
+            .net-pay-box { 
+                background-color: #f2f8f2; 
+                border-radius: 8px; 
+                padding: 20px; 
+                margin-top: 20px; 
+                display: table;
+                width: 100%;
+            }
+            .net-pay-left {
+                display: table-cell;
+                vertical-align: middle;
+                width: 60%;
+            }
+            .net-pay-right {
+                display: table-cell;
+                vertical-align: middle;
+                text-align: right;
+                width: 40%;
+            }
+            .net-pay-label { 
+                font-weight: 700; 
+                font-size: 14px; 
+                color: #2d5016;
+            }
+            .net-pay-desc { 
+                font-size: 12px; 
+                color: #333; 
+                margin-top: 5px; 
+                font-weight: normal;
+            }
+            .net-pay-amount { 
+                font-weight: 700; 
+                font-size: 26px; 
+                color: #2d5016; 
+                text-align: right; 
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="header-top">
+                <div class="header-left">
+                    <div class="header-left-content">
+                        <div class="logo-container">
+                            ' . $logoImgTag . '
+                        </div>
+                        <div class="company-info">
+                            <div class="company-name">Migrants Venture Corporation</div>
+                            <div class="company-address">Lapu-Lapu St. Tagum City, Davao Del Norte</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="header-pay-period">
+                <div class="pay-period-label">PAY PERIOD</div>
+                <div class="pay-period-date">' . $formatDate($startDate) . ' - ' . $formatDate($endDate) . '</div>
+            </div>
+        </div>
+
+        
+
+        <!-- Employee and Payment Details Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <span class="section-title">Employee Information</span>
+                <div class="info-text"> 
+                    <p><strong>Name:</strong> ' . htmlspecialchars($fullName) . '</p>
+                    <p><strong>ID:</strong> ' . htmlspecialchars($employeeNo) . '</p>
+                    <p><strong>Position:</strong> ' . htmlspecialchars($position) . '</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <span class="section-title">Payment Details</span>
+                <div class="info-text">
+                    <p><strong>Basic Salary:</strong> ₱' . $formatNumber($baseSalary) . ' /day</p>
+                    <p><strong>Total Hours:</strong> ' . $totalHours . '</p>
+                    <p><strong>Present Days:</strong> ' . $presentDays . '</p>
+                    <p><strong>Absent:</strong> ' . $absentDays . '</p>
+                    <p><strong>Leave:</strong> ' . $leaveDays . '</p>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+        
+        <!-- Earnings and Deductions Section -->
+        <div class="earnings-deductions-section">
+            <span class="section-title">Earnings & Deductions</span>
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="earnings-title">Earnings</span>
+                    <table class="earnings-table">
+                        <tbody>
+                            <tr>
+                                <td>Gross Pay</td>
+                                <td class="text-end">₱' . $formatNumber($grossPay) . '</td>
+                            </tr>
+                            <tr class="total-earnings">
+                                <td>Total Earnings</td>
+                                <td class="text-end">₱' . $formatNumber($grossPay) . '</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <span class="deductions-title">Deductions</span>
+                    <table class="deductions-table">
+                        <tbody>
+                            <tr>
+                                <td>SSS</td>                        
+                                <td class="text-end">₱' . $formatNumber($sss) . '</td>
+                            </tr>
+                            <tr>
+                                <td>PhilHealth</td>                        
+                                <td class="text-end">₱' . $formatNumber($philhealth) . '</td>
+                            </tr>
+                            <tr>
+                                <td>Pag-IBIG</td>                        
+                                <td class="text-end">₱' . $formatNumber($pagibig) . '</td>
+                            </tr>
+                            <tr>
+                                <td>Late Deduction</td>                        
+                                <td class="text-end">₱' . $formatNumber($lateDeduction) . '</td>
+                            </tr>
+                            <tr>
+                                <td>Leave Deduction</td>                        
+                                <td class="text-end">₱' . $formatNumber($leaveDeduction) . '</td>
+                            </tr>
+                            <tr class="total-deductions">
+                                <td>Total Deductions</td>                        
+                                <td class="text-end">₱' . $formatNumber($totalDeductions) . '</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            
+
+            <!-- Net Pay Section -->
+            <div class="net-pay-box">
+                <div class="net-pay-left">
+                    <div class="net-pay-label">Net Pay</div>
+                    <div class="net-pay-desc">Total earnings minus total deductions</div>
+                </div>
+                <div class="net-pay-right">
+                    <div class="net-pay-amount">₱' . $formatNumber($netPay) . '</div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>';

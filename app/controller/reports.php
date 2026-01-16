@@ -1,19 +1,14 @@
 <?php
+require_once '../app/core/session_helper.php';
 
-// $admin_id = $_SESSION['admin_id'] ?? null;
+// Check if admin is logged in
+requireAdminAuth();
 
-// if (!$admin_id) {
-//     // If it's an API request, return JSON
-//     if (isset($_GET['id'])) {
-//         header('Content-Type: application/json');
-//         echo json_encode(['error' => 'Unauthorized admin access']);
-//         exit;
-//     } else {
-//         // Show custom 403 page for browser access
-//         http_response_code(403);
-//          require_once '../app/Error/unauthorized.php'; // Adjust the path
-//         exit;
-//     }
-// }
+// Log user activity
+logUserActivity('Access reports page');
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 require views_path("auth/reports");

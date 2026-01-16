@@ -20,6 +20,10 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
             <div class="flex items-center justify-between p-4 border-b border-gray-200 relative">
                 <span class="text-lg font-semibold text-gray-800">Employees</span>
                 <div class="relative max-w-sm w-full sm:w-auto">
+                  <svg class="lucide lucide-search absolute left-2.5 top-3 h-4 w-4 text-[#478547]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
                     <input
                         type="text"
                         id="employeeSearch"
@@ -28,7 +32,7 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                     >
                     <button
                         id="clearSearch"
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 hidden"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-400 hover:text-gray-600 cursor-pointer transition-colors hidden"
                         aria-label="Clear search"
                         type="button"
                     >
@@ -37,89 +41,156 @@ echo '<script src="../public/assets/js/sweetalert2/sweetalert2.all.min.js"></scr
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table id="employeeTable" class="min-w-full divide-y divide-gray-200 text-sm overflow-hidden">
-                    <thead class="bg-emerald-600 text-white">
-                        <tr>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Photo</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Employee Name</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Employee ID</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">RFID Number</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Position</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Status</th>
-                            <th class="px-6 py-3 text-left font-semibold tracking-wide">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
-                        <?php if (!empty($list) && is_array($list)): ?>
-                            <?php foreach ($list as $lists): ?>
-                                <tr>
-                                    <td class="px-6 py-4">
-                                        <?php if (!empty($lists['photo_path'])): ?>
-                                            <img src="/mvcPayroll/public/<?= htmlspecialchars($lists['photo_path']) ?>" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
-                                        <?php else: ?>
-                                            <div class="h-10 w-10 rounded-full border-1 border-gray-500 bg-gray-300 flex items-center justify-center text-sm text-white">
-                                                <img src="../public/assets/image/man (1).png" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars(ucwords(strtolower($lists['full_name']))) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($lists['employee_no']) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($lists['rfid_number']) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($lists['position']) ?></td>
-                                    
-                                    <td class="px-6 py-4">
-                                        <?php if ($lists['approved_by_manager'] == 1): ?>
-                                            <span class="text-green-600 font-medium">Approved</span>
-                                        <?php elseif ($lists['approved_by_manager'] == -1): ?>
-                                            <span class="text-red-600 font-medium">Rejected</span>
-                                        <?php else: ?>
-                                            <span class="text-yellow-500 text-xs font-medium">Waiting for approval..</span>
-                                        <?php endif; ?>
-                                    </td>
+            <div class="relative w-full max-h-[calc(100vh-220px)] overflow-y-auto">
+                  <table id="employeeTable" class="min-w-full divide-y divide-gray-200 text-sm">
+                      <thead>
+                          <tr>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Photo</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Employee Name</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Employee ID</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">RFID Number</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Position</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Status</th>
+                              <th class="sticky top-0 z-10 bg-emerald-600 px-6 py-3 text-left font-semibold tracking-wide text-white">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-100">
+                          <?php if (!empty($list) && is_array($list)): ?>
+                              <?php foreach ($list as $lists): ?>
+                                  <tr>
+                                      <td class="px-6 py-4">
+                                          <?php
+                                              // Determine which photo to display
+                                              if (!empty($lists['photo_path'])) {
+                                                  $imagePath = '/mvcPayroll/public/' . htmlspecialchars($lists['photo_path']);
+                                              } else {
+                                                  $sex = strtolower($lists['sex'] ?? '');
+                                                  $imagePath = in_array($sex, ['f', 'female', 'woman'])
+                                                      ? '/mvcPayroll/public/assets/image/default_women.png'
+                                                      : '/mvcPayroll/public/assets/image/default_men.png';
+                                              }
+                                          ?>
+                                          <img src="<?= $imagePath ?>" class="h-10 w-10 rounded-full object-cover" alt="Employee Photo">
+                                      </td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars(ucwords(strtolower($lists['full_name']))) ?></td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars($lists['employee_no']) ?></td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars($lists['rfid_number']) ?></td>
+                                      <td class="px-6 py-4"><?= htmlspecialchars($lists['position']) ?></td>
 
-                                    <td class="px-6 py-4">
-                                        <?php if ($lists['approved_by_manager'] == 0): ?>
-                                            <div class="flex space-x-2 gap-2">
-                                                <button 
-                                                    class="btn btn-success text-white rounded flex items-center justify-center p-1 w-8 h-8 approve-btn" 
-                                                    data-id="<?= $lists['id'] ?>"
-                                                    title="Approve"
-                                                    type="button"
-                                                >
-                                                    <i class="bi bi-check-circle"></i>
-                                                </button>
+                                      <td class="px-6 py-4">
+                                          <?php if ($lists['approved_by_manager'] == 1): ?>
+                                              <span class="text-green-600 font-medium">Approved</span>
+                                          <?php elseif ($lists['approved_by_manager'] == -1): ?>
+                                              <span class="text-red-600 font-medium">Rejected</span>
+                                          <?php else: ?>
+                                              <span class="text-yellow-500 text-xs font-medium">Waiting for approval..</span>
+                                          <?php endif; ?>
+                                      </td>
 
-                                                <button 
-                                                    class="btn btn-danger text-white rounded flex items-center justify-center p-1 w-8 h-8 reject-btn" 
-                                                    data-id="<?= $lists['id'] ?>"
-                                                    title="Reject"
-                                                    type="button"
-                                                >
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-gray-400 italic">No Action</span>
-                                        <?php endif; ?>
-                                    </td>
+                                      <td class="px-6 py-4">
+                                          <?php if ($lists['approved_by_manager'] == 0): ?>
+                                              <div class="flex space-x-2 gap-2">
+                                                  <button 
+                                                      class="btn btn-success text-white rounded flex items-center justify-center p-1 w-8 h-8 approve-btn" 
+                                                      data-id="<?= $lists['id'] ?>"
+                                                      title="Approve"
+                                                      type="button"
+                                                  >
+                                                      <i class="bi bi-check-circle"></i>
+                                                  </button>
 
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="8" class="text-center px-6 py-4 text-gray-500">No employees found.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                                                  <button 
+                                                      class="btn btn-danger text-white rounded flex items-center justify-center p-1 w-8 h-8 reject-btn" 
+                                                      data-id="<?= $lists['id'] ?>"
+                                                      title="Reject"
+                                                      type="button"
+                                                  >
+                                                      <i class="bi bi-x-circle"></i>
+                                                  </button>
+                                              </div>
+                                          <?php else: ?>
+                                              <span class="text-gray-400 italic">No Action</span>
+                                          <?php endif; ?>
+                                      </td>
+                                  </tr>
+                              <?php endforeach; ?>
+                          <?php else: ?>
+                              <tr id="noEmployeesRow">
+                                  <td colspan="7" class="text-center px-6 py-4 text-gray-500">No employees found.</td>
+                              </tr>
+                          <?php endif; ?>
+                          <tr id="noSearchResults" style="display: none;">
+                              <td colspan="7" class="text-center px-6 py-4 text-gray-500">No search results found.</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
         </div>
     </main>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Search functionality
+  const searchInput = document.getElementById('employeeSearch');
+  const clearBtn = document.getElementById('clearSearch');
+  const table = document.getElementById('employeeTable');
+  const noEmployeesRow = document.getElementById('noEmployeesRow');
+  const noSearchResults = document.getElementById('noSearchResults');
+
+  if (searchInput && table) {
+    searchInput.addEventListener('input', () => {
+      // Show/hide clear button
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !searchInput.value);
+      }
+
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const tbody = table.querySelector('tbody');
+      
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => 
+        row.id !== 'noEmployeesRow' && row.id !== 'noSearchResults'
+      );
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        const match = searchTerm === '' || rowText.includes(searchTerm);
+        row.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      });
+
+      // Show/hide "no search results" message
+      if (noSearchResults) {
+        if (searchTerm !== '' && visibleCount === 0) {
+          noSearchResults.style.display = '';
+          // Hide the original "no employees" row when searching
+          if (noEmployeesRow) {
+            noEmployeesRow.style.display = 'none';
+          }
+        } else {
+          noSearchResults.style.display = 'none';
+          // Show the original "no employees" row if no search and no data
+          if (noEmployeesRow && searchTerm === '') {
+            noEmployeesRow.style.display = rows.length === 0 ? '' : 'none';
+          }
+        }
+      }
+    });
+  }
+
+  if (clearBtn && searchInput) {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      searchInput.dispatchEvent(new Event('input'));
+      searchInput.focus();
+    });
+  }
+
   // Approve buttons
   document.querySelectorAll('.approve-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -128,8 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Approve Employee?',
         text: "Are you sure you want to approve this employee?",
         icon: 'question',
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
         showCancelButton: true,
-        confirmButtonText: 'Yes, approve',
+        confirmButtonText: 'Yes, approved',
         cancelButtonText: 'Cancel',
       }).then((result) => {
         if (result.isConfirmed) {
@@ -155,6 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Reject Employee?',
         text: "Are you sure you want to reject this employee?",
         icon: 'warning',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
         showCancelButton: true,
         confirmButtonText: 'Yes, reject',
         cancelButtonText: 'Cancel',

@@ -4,19 +4,96 @@ require_once views_path("partials/header");
 require_once views_path("partials/sidebar");
 require_once views_path("partials/nav");
 ?>
+<link rel="stylesheet" href="../public/assets/css/flatpickr/material_green.css">
 
-<style>/* Hide the dropdown arrow */
+<style>
+    
+/* Hide the dropdown arrow */
 .dropdown-toggle::after {
-    display: none;
+  display: none;
 }
 
 /* Remove border from the dropdown button */
 .dropdown-toggle {
-    border: none !important;
+  border: none !important;
 }
 
-</style>
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-slide {
+  animation: fadeInSlide 0.4s ease-out;
+}
 
+
+#noResultRow {
+  display: table-row !important;
+  background-color: #f0fdf4 !important;
+  color: #6b7280 !important;
+  font-style: italic;
+}
+.custom-dropdown-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.custom-dropdown-option:hover {
+    background-color: #f3f4f6;
+}
+
+.custom-dropdown-option.selected {
+    background-color: #16a249;
+    color: white;
+}
+
+.custom-dropdown-option.selected:hover {
+    background-color: #15803d;
+}
+
+/* Add ellipsis for long text in dropdown buttons */
+.dropdown-button-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    text-align: left;
+}
+
+/* Ensure close button is visible */
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.btn-close:hover {
+    color: #000;
+    text-decoration: none;
+    opacity: 0.75;
+}
+
+.btn-close:focus {
+    outline: none;
+    box-shadow: none;
+}
+</style>
 
 
 <main class="flex-1 h-[calc(100vh-3rem)] p-4 md:p-6 ml-[255px] mt-12 bg-[#f8fbf8]">
@@ -31,7 +108,7 @@ require_once views_path("partials/nav");
                     <button id="showAddEmployeeModal" 
                             class="btn btn-success d-inline-flex align-items-center h-10 px-4 py-2 " 
                             data-bs-toggle="modal" 
-                            data-bs-target="#addProducts">
+                            data-bs-target="#addEmployeeModal">
                     <i class="fas fa-plus me-2"></i>
                     <span class="font-semibold">Add Employee</span>
                     </button>
@@ -40,9 +117,7 @@ require_once views_path("partials/nav");
 
 
         <div class="rounded-lg border-2 border-green-200 bg-white text-[#133913] shadow-sm" 
-                    data-aos="fade-in" 
-                    data-aos-delay="<?= $index * 1 ?>"
-                    data-aos-duration="500">
+                    >
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
                 <span class="text-2xl font-semibold leading-none tracking-tight text-[#133913]">Employee Directory</span>
                 <div class="relative w-64">
@@ -55,15 +130,15 @@ require_once views_path("partials/nav");
                         id="employee_searchInput"
                         class="flex h-10 w-full text-sm placeholder:ml-[10px] rounded-md border border-input bg-background px-[50px] py-2 pl-8  placeholder:text-[#478547] ring-offset-[#f8fbf8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a249] focus-visible:ring-offset-2 disabled:opacity-50 md:text-sm"
                         placeholder="Search employee..."
-                        oninput="toggleClearButton()"
                     >
-                    <button id="employee_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" onclick="clearInput()">×</button>
+                    <button id="employee_clearButton" class="absolute right-2 top-1 text-[#478547] text-xl hidden" >×</button>
                 </div>                
             </div>
 
             <div class="p-6 pt-0">
                 <div class="relative w-full overflow-auto">
                     <div class="max-h-[calc(100vh-300px)] overflow-y-auto">
+
                         <table class="w-full caption-bottom text-sm">
                             <thead class="[&_tr]:border-b bg-[#f2f8f2] sticky top-0 z-10">
                                 <tr class="border-b transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
@@ -76,11 +151,13 @@ require_once views_path("partials/nav");
                                     <th class="h-12 px-3 align-middle font-bold text-[#478547] bg-white">Actions</th>
                                 </tr>
                             </thead>
-                                <tbody id="employeeTable" class="[&_tr:last-child]:border-0">
-                                    <?php if (is_array($employees) && count(array_filter($employees)) > 0): ?>
+                                <tbody id="employeeTable" class="[&_tr:last-child]:border-0 min-h-[80px]">
+                                    
+                                        <?php if (!empty($employees) && is_array($employees) && count($employees) > 0): ?>
+
                                         <?php $count = 1; ?>
                                         <?php foreach($employees as $employee): ?>
-                                            <tr class="transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
+                                            <tr class="fade-in-slide transition-colors hover:bg-[#f2f8f2] even:bg-[#cde4cd]">
                                                 <td class="p-3 align-middle font-medium"><?= $count++ ?></td>
                                                 <td class="p-3 align-middle font-medium">
                                                     <div class="flex items-center space-x-2">
@@ -176,10 +253,11 @@ require_once views_path("partials/nav");
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <!-- No employees PHP fallback -->
-                                        <!-- <tr id="employeeNoResultRow">
-                                            <td colspan="7" class="p-4 text-center text-gray-500">No Employee Found!</td>
-                                        </tr> -->
+                                        <tr id="EmployeenoResultRow">
+                                            <td colspan="7" class="p-4 text-center italic text-gray-500 bg-[#f0fdf4]">
+                                                <i class="bi bi-person-x me-2"></i> No employees found.
+                                            </td>
+                                        </tr>
                                     <?php endif; ?>
                                 </tbody>
                             </table>
@@ -193,19 +271,22 @@ require_once views_path("partials/nav");
 </main>
 
 <!-- Add Employee Modal -->
-<div class="modal fade" id="addProducts" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+<div class="modal fade" id="addEmployeeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
     aria-labelledby="addModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <i class="bi bi-person-plus text-[#16a249] fs-4 mr-2"></i>
                 <h1 class="modal-title fs-5 text-[#16a249]" id="addModalLabel">Add Employees</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="container-fluid  p-2 ">
-                    <form method="post" id="addEmployeeForm" action="index.php?payroll=employees"
+                    <form method="post" id="addEmployeeForm" action="../app/api/employees-api.php"
                         enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <div class="border rounded-lg mb-4">
                             <div class="bg-yellow-100 px-4 py-2 rounded-t-lg border-b border-b-gray-200">
                                 <span class="font-semibold text-[#133913]">PERSONAL INFORMATION</span>
@@ -262,31 +343,43 @@ require_once views_path("partials/nav");
                                     </div>
                                                                             
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER</label>
-                                        <select name="branchManager"  class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                            <option value="" disabled selected>Select a Manager</option>
+                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="manager-dropdown-container">
+                                            <input type="hidden" name="branchManager" id="branchManager" required />
+                                            <button type="button" id="managerDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="managerDropdownSelected" class="dropdown-button-text">Select a Manager</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="managerDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
                                             <?php if (!empty($managers)): ?>
                                                 <?php foreach ($managers as $manager): ?>
-                                                    <option value="<?= htmlspecialchars($manager['id']) ?>">
-                                                        <?= htmlspecialchars(ucwords($manager['name']) . ' - ' . ucwords($manager['branch'])) ?>
-                                                    </option>
+                                                        <div class="custom-dropdown-option" data-value="<?= htmlspecialchars($manager['id']) ?>">
+                                                        <?= htmlspecialchars(ucwords($manager['m_first_name']) . ' ' . strtoupper(substr($manager['m_middle_name'], 0, 1)) . '. ' . ucwords($manager['m_last_name']) . ' - ' . ucwords($manager['m_branch'])) ?>
+                                                        </div>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
-                                                <option disabled>No available managers</option>
+                                                    <div class="custom-dropdown-option" data-value="">No available managers</div>
                                             <?php endif; ?>
-                                        </select>
                                     </div>   
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
+                                        </div>
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
-                                        <div class="relative">
-                                            <select name="position"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Manager">Manager</option>
-                                                <option value="Human Resources">Human Resources</option>
-                                                <option value="Staff">Staff</option>
-                                                <option value="Driver">Driver</option>
-                                            </select>
+                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="position-dropdown-container">
+                                            <input type="hidden" name="position" id="position" required />
+                                            <button type="button" id="positionDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="positionDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="positionDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <!-- <div class="custom-dropdown-option" data-value="Manager">Manager</div> -->
+                                                <div class="custom-dropdown-option" data-value="Staff">Staff</div>
+                                                <div class="custom-dropdown-option" data-value="Driver">Driver</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -340,8 +433,7 @@ require_once views_path("partials/nav");
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BIRTHDAY</label>
                                         <div class="relative">
-                                            <input type="date" name="dob"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                            <input type="text" name="dob" id="dob" class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full flatpickr-dob" placeholder="Select date">
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -356,28 +448,36 @@ require_once views_path("partials/nav");
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">SEX</label>
-                                        <div class="relative">
-                                            <select name="sex"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
+                                        <div class="relative" id="sex-dropdown-container">
+                                            <input type="hidden" name="sex" id="sex" />
+                                            <button type="button" id="sexDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="sexDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="sexDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Male">Male</div>
+                                                <div class="custom-dropdown-option" data-value="Female">Female</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CIVIL STATUS</label>
-                                        <div class="relative">
-                                            <select name="civilStatus"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Single">Single</option>
-                                                <option value="Married">Married</option>
-                                                <option value="Separated">Separated</option>
-                                                <option value="Divorced">Divorced</option>
-                                                <option value="Widowed">Widowed</option>
-                                            </select>
+                                        <div class="relative" id="civilStatus-dropdown-container">
+                                            <input type="hidden" name="civilStatus" id="civilStatus" />
+                                            <button type="button" id="civilStatusDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="civilStatusDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="civilStatusDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Single">Single</div>
+                                                <div class="custom-dropdown-option" data-value="Married">Married</div>
+                                                <div class="custom-dropdown-option" data-value="Separated">Separated</div>
+                                                <div class="custom-dropdown-option" data-value="Divorced">Divorced</div>
+                                                <div class="custom-dropdown-option" data-value="Widowed">Widowed</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -402,28 +502,36 @@ require_once views_path("partials/nav");
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CITIZENSHIP</label>
-                                        <div class="relative">
-                                            <input type="text" name="citizenship" placeholder="e.g., Filipino"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                        <div class="relative" id="citizenship-dropdown-container">
+                                            <input type="hidden" name="citizenship" id="citizenship" />
+                                            <button type="button" id="citizenshipDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="citizenshipDropdownSelected" class="dropdown-button-text">Select citizenship</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="citizenshipDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden"></div>
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BLOOD TYPE</label>
-                                        <div class="relative">
-                                            <select name="bloodType"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                            </select>
+                                        <div class="relative" id="bloodType-dropdown-container">
+                                            <input type="hidden" name="bloodType" id="bloodType" />
+                                            <button type="button" id="bloodTypeDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="bloodTypeDropdownSelected" class="dropdown-button-text">Select blood type</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="bloodTypeDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="A+">A+</div>
+                                                <div class="custom-dropdown-option" data-value="A-">A-</div>
+                                                <div class="custom-dropdown-option" data-value="B+">B+</div>
+                                                <div class="custom-dropdown-option" data-value="B-">B-</div>
+                                                <div class="custom-dropdown-option" data-value="O+">O+</div>
+                                                <div class="custom-dropdown-option" data-value="O-">O-</div>
+                                                <div class="custom-dropdown-option" data-value="AB+">AB+</div>
+                                                <div class="custom-dropdown-option" data-value="AB-">AB-</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -514,7 +622,9 @@ require_once views_path("partials/nav");
                 <h5 class="modal-title text-success text-lg fw-semibold">
                     <i class="bi bi-info-circle me-2"></i>Employee Details
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body">
@@ -608,15 +718,18 @@ require_once views_path("partials/nav");
             <div class="modal-header">
                 <i class="fa fa-file-pen text-[#16a249] fs-4 mr-2"></i>
                 <h1 class="modal-title fs-5 text-[#16a249]" id="editEmployeeModalLabel">Edit Employees</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="container-fluid  p-2 ">
-                    <form method="post" id="editEmployeeForm" action="index.php?payroll=employees"
+                    <form method="post" id="editEmployeeForm" action="../app/api/employees-api.php"
                         enctype="multipart/form-data">
                         <?php if (isset($employee)) : ?>
                             <input type="hidden" name="isUpdate" value="1">
                         <?php endif; ?>
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <div class="border rounded-lg mb-4">
                             <div class="bg-yellow-100 px-4 py-2 rounded-t-lg border-b border-b-gray-200">
                                 <span class="font-semibold text-[#133913]">PERSONAL INFORMATION</span>
@@ -655,41 +768,44 @@ require_once views_path("partials/nav");
                                         </div>
                                     </div>                                                                                                      
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER</label>
-                                        <select id="edit_branchManager" name="branchManager" 
-                                            class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-
-                                            <!-- Default option if no manager assigned -->
-                                            <option value="" disabled <?= empty($currentBranchManager) ? 'selected' : '' ?>>
-                                                Select a Manager
-                                            </option>
-
+                                        <label class="block text-xs font-medium mb-1 ml-2">MANAGER <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="edit-manager-dropdown-container">
+                                            <input type="hidden" name="branchManager" id="edit_branchManager" />
+                                            <button type="button" id="editManagerDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editManagerDropdownSelected" class="dropdown-button-text">Select a Manager</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editManagerDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
                                             <?php if (!empty($managers)): ?>
                                                 <?php foreach ($managers as $manager): ?>
-                                                    <option 
-                                                        value="<?= htmlspecialchars($manager['id']) ?>"
-                                                        data-display="<?= htmlspecialchars($manager['name'] . ' - ' . $manager['branch']) ?>"
-                                                        <?= (!empty($currentBranchManager) && $manager['id'] == $currentBranchManager) ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars(ucwords($manager['name']) . ' - ' . ucwords($manager['branch'])) ?>
-                                                    </option>
+                                                        <div class="custom-dropdown-option" data-value="<?= htmlspecialchars($manager['id']) ?>">
+                                                        <?= htmlspecialchars(ucwords($manager['m_first_name']) . ' ' . strtoupper(substr($manager['m_middle_name'], 0, 1)) . '. ' . ucwords($manager['m_last_name']) . ' - ' . ucwords($manager['m_branch'])) ?>
+                                                        </div>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
-                                                <option disabled>No available managers</option>
+                                                    <div class="custom-dropdown-option" data-value="">No available managers</div>
                                             <?php endif; ?>
-                                        </select>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
+                                        </div>
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
 
                                     <div class="flex flex-col gap-1 relative">
-                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION</label>
-                                        <div class="relative">
-                                            <select name="position" id="edit_position"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Manager">Manager</option>
-                                                <option value="Human Resources">Human Resources</option>
-                                                <option value="Staff">Staff</option>
-                                                <option value="Driver">Driver</option>
-                                            </select>
+                                        <label class="block text-xs font-medium mb-1 ml-2">POSITION <span class="text-red-500">*</span></label>
+                                        <div class="relative" id="edit-position-dropdown-container">
+                                            <input type="hidden" name="position" id="edit_position" required />
+                                            <button type="button" id="editPositionDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editPositionDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editPositionDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Manager">Manager</div>
+                                                <div class="custom-dropdown-option" data-value="Human Resources">Human Resources</div>
+                                                <div class="custom-dropdown-option" data-value="Staff">Staff</div>
+                                                <div class="custom-dropdown-option" data-value="Driver">Driver</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -742,8 +858,7 @@ require_once views_path("partials/nav");
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BIRTHDAY</label>
                                         <div class="relative">
-                                            <input type="date" name="dob" id="edit_dob"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                            <input type="text" name="dob" id="edit_dob" class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full flatpickr-dob" placeholder="Select date">
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -760,29 +875,37 @@ require_once views_path("partials/nav");
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">SEX</label>
-                                        <div class="relative">
-                                            <select name="sex" id="edit_sex"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
+                                        <div class="relative" id="edit-sex-dropdown-container">
+                                            <input type="hidden" name="sex" id="edit_sex" />
+                                            <button type="button" id="editSexDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editSexDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editSexDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Male">Male</div>
+                                                <div class="custom-dropdown-option" data-value="Female">Female</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CIVIL STATUS</label>
-                                        <div class="relative">
-                                            <select name="civilStatus" id="edit_civilStatus"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="Single">Single</option>
-                                                <option value="Married">Married</option>
-                                                <option value="Separated">Separated</option>
-                                                <option value="Divorced">Divorced</option>
-                                                <option value="Widowed">Widowed</option>
-                                            </select>
+                                        <div class="relative" id="edit-civilStatus-dropdown-container">
+                                            <input type="hidden" name="civilStatus" id="edit_civilStatus" />
+                                            <button type="button" id="editCivilStatusDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editCivilStatusDropdownSelected" class="dropdown-button-text">Select</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editCivilStatusDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="Single">Single</div>
+                                                <div class="custom-dropdown-option" data-value="Married">Married</div>
+                                                <div class="custom-dropdown-option" data-value="Separated">Separated</div>
+                                                <div class="custom-dropdown-option" data-value="Divorced">Divorced</div>
+                                                <div class="custom-dropdown-option" data-value="Widowed">Widowed</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -810,9 +933,13 @@ require_once views_path("partials/nav");
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">CITIZENSHIP</label>
-                                        <div class="relative">
-                                            <input type="text" name="citizenship" id="edit_citizenship" placeholder="e.g., Filipino"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
+                                        <div class="relative" id="edit-citizenship-dropdown-container">
+                                            <input type="hidden" name="citizenship" id="edit_citizenship" />
+                                            <button type="button" id="editCitizenshipDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editCitizenshipDropdownSelected" class="dropdown-button-text">Select citizenship</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editCitizenshipDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden"></div>
                                             <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                         </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
@@ -820,19 +947,23 @@ require_once views_path("partials/nav");
 
                                     <div class="flex flex-col gap-1 relative">
                                         <label class="block text-xs font-medium mb-1 ml-2">BLOOD TYPE</label>
-                                        <div class="relative">
-                                            <select name="bloodType" id="edit_bloodType"
-                                                class="p-2 pl-8 border rounded text-sm focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] w-full">
-                                                <option value="">Select</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                            </select>
+                                        <div class="relative" id="edit-bloodType-dropdown-container">
+                                            <input type="hidden" name="bloodType" id="edit_bloodType" />
+                                            <button type="button" id="editBloodTypeDropdownBtn" class="p-2 pl-8 border rounded text-sm w-full text-left bg-white focus:outline-none focus:border-[#16a249] focus:ring-2 focus:ring-[#16a249] flex justify-between items-center">
+                                                <span id="editBloodTypeDropdownSelected" class="dropdown-button-text">Select blood type</span>
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div id="editBloodTypeDropdownList" class="absolute left-0 right-0 z-50 bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                                <div class="custom-dropdown-option" data-value="A+">A+</div>
+                                                <div class="custom-dropdown-option" data-value="A-">A-</div>
+                                                <div class="custom-dropdown-option" data-value="B+">B+</div>
+                                                <div class="custom-dropdown-option" data-value="B-">B-</div>
+                                                <div class="custom-dropdown-option" data-value="O+">O+</div>
+                                                <div class="custom-dropdown-option" data-value="O-">O-</div>
+                                                <div class="custom-dropdown-option" data-value="AB+">AB+</div>
+                                                <div class="custom-dropdown-option" data-value="AB-">AB-</div>
+                                            </div>
+                                            <i class="validation-icon absolute right-2 top-1/2 transform -translate-y-1/2"></i>
                                             </div>
                                         <div class="validation-message text-red-500 text-xs mt-1"></div>
                                     </div>
@@ -916,7 +1047,7 @@ require_once views_path("partials/nav");
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
 
 <script>
 document.addEventListener("keydown", (event) => {
@@ -985,205 +1116,532 @@ function toggleDropdown(button) {
 
 // Update control numbers only if changed to prevent infinite loops
 function updateControlNumbers() {
-    const rows = document.querySelectorAll('tbody tr');
-    let visibleIndex = 1;
+  const rows = document.querySelectorAll('#employeeTable tr');
+  let visibleIndex = 1;
 
-    rows.forEach((row) => {
-        // Skip the "No matching employees found" or "No employees found" rows
-        if (row.id === "noResultRow" || row.id === "noDataRow") {
-            // Hide the number for these rows
-            const controlNumberCell = row.querySelector('td:first-child');
-            if (controlNumberCell) {
-                controlNumberCell.textContent = "";
+  rows.forEach(row => {
+    const isNoResult = row.id === "noResultRow";
+    const isHidden = row.style.display === "none";
+
+    const numberCell = row.querySelector('td:first-child');
+
+    if (isNoResult || isHidden) {
+      if (numberCell) numberCell.textContent = '';
+    } else {
+      if (numberCell) numberCell.textContent = visibleIndex++;
+    }
+  });
+}
+
+
+
+// document.addEventListener('DOMContentLoaded', () => {
+//     updateControlNumbers();
+
+//     const tableBody = document.querySelector('tbody');
+
+//     if (tableBody) {
+//         const observer = new MutationObserver(() => {
+//             observer.disconnect(); // prevent recursion
+//             updateControlNumbers();
+//             observer.observe(tableBody, { childList: true, subtree: true });
+//         });
+
+//         observer.observe(tableBody, { childList: true, subtree: true });
+//     }
+// });
+
+function setupCustomCitizenshipDropdown(dropdownBtnId, dropdownListId, selectedSpanId, hiddenInputId, apiUrl, initialValue = "") {
+    const btn = document.getElementById(dropdownBtnId);
+    const list = document.getElementById(dropdownListId);
+    const selectedSpan = document.getElementById(selectedSpanId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    let options = [];
+    let selectedValue = initialValue;
+    let invalidCitizenship = false;
+    let warningDiv = null;
+
+    function renderOptions() {
+        list.innerHTML = '';
+        options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'custom-dropdown-option' + (opt.citizenship === selectedValue ? ' selected' : '');
+            div.textContent = opt.citizenship;
+            div.onclick = () => {
+                selectedValue = opt.citizenship;
+                selectedSpan.textContent = opt.citizenship;
+                hiddenInput.value = opt.citizenship;
+                list.classList.add('hidden');
+                btn.classList.remove('active');
+                
+                // Remove error message when valid citizenship is selected
+                if (warningDiv) {
+                    warningDiv.remove();
+                    warningDiv = null;
+                }
+                invalidCitizenship = false;
+                
+                // Re-render to update selected state
+                renderOptions();
+            };
+            list.appendChild(div);
+        });
+        
+        // Scroll to selected option if exists
+        if (selectedValue && options.some(opt => opt.citizenship === selectedValue)) {
+            const selectedOption = list.querySelector('.selected');
+            if (selectedOption) {
+                selectedOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            return;
         }
+    }
 
-        // Update only visible rows
-        if (row.style.display !== "none") {
-            const controlNumberCell = row.querySelector('td:first-child');
-            if (controlNumberCell) {
-                controlNumberCell.textContent = visibleIndex++;
+    // Fetch options from API
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success' && Array.isArray(data.data)) {
+                options = data.data;
+                
+                // Ensure options have citizenship property (handle both 'name' and 'citizenship' for backward compatibility)
+                options = options.map(opt => ({
+                    citizenship: opt.citizenship || opt.name || ''
+                })).filter(opt => opt.citizenship);
+                
+                // Check if current value is valid
+                const isValidValue = options.some(opt => opt.citizenship === selectedValue);
+                if (selectedValue && !isValidValue) {
+                    invalidCitizenship = true;
+                    // Show warning message
+                    if (!warningDiv) {
+                        warningDiv = document.createElement('div');
+                        warningDiv.className = 'text-red-500 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200';
+                        warningDiv.textContent = 'The current citizenship is not valid. Please select a valid citizenship.';
+                        btn.parentNode.appendChild(warningDiv);
+                    }
+                    selectedSpan.textContent = 'Select citizenship';
+                    hiddenInput.value = '';
+                } else if (selectedValue) {
+                    selectedSpan.textContent = selectedValue;
+                    hiddenInput.value = selectedValue;
+                }
+                
+                renderOptions();
+            } else {
+                console.error('Invalid API response:', data);
+                selectedSpan.textContent = 'Error loading options';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching citizenship data:', error);
+            selectedSpan.textContent = 'Error loading options';
+        });
+
+    // Toggle dropdown
+    btn.onclick = () => {
+        list.classList.toggle('hidden');
+        btn.classList.toggle('active');
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!btn.contains(e.target) && !list.contains(e.target)) {
+            list.classList.add('hidden');
+            btn.classList.remove('active');
+        }
+    });
+}
+// Add modal show listeners to initialize dropdowns
+const addModal = document.getElementById('addEmployeeModal');
+if (addModal) {
+    addModal.addEventListener('show.bs.modal', function() {
+        // Initialize all dropdowns with fresh state
+        setupCustomCitizenshipDropdown(
+            'citizenshipDropdownBtn',
+            'citizenshipDropdownList',
+            'citizenshipDropdownSelected',
+            'citizenship',
+            '../app/api/citizenship-api.php'
+        );
+        setupStaticDropdown(
+            'bloodTypeDropdownBtn',
+            'bloodTypeDropdownList',
+            'bloodTypeDropdownSelected',
+            'bloodType'
+        );
+        setupStaticDropdown(
+            'managerDropdownBtn',
+            'managerDropdownList',
+            'managerDropdownSelected',
+            'branchManager'
+        );
+        setupStaticDropdown(
+            'positionDropdownBtn',
+            'positionDropdownList',
+            'positionDropdownSelected',
+            'position'
+        );
+        setupStaticDropdown(
+            'sexDropdownBtn',
+            'sexDropdownList',
+            'sexDropdownSelected',
+            'sex'
+        );
+        setupStaticDropdown(
+            'civilStatusDropdownBtn',
+            'civilStatusDropdownList',
+            'civilStatusDropdownSelected',
+            'civilStatus'
+        );
+        
+        // Add debugging for dropdown values
+        console.log('Dropdowns initialized');
+        console.log('Manager dropdown value:', document.getElementById('branchManager')?.value);
+        console.log('Position dropdown value:', document.getElementById('position')?.value);
+        console.log('Sex dropdown value:', document.getElementById('sex')?.value);
+        console.log('Civil status dropdown value:', document.getElementById('civilStatus')?.value);
+    });
+
+    // Reset form when modal is hidden
+    addModal.addEventListener('hidden.bs.modal', function() {
+        resetAddEmployeeForm();
+    });
+}
+
+const editModal = document.getElementById('editEmployeeModal');
+if (editModal) {
+    editModal.addEventListener('show.bs.modal', function() {
+        // Get current value from the hidden input if it exists
+        const currentHiddenInput = document.getElementById('edit_citizenship');
+        const current = currentHiddenInput ? currentHiddenInput.value : "";
+        setupCustomCitizenshipDropdown(
+            'editCitizenshipDropdownBtn',
+            'editCitizenshipDropdownList',
+            'editCitizenshipDropdownSelected',
+            'edit_citizenship',
+            '../app/api/citizenship-api.php',
+            current
+        );
+        
+        // Get current blood type value
+        const currentBloodTypeInput = document.getElementById('edit_bloodType');
+        const currentBloodType = currentBloodTypeInput ? currentBloodTypeInput.value : "";
+        setupStaticDropdown(
+            'editBloodTypeDropdownBtn',
+            'editBloodTypeDropdownList',
+            'editBloodTypeDropdownSelected',
+            'edit_bloodType',
+            currentBloodType
+        );
+        
+        // Get current manager value
+        const currentManagerInput = document.getElementById('edit_branchManager');
+        const currentManager = currentManagerInput ? currentManagerInput.value : "";
+        setupStaticDropdown(
+            'editManagerDropdownBtn',
+            'editManagerDropdownList',
+            'editManagerDropdownSelected',
+            'edit_branchManager',
+            currentManager
+        );
+        
+        // Get current position value
+        const currentPositionInput = document.getElementById('edit_position');
+        const currentPosition = currentPositionInput ? currentPositionInput.value : "";
+        setupStaticDropdown(
+            'editPositionDropdownBtn',
+            'editPositionDropdownList',
+            'editPositionDropdownSelected',
+            'edit_position',
+            currentPosition
+        );
+        
+        // Get current sex value
+        const currentSexInput = document.getElementById('edit_sex');
+        const currentSex = currentSexInput ? currentSexInput.value : "";
+        setupStaticDropdown(
+            'editSexDropdownBtn',
+            'editSexDropdownList',
+            'editSexDropdownSelected',
+            'edit_sex',
+            currentSex
+        );
+        
+        // Get current civil status value
+        const currentCivilStatusInput = document.getElementById('edit_civilStatus');
+        const currentCivilStatus = currentCivilStatusInput ? currentCivilStatusInput.value : "";
+        setupStaticDropdown(
+            'editCivilStatusDropdownBtn',
+            'editCivilStatusDropdownList',
+            'editCivilStatusDropdownSelected',
+            'edit_civilStatus',
+            currentCivilStatus
+        );
+    });
+}
+
+// Generic function for static dropdowns (like Blood Type)
+function setupStaticDropdown(dropdownBtnId, dropdownListId, selectedSpanId, hiddenInputId, initialValue = "") {
+    const btn = document.getElementById(dropdownBtnId);
+    const list = document.getElementById(dropdownListId);
+    const selectedSpan = document.getElementById(selectedSpanId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    let selectedValue = initialValue;
+
+    // Clear any existing selections first
+    if (list) {
+        list.querySelectorAll('.custom-dropdown-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+    }
+
+    // Set default text based on dropdown type
+    const defaultTexts = {
+        'citizenshipDropdownSelected': 'Select citizenship',
+        'bloodTypeDropdownSelected': 'Select blood type',
+        'managerDropdownSelected': 'Select a Manager',
+        'positionDropdownSelected': 'Select',
+        'sexDropdownSelected': 'Select',
+        'civilStatusDropdownSelected': 'Select'
+    };
+
+    // Always start with default text unless there's a valid initial value
+    if (!initialValue) {
+        selectedSpan.textContent = defaultTexts[selectedSpanId] || 'Select';
+        hiddenInput.value = '';
+    }
+
+    function renderOptions() {
+        const options = list.querySelectorAll('.custom-dropdown-option');
+        options.forEach(option => {
+            option.classList.remove('selected');
+            if (option.dataset.value === selectedValue) {
+                option.classList.add('selected');
+            }
+        });
+        
+        // Scroll to selected option if exists
+        if (selectedValue) {
+            const selectedOption = list.querySelector('.selected');
+            if (selectedOption) {
+                selectedOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    // Set initial value if provided
+    if (initialValue) {
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+            const options = list.querySelectorAll('.custom-dropdown-option');
+            let displayText = initialValue;
+            
+            options.forEach(option => {
+                if (option.dataset.value === initialValue) {
+                    displayText = option.textContent;
+                }
+            });
+            
+            selectedSpan.textContent = displayText;
+            hiddenInput.value = initialValue;
+            renderOptions();
+        }, 10);
+    } else {
+        // Ensure dropdown shows default text
+        selectedSpan.textContent = defaultTexts[selectedSpanId] || 'Select';
+        hiddenInput.value = '';
+    }
+
+    // Add click handlers to options
+    list.querySelectorAll('.custom-dropdown-option').forEach(option => {
+        option.onclick = () => {
+            selectedValue = option.dataset.value;
+            selectedSpan.textContent = option.textContent; // Use the display text, not the value
+            hiddenInput.value = option.dataset.value;
+            
+            // Debug: Log the selection
+            console.log(`Dropdown ${hiddenInputId} selected:`, {
+                value: option.dataset.value,
+                text: option.textContent,
+                hiddenInputValue: hiddenInput.value
+            });
+            
+            list.classList.add('hidden');
+            btn.classList.remove('active');
+            renderOptions();
+        };
+    });
+
+    // Toggle dropdown
+    btn.onclick = () => {
+        list.classList.toggle('hidden');
+        btn.classList.toggle('active');
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!btn.contains(e.target) && !list.contains(e.target)) {
+            list.classList.add('hidden');
+            btn.classList.remove('active');
         }
     });
 }
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateControlNumbers();
-
-    const tableBody = document.querySelector('tbody');
-
-    if (tableBody) {
-        const observer = new MutationObserver(() => {
-            observer.disconnect(); // prevent recursion
-            updateControlNumbers();
-            observer.observe(tableBody, { childList: true, subtree: true });
-        });
-
-        observer.observe(tableBody, { childList: true, subtree: true });
-    }
-});
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const searchInput = document.getElementById("searchInput");
-//     const clearBtn = document.getElementById("clearButton");
-
-//     searchInput.addEventListener("input", () => {
-//         toggleClearButton();
-//         filterTable();
-//     });
-
-//     clearBtn.addEventListener("click", () => {
-//         searchInput.value = "";
-//         toggleClearButton();
-//         filterTable();
-//     });
-
-//     function toggleClearButton() {
-//         clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
-//     }
-
-//     function filterTable() {
-//     const tbody = document.querySelector("tbody");
-//     console.log("Searching... tbody:", tbody);
-
-//     const searchTerm = searchInput.value.toLowerCase();
-//     const rows = tbody.querySelectorAll("tr");
-
-//     let visibleCount = 0;
-
-//     // Remove dynamic no-result row if exists
-//     const existingNoResult = document.getElementById("noResultRow");
-//     if (existingNoResult) existingNoResult.remove();
-
-//     // Hide static fallback row
-//     const staticNoDataRow = document.getElementById("noDataRow");
-//     if (staticNoDataRow) staticNoDataRow.style.display = "none";
-
-//     rows.forEach(row => {
-//         if (row.id === "noResultRow" || row.id === "noDataRow") return;
-
-//         const tds = row.querySelectorAll("td");
-//         if (tds.length < 6) return;
-
-//         const fullName = tds[2].textContent.toLowerCase();
-//         const empID    = tds[3].textContent.toLowerCase();
-//         const rfid     = tds[4].textContent.toLowerCase();
-//         const position = tds[5].textContent.toLowerCase();
-
-//         const matches = fullName.includes(searchTerm) ||
-//                         empID.includes(searchTerm) ||
-//                         rfid.includes(searchTerm) ||
-//                         position.includes(searchTerm);
-
-//         row.style.display = matches ? "" : "none";
-//         if (matches) visibleCount++;
-//     });
-
-//     // Show no result row if needed
-//     if (visibleCount === 0 && tbody) {
-//         const noResultRow = document.createElement("tr");
-//         noResultRow.id = "noResultRow";
-
-//         const td = document.createElement("td");
-//         td.colSpan = 7;
-//         td.className = "p-4 text-center text-black font-semibold";
-//         td.textContent = "No matching employees found";
-//         console.log("Appending noResultRow with message:", td.textContent);
-
-//         noResultRow.appendChild(td);
-//         tbody.appendChild(noResultRow);
-
-//         // 🔔 SweetAlert2 toast or alert
-//         Swal.fire({
-//             icon: 'warning',
-//             title: 'No employee found',
-//             text: 'No matching employees were found in the list.',
-//             timer: 2500,
-//             showConfirmButton: false,
-//             toast: true,
-//             position: 'bottom-end'
-//         });
-//     }
-
-//     updateControlNumbers();
-// }
-
-// });
-
-</script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("employee_searchInput");
-    const clearBtn = document.getElementById("employee_clearButton");
-
-    // Initial setup
-    toggleClearButton();
-    filterEmployeeTable();
-
-    searchInput.addEventListener("input", function () {
-        toggleClearButton();
-        filterEmployeeTable();
+// Function to reset Add Employee form
+function resetAddEmployeeForm() {
+    // Reset all text inputs
+    const textInputs = addModal.querySelectorAll('input[type="text"], input[type="email"]');
+    textInputs.forEach(input => {
+        input.value = '';
     });
 
-    clearBtn.addEventListener("click", function () {
-        searchInput.value = "";
-        toggleClearButton();
-        filterEmployeeTable();
+    // Reset hidden inputs
+    const hiddenInputs = addModal.querySelectorAll('input[type="hidden"]');
+    hiddenInputs.forEach(input => {
+        input.value = '';
     });
 
-    function toggleClearButton() {
-        clearBtn.classList.toggle("hidden", searchInput.value.trim() === "");
+    // Reset file input
+    const fileInput = document.getElementById('employeePhoto');
+    if (fileInput) {
+        fileInput.value = '';
     }
 
-    function filterEmployeeTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll("#employeeTable tr");
-        let visibleCount = 0;
+    // Reset photo preview
+    const photoPreview = document.getElementById('employeePhotoPreview');
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
+    const photoFileName = document.getElementById('photoFileName');
+    if (photoPreview) photoPreview.style.display = 'none';
+    if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
+    if (photoFileName) photoFileName.textContent = '';
 
-        rows.forEach(row => {
-            if (row.id === "employeeNoResultRow" || row.id === "noResultRow") return;
+    // Reset dropdown displays and clear selections
+    const dropdownConfigs = [
+        { spanId: 'citizenshipDropdownSelected', listId: 'citizenshipDropdownList', defaultText: 'Select citizenship' },
+        { spanId: 'bloodTypeDropdownSelected', listId: 'bloodTypeDropdownList', defaultText: 'Select blood type' },
+        { spanId: 'managerDropdownSelected', listId: 'managerDropdownList', defaultText: 'Select a Manager' },
+        { spanId: 'positionDropdownSelected', listId: 'positionDropdownList', defaultText: 'Select' },
+        { spanId: 'sexDropdownSelected', listId: 'sexDropdownList', defaultText: 'Select' },
+        { spanId: 'civilStatusDropdownSelected', listId: 'civilStatusDropdownList', defaultText: 'Select' }
+    ];
 
-            const nameCell = row.querySelector("td:nth-child(3)");
-            const empNoCell = row.querySelector("td:nth-child(4)");
-
-            if (!nameCell || !empNoCell) return;
-
-            const name = nameCell.textContent.toLowerCase();
-            const empNo = empNoCell.textContent.toLowerCase();
-            const matches = name.includes(searchTerm) || empNo.includes(searchTerm);
-
-            row.style.display = matches ? "" : "none";
-
-            if (matches) visibleCount++;
-        });
-
-        // Handle "No matching employees found" dynamic row
-        let noResultRow = document.getElementById("noResultRow");
-        if (visibleCount === 0) {
-            if (!noResultRow) {
-                noResultRow = document.createElement("tr");
-                noResultRow.id = "noResultRow";
-                noResultRow.innerHTML = `
-                    <td colspan="7" class="p-8 text-center text-muted fst-italic bg-light">
-                        <i class="bi bi-person-x fs-5 me-2" aria-hidden="true"></i>
-                        No matching employees found.
-                    </td>`;
-                document.querySelector("#employeeTable").appendChild(noResultRow);
-            }
-        } else {
-            if (noResultRow) noResultRow.remove();
+    dropdownConfigs.forEach(config => {
+        // Reset the dropdown button text
+        const span = document.getElementById(config.spanId);
+        if (span) {
+            span.textContent = config.defaultText;
         }
 
-        // Hide PHP fallback row if present
-        // const phpFallbackRow = document.getElementById("employeeNoResultRow");
-        // if (phpFallbackRow) phpFallbackRow.style.display = (visibleCount === 0 && searchTerm === "") ? "" : "none";
+        // Clear all selected states in the dropdown list
+        const list = document.getElementById(config.listId);
+        if (list) {
+            const options = list.querySelectorAll('.custom-dropdown-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+    });
+
+    // Reset flatpickr date picker
+    const dobInput = document.getElementById('dob');
+    if (dobInput && dobInput._flatpickr) {
+        dobInput._flatpickr.clear();
+    }
+
+    // Clear validation messages
+    const validationMessages = addModal.querySelectorAll('.validation-message');
+    validationMessages.forEach(msg => {
+        msg.textContent = '';
+    });
+
+    // Reset validation icons
+    const validationIcons = addModal.querySelectorAll('.validation-icon');
+    validationIcons.forEach(icon => {
+        icon.className = 'validation-icon absolute right-2 top-1/2 transform -translate-y-1/2';
+    });
+
+    // Reset employee ID
+    const employeeIdInput = document.getElementById('employeeId');
+    if (employeeIdInput) {
+        employeeIdInput.value = '';
+    }
+
+    // Force re-initialization of all dropdowns by clearing their state
+    const dropdownButtons = [
+        'citizenshipDropdownBtn',
+        'bloodTypeDropdownBtn', 
+        'managerDropdownBtn',
+        'positionDropdownBtn',
+        'sexDropdownBtn',
+        'civilStatusDropdownBtn'
+    ];
+    
+    dropdownButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// Add manual reset for close and cancel buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset on X button click
+    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal && modal.id === 'addEmployeeModal') {
+                setTimeout(() => {
+                    resetAddEmployeeForm();
+                }, 100);
+            }
+        });
+    });
+
+    // Reset on Cancel button click
+    const cancelButton = document.querySelector('#addEmployeeModal .btn-secondary, #addEmployeeModal .bg-gray-200');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', function() {
+            setTimeout(() => {
+                resetAddEmployeeForm();
+            }, 100);
+        });
     }
 });
 </script>
+<script src="../public/assets/js/flatpickr/flatpickr.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Store flatpickr instances
+    const flatpickrInstances = [];
+    document.querySelectorAll('.flatpickr-dob').forEach(function(input) {
+        const instance = flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            altInput: true,
+            altFormat: 'F j, Y',
+            theme: 'material_green',
+        });
+        flatpickrInstances.push(instance);
+    });
+
+    // Helper to close all flatpickr instances
+    function closeAllFlatpickr() {
+        flatpickrInstances.forEach(fp => fp.close());
+    }
+
+    // Add scroll event listeners to modal-content containers
+    document.querySelectorAll('.modal-content').forEach(function(modalContent) {
+        modalContent.addEventListener('scroll', closeAllFlatpickr);
+    });
+});
+</script>
+
 
 <?php require_once views_path("partials/footer"); ?>
